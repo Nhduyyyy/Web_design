@@ -1,0 +1,249 @@
+.camera-experience {
+  padding: 4rem 2rem;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.experience-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.ar-icon {
+  font-size: 2rem;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.experience-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.camera-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.camera-container {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: 4/3;
+  position: relative;
+  border: 3px solid rgba(255, 215, 0, 0.3);
+}
+
+.camera-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  gap: 1rem;
+}
+
+.placeholder-icon {
+  font-size: 5rem;
+  opacity: 0.5;
+}
+
+.video-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.mask-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10;
+  filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+  animation: floatMask 3s ease-in-out infinite;
+}
+
+@keyframes floatMask {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-10px);
+  }
+}
+
+.camera-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.control-btn {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.control-btn.start {
+  background: var(--accent-gold);
+  color: var(--dark-bg);
+}
+
+.control-btn.stop {
+  background: #e74c3c;
+}
+
+.control-btn.capture {
+  background: #27ae60;
+}
+
+.control-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.mask-selector-section {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 20px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.mask-selector-section h3 {
+  color: white;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.mask-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mask-selector-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid;
+  border-radius: 15px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+}
+
+.mask-selector-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-5px);
+}
+
+.mask-selector-btn.selected {
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.mask-selector-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.selected-mask-info {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1.5rem;
+  border-radius: 15px;
+  text-align: center;
+}
+
+.selected-mask-info h4 {
+  color: var(--accent-gold);
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.selected-mask-info p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+}
+
+.ar-instructions {
+  max-width: 800px;
+  margin: 3rem auto 0;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 20px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.ar-instructions h3 {
+  color: var(--accent-gold);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.ar-instructions ol {
+  color: white;
+  line-height: 2;
+  padding-left: 2rem;
+}
+
+.ar-instructions li {
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 968px) {
+  .experience-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .mask-selector-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .mask-selector-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .camera-controls {
+    flex-direction: column;
+  }
+  
+  .control-btn {
+    width: 100%;
+  }
+}
+
+
+

@@ -1,0 +1,128 @@
+.mask-gallery {
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  color: white;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.section-subtitle {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  margin-bottom: 3rem;
+}
+
+.mask-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.mask-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.mask-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--accent-gold);
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+  transform: translateY(-5px);
+}
+
+.mask-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.mask-card:hover::before {
+  left: 100%;
+}
+
+.mask-card.selected {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.mask-icon-large {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid;
+  transition: all 0.3s ease;
+}
+
+.mask-card:hover .mask-icon-large {
+  transform: rotate(360deg);
+  transition: transform 0.6s ease;
+}
+
+.mask-name {
+  font-size: 1.5rem;
+  color: var(--accent-gold);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.mask-description {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.mask-hover-info {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hover-text {
+  color: var(--accent-gold);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .mask-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+}
+
+

@@ -1,0 +1,246 @@
+.ai-explainer {
+  padding: 4rem 2rem;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.explainer-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.ai-icon {
+  font-size: 2rem;
+  display: inline-block;
+  margin-right: 0.5rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.explainer-content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.item-selector {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 1.5rem;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.item-selector h3 {
+  color: white;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.selector-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.selector-tab {
+  padding: 0.75rem 2rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid transparent;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.selector-tab:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: var(--accent-gold);
+}
+
+.explanation-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 3rem;
+  margin-bottom: 2rem;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.item-display {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.item-icon-large {
+  margin-bottom: 1rem;
+}
+
+.item-title {
+  font-size: 2rem;
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+.explanation-text {
+  margin-bottom: 2rem;
+}
+
+.ai-message {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.ai-avatar {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.message-content {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1.5rem;
+  border-radius: 15px;
+  border-left: 4px solid var(--accent-gold);
+}
+
+.explanation-pre {
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.cursor {
+  animation: blink 1s infinite;
+  color: var(--accent-gold);
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.quick-facts {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.quick-facts h4 {
+  color: var(--accent-gold);
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+}
+
+.facts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.fact-item {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fact-icon {
+  font-size: 2rem;
+}
+
+.fact-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.fact-value {
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.item-list {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 15px;
+  text-align: center;
+}
+
+.item-list h4 {
+  color: white;
+  margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+}
+
+.item-mini-grid {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mini-item {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid transparent;
+  border-radius: 15px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 500;
+  min-width: 120px;
+}
+
+.mini-item:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: var(--accent-gold);
+  transform: translateY(-5px);
+}
+
+@media (max-width: 768px) {
+  .explanation-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .ai-message {
+    flex-direction: column;
+  }
+  
+  .item-mini-grid {
+    flex-direction: column;
+  }
+  
+  .mini-item {
+    width: 100%;
+  }
+}
+
+
+

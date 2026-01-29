@@ -1,0 +1,30 @@
+{
+  "name": "tuong-interactive-platform",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "setup": "npm install"
+  },
+  "dependencies": {
+    "@mediapipe/camera_utils": "^0.3.1640029074",
+    "@mediapipe/drawing_utils": "^0.3.1620248257",
+    "@mediapipe/face_mesh": "^0.4.1630673314",
+    "@react-three/drei": "^9.88.13",
+    "@react-three/fiber": "^8.15.11",
+    "face-api.js": "^0.22.2",
+    "framer-motion": "^10.16.16",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "three": "^0.158.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.0.8"
+  }
+}
