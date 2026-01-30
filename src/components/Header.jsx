@@ -12,41 +12,46 @@ function Header({ activeSection, setActiveSection }) {
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="header-content">
-        <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <span className="logo-icon">🎭</span>
-          <h1>Tuồng Việt Nam</h1>
-        </div>
-        <nav className="nav">
+      <div className="header-container">
+        {/* Left Navigation */}
+        <div className="header-left">
           <button 
-            className={`nav-btn ${activeSection === 'experience' ? 'active' : ''}`}
+            className={`header-btn ${activeSection === 'experience' ? 'active' : ''}`}
             onClick={() => setActiveSection('experience')}
           >
             Trải Nghiệm
           </button>
           <button 
-            className={`nav-btn ${activeSection === 'watch' ? 'active' : ''}`}
+            className={`header-btn ${activeSection === 'watch' ? 'active' : ''}`}
             onClick={() => setActiveSection('watch')}
           >
             Xem Tuồng
           </button>
+        </div>
+
+        {/* Center Logo */}
+        <div className="header-center" onClick={() => navigate('/')}>
+          <img src="/src/img/logo_mo_man.png" alt="Tuồng Việt Nam" className="header-logo" />
+        </div>
+
+        {/* Right Navigation */}
+        <div className="header-right">
           <button 
-            className={`nav-btn ${activeSection === 'tryRole' ? 'active' : ''}`}
+            className={`header-btn ${activeSection === 'tryRole' ? 'active' : ''}`}
             onClick={() => setActiveSection('tryRole')}
           >
             Thử vai
           </button>
           <button 
-            className={`nav-btn ${activeSection === 'learning' ? 'active' : ''}`}
+            className={`header-btn ${activeSection === 'learning' ? 'active' : ''}`}
             onClick={() => setActiveSection('learning')}
           >
             Học tập
           </button>
-        </nav>
+        </div>
       </div>
     </motion.header>
   )
 }
 
 export default Header
-

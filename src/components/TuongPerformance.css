@@ -10,6 +10,7 @@
   --tp-text: #F5F5F5;
   --tp-text-muted: rgba(156, 163, 175, 1);
   min-height: 100vh;
+  padding-top: 120px;
   background: var(--tp-bg-dark);
   color: var(--tp-text);
   font-family: 'Montserrat', sans-serif;
