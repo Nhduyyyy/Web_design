@@ -12,7 +12,8 @@ export const sceneObjects = {
         meaning: 'Tượng trưng cho sức mạnh và công lý',
         history: 'Kiếm được truyền từ đời này sang đời khác trong các vở Tuồng',
         usage: 'Sử dụng trong các cảnh chiến đấu và biểu diễn võ thuật'
-      }
+      },
+      aiSuggestion: 'Trong các vở diễn kinh điển, Thanh Kiếm thường gắn liền với hình tượng Quan Công. Bạn có thể sử dụng đạo cụ này để mở khóa các chương về thời Tam Quốc.'
     },
     {
       id: 'helmet',
@@ -262,68 +263,88 @@ export const sceneObjects = {
   ]
 }
 
+// Nền cảnh dùng theme tối + vàng, đồng bộ với toàn trang
+const sceneBaseGradient = 'linear-gradient(160deg, #1a1520 0%, #120e18 40%, #0d0a12 100%)'
+
 export const sceneBackgrounds = {
   1: {
     name: 'Cảnh Chiến Trường',
     description: 'Không gian rộng lớn với cờ xí và vũ khí',
-    color: '#8B4513',
-    gradient: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+    color: '#1a1520',
+    gradient: sceneBaseGradient,
     sceneType: 'battlefield',
-    skyColor: '#87CEEB',
-    groundColor: '#8B4513'
+    skyColor: '#1e2433',
+    groundColor: '#15101a'
   },
   2: {
     name: 'Cảnh Gia Đình',
     description: 'Không gian ấm cúng của gia đình truyền thống',
-    color: '#DDA0DD',
-    gradient: 'linear-gradient(135deg, #DDA0DD 0%, #EE82EE 100%)',
+    color: '#1a1520',
+    gradient: sceneBaseGradient,
     sceneType: 'home',
-    skyColor: '#E6E6FA',
-    groundColor: '#DDA0DD'
+    skyColor: '#1e2433',
+    groundColor: '#15101a'
   },
   3: {
     name: 'Cảnh Doanh Trại',
     description: 'Không gian quân sự với bản đồ và vũ khí',
-    color: '#4682B4',
-    gradient: 'linear-gradient(135deg, #4682B4 0%, #5F9EA0 100%)',
+    color: '#1a1520',
+    gradient: sceneBaseGradient,
     sceneType: 'camp',
-    skyColor: '#87CEEB',
-    groundColor: '#4682B4'
+    skyColor: '#1e2433',
+    groundColor: '#15101a'
   },
   4: {
     name: 'Cảnh Vườn Hoa',
-    description: 'Vườn hoa đẹp với cây cối và hoa cỏ',
-    color: '#90EE90',
-    gradient: 'linear-gradient(135deg, #90EE90 0%, #98FB98 100%)',
+    description: 'Vườn hoa với cây cối và hoa cỏ',
+    color: '#1a1520',
+    gradient: sceneBaseGradient,
     sceneType: 'garden',
-    skyColor: '#87CEEB',
-    groundColor: '#90EE90'
+    skyColor: '#1e2433',
+    groundColor: '#15101a'
   },
   5: {
     name: 'Cảnh Triều Đình',
     description: 'Cung điện hoàng gia với kiến trúc cổ kính',
-    color: '#DAA520',
-    gradient: 'linear-gradient(135deg, #DAA520 0%, #FFD700 100%)',
+    color: '#1a1520',
+    gradient: sceneBaseGradient,
     sceneType: 'palace',
-    skyColor: '#E0E0E0',
-    groundColor: '#DAA520'
+    skyColor: '#1e2433',
+    groundColor: '#15101a'
   }
 }
 
-// Map performance to scenes
+// Map vở diễn → sceneId 3D cho từng "cảnh chính" (theo thứ tự trong performance.scenes).
+// Số phần tử = số cảnh chính của vở đó. ID khớp với performances trong TuongPerformance.jsx
+export const performanceSceneIdMap = {
+  1: [5, 1, 5],   // Sơn Hậu: Triều Đình, Chiến Trường, Triều Đình
+  2: [5, 1, 5],   // Đào Tam Xuân: Triều Đình, Chiến Trường, Triều Đình
+  3: [1, 3, 1],   // Trần Bình Trọng: Chiến Trường, Doanh Trại, Chiến Trường
+  4: [4, 3, 4],   // San Hậu (Hồ Nguyệt Cô): Vườn Hoa, Doanh Trại, Vườn Hoa
+  5: [1, 1, 5]    // Lưu Kim Đính: Chiến Trường, Chiến Trường, Triều Đình
+}
+
+// Giữ để tương thích nếu có chỗ dùng performanceScenes theo tên cảnh
 export const performanceScenes = {
-  1: [ // Quan Công - Chiến trường
+  1: [
+    { id: 1, name: 'Cảnh 1: Triều Đình', sceneId: 5 },
+    { id: 2, name: 'Cảnh 2: Chiến Trường', sceneId: 1 }
+  ],
+  2: [
+    { id: 1, name: 'Cảnh 1: Triều Đình', sceneId: 5 },
+    { id: 2, name: 'Cảnh 2: Chiến Trường', sceneId: 1 }
+  ],
+  3: [
     { id: 1, name: 'Cảnh 1: Chiến Trường', sceneId: 1 },
     { id: 2, name: 'Cảnh 2: Doanh Trại', sceneId: 3 }
   ],
-  2: [ // Thị Kính - Gia đình
-    { id: 1, name: 'Cảnh 1: Gia Đình', sceneId: 2 },
-    { id: 2, name: 'Cảnh 2: Vườn Hoa', sceneId: 4 }
+  4: [
+    { id: 1, name: 'Cảnh 1: Vườn Hoa', sceneId: 4 },
+    { id: 2, name: 'Cảnh 2: Doanh Trại', sceneId: 3 }
   ],
-  3: [ // Tam Quốc - Quân sự
-    { id: 1, name: 'Cảnh 1: Doanh Trại', sceneId: 3 },
-    { id: 2, name: 'Cảnh 2: Chiến Trường', sceneId: 1 },
-    { id: 3, name: 'Cảnh 3: Triều Đình', sceneId: 5 }
+  5: [
+    { id: 1, name: 'Cảnh 1: Chiến Trường', sceneId: 1 },
+    { id: 2, name: 'Cảnh 2: Triều Đình', sceneId: 5 }
   ]
 }
 
