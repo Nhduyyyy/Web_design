@@ -6,7 +6,7 @@ import MaskGallery from './components/MaskGallery'
 import CharacterShowcase from './components/CharacterShowcase'
 import CameraExperience from './components/CameraExperience'
 import TuongPerformance from './components/TuongPerformance'
-import Viewer3D from './components/Viewer3D'
+import TryRoleExperience from './components/TryRoleExperience'
 import ScrollProgress from './components/ScrollProgress'
 import './styles/App.css'
 
@@ -47,8 +47,8 @@ function App() {
         <TuongPerformance />
       )}
 
-      {activeSection === '3d' && (
-        <Viewer3D />
+      {activeSection === 'tryRole' && (
+        <TryRoleExperience />
       )}
     </div>
   )

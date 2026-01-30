@@ -34,10 +34,10 @@ function Header({ activeSection, setActiveSection }) {
             Xem Tuồng
           </button>
           <button 
-            className={`nav-btn ${activeSection === '3d' ? 'active' : ''}`}
-            onClick={() => setActiveSection('3d')}
+            className={`nav-btn ${activeSection === 'tryRole' ? 'active' : ''}`}
+            onClick={() => setActiveSection('tryRole')}
           >
-            3D View
+            Thử vai
           </button>
         </nav>
       </div>

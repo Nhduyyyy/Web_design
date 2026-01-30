@@ -31,12 +31,14 @@ export const glossaryData = [
   { id: 'vo-thuat', term: 'Võ thuật Tuồng', definition: 'Động tác múa võ trên sân khấu, mô phỏng chiến đấu. Tạo tính kịch và thẩm mỹ cho cảnh đánh nhau.', emoji: '🥋' }
 ]
 
+// maskId: mặt nạ dùng khi "Thử vai" — nhân vật hóa thân bằng mặt nạ đó
 export const characterData = [
   {
     id: 1,
     name: 'Quan Công',
     type: 'Quan Võ',
     emoji: '⚔️',
+    maskId: 5,
     costume: {
       color: 'Đỏ',
       description: 'Áo giáp đỏ, mũ quan, râu dài',
@@ -50,6 +52,7 @@ export const characterData = [
     name: 'Thị Kính',
     type: 'Nữ',
     emoji: '💃',
+    maskId: 7,
     costume: {
       color: 'Hồng',
       description: 'Áo dài truyền thống, khăn đóng, trang sức tinh tế',
@@ -63,6 +66,7 @@ export const characterData = [
     name: 'Lưu Bị',
     type: 'Quan Văn',
     emoji: '👑',
+    maskId: 9,
     costume: {
       color: 'Vàng',
       description: 'Áo long bào vàng, mũ miện, giày quan',
