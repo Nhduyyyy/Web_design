@@ -1,50 +1,711 @@
-/* Luxury Tuồng Opera Streaming — theme */
+/* Luxury Tuồng Opera Streaming — theme (theo mẫu HTML) */
 .tuong-performance.luxury-streaming {
   --tp-primary: #A01616;
   --tp-accent: #A01616;
+  --tp-glow: #c41e1e;
   --tp-bg-dark: #0B0B0B;
   --tp-surface: #121212;
   --tp-card: #1C1C1C;
   --tp-crimson: #8B1E1E;
   --tp-text: #F5F5F5;
-  --tp-text-muted: #9CA3AF;
+  --tp-text-muted: rgba(156, 163, 175, 1);
   min-height: 100vh;
   background: var(--tp-bg-dark);
   color: var(--tp-text);
   font-family: 'Montserrat', sans-serif;
 }
 
-.tuong-performance .font-display {
+.tuong-performance.luxury-streaming .font-display {
   font-family: 'Playfair Display', serif;
 }
 
-.tuong-performance .text-accent {
-  color: var(--tp-accent);
-}
-
-/* Red gradient border (selected card) */
-.tuong-performance .gold-gradient-border {
+/* Red gradient border (selected card) — tông đỏ chủ đạo */
+.tuong-performance.luxury-streaming .gold-gradient-border {
   border: 1px solid transparent;
   background:
     linear-gradient(var(--tp-card), var(--tp-card)) padding-box,
-    linear-gradient(to bottom right, #A01616, #8B1E1E) border-box;
+    linear-gradient(135deg, #8B1E1E 0%, #A01616 50%, #c41e1e 100%) border-box;
+  box-shadow: 0 0 15px rgba(160, 22, 22, 0.3);
 }
 
-.tuong-performance .red-glow {
-  box-shadow: 0 0 30px rgba(160, 22, 22, 0.2);
-}
-
-.tuong-performance .custom-scrollbar::-webkit-scrollbar {
+.tuong-performance.luxury-streaming .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
 
-.tuong-performance .custom-scrollbar::-webkit-scrollbar-track {
+.tuong-performance.luxury-streaming .custom-scrollbar::-webkit-scrollbar-track {
   background: var(--tp-bg-dark);
 }
 
-.tuong-performance .custom-scrollbar::-webkit-scrollbar-thumb {
+.tuong-performance.luxury-streaming .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--tp-accent);
   border-radius: 10px;
+}
+
+/* ========== Header (chỉ còn nav tabs) ========== */
+.tuong-performance.luxury-streaming .tp-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2rem;
+  background: rgba(11, 11, 11, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tuong-performance.luxury-streaming .tp-header-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+
+.tuong-performance.luxury-streaming .tp-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--tp-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid transparent;
+  border-radius: 8px;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.tuong-performance.luxury-streaming .tp-nav-link:hover {
+  color: var(--tp-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tuong-performance.luxury-streaming .tp-nav-link.active {
+  color: var(--tp-accent);
+  border-bottom-color: var(--tp-accent);
+}
+
+.tuong-performance.luxury-streaming .tp-tab-icon {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.tuong-performance.luxury-streaming .tp-tab-label {
+  white-space: nowrap;
+}
+
+/* ========== Main grid (4 + 8 cols) ========== */
+.tuong-performance.luxury-streaming .tp-main {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  padding: 2rem;
+  height: calc(100vh - 80px);
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .tuong-performance.luxury-streaming .tp-main {
+    grid-template-columns: 1fr 2fr;
+  }
+}
+
+.tuong-performance.luxury-streaming .tp-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.tuong-performance.luxury-streaming .tp-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tuong-performance.luxury-streaming .tp-sidebar-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--tp-accent);
+  margin: 0;
+}
+
+.tuong-performance.luxury-streaming .tp-sidebar-count {
+  font-size: 0.75rem;
+  color: var(--tp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tuong-performance.luxury-streaming .tp-play-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tuong-performance.luxury-streaming .tp-play-card {
+  padding: 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s, background 0.2s;
+  background: var(--tp-surface);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tuong-performance.luxury-streaming .tp-play-card:hover {
+  border-color: rgba(160, 22, 22, 0.5);
+  transform: scale(1.01);
+}
+
+.tuong-performance.luxury-streaming .tp-play-card.selected {
+  background: var(--tp-card);
+}
+
+.tuong-performance.luxury-streaming .tp-play-card-inner {
+  display: flex;
+  gap: 1rem;
+}
+
+.tuong-performance.luxury-streaming .tp-play-card-thumb {
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  position: relative;
+}
+
+.tuong-performance.luxury-streaming .tp-play-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.2s;
+}
+
+.tuong-performance.luxury-streaming .tp-play-card-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.tuong-performance.luxury-streaming .tp-play-card-overlay .material-symbols-outlined {
+  color: var(--tp-accent);
+  font-size: 2.5rem;
+}
+
+.tuong-performance.luxury-streaming .tp-play-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.tuong-performance.luxury-streaming .tp-play-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.tuong-performance.luxury-streaming .tp-tag {
+  font-size: 10px;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.tuong-performance.luxury-streaming .tp-tag-primary {
+  background: rgba(160, 22, 22, 0.2);
+  color: #e57373;
+  border: 1px solid rgba(160, 22, 22, 0.3);
+}
+
+.tuong-performance.luxury-streaming .tp-tag-accent {
+  background: rgba(160, 22, 22, 0.2);
+  color: var(--tp-accent);
+  border: 1px solid rgba(160, 22, 22, 0.3);
+}
+
+.tuong-performance.luxury-streaming .tp-tag-blue {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.tuong-performance.luxury-streaming .tp-duration {
+  font-size: 10px;
+  color: var(--tp-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tuong-performance.luxury-streaming .tp-duration .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.tuong-performance.luxury-streaming .tp-play-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--tp-text);
+  line-height: 1.3;
+  margin: 0;
+  transition: color 0.2s;
+}
+
+.tuong-performance.luxury-streaming .tp-play-card:hover .tp-play-card-title,
+.tuong-performance.luxury-streaming .tp-play-card.selected .tp-play-card-title {
+  color: var(--tp-glow);
+}
+
+.tuong-performance.luxury-streaming .tp-play-card-desc {
+  font-size: 0.75rem;
+  color: var(--tp-text-muted);
+  margin: 0.25rem 0 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ========== Content (video + details) ========== */
+.tuong-performance.luxury-streaming .tp-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  min-width: 0;
+}
+
+.tuong-performance.luxury-streaming .tp-video-block {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  min-height: 280px;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+}
+
+.tuong-performance.luxury-streaming .tp-video-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.4;
+  transition: transform 1s;
+}
+
+.tuong-performance.luxury-streaming .tp-video-block:hover .tp-video-bg {
+  transform: scale(1.05);
+}
+
+.tuong-performance.luxury-streaming .tp-video-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.tuong-performance.luxury-streaming .tp-video-play-btn {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: var(--tp-primary);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 40px rgba(160, 22, 22, 0.5);
+}
+
+.tuong-performance.luxury-streaming .tp-video-play-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 30px rgba(196, 30, 30, 0.6);
+  background: var(--tp-glow);
+}
+
+.tuong-performance.luxury-streaming .tp-video-play-btn .material-symbols-outlined {
+  font-size: 3rem;
+}
+
+.tuong-performance.luxury-streaming .tp-video-prompt {
+  margin-top: 1rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tp-accent);
+  margin: 0;
+}
+
+.tuong-performance.luxury-streaming .tp-video-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1.5rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tuong-performance.luxury-streaming .tp-progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.tuong-performance.luxury-streaming .tp-progress-fill {
+  height: 100%;
+  background: var(--tp-primary);
+  position: relative;
+  transition: width 0.1s linear;
+}
+
+.tuong-performance.luxury-streaming .tp-progress-knob {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+.tuong-performance.luxury-streaming .tp-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.tuong-performance.luxury-streaming .tp-controls-left,
+.tuong-performance.luxury-streaming .tp-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tuong-performance.luxury-streaming .tp-control-icon {
+  background: none;
+  border: none;
+  color: var(--tp-text);
+  padding: 0.25rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.tuong-performance.luxury-streaming .tp-control-icon:hover {
+  color: var(--tp-accent);
+}
+
+.tuong-performance.luxury-streaming .tp-time-text {
+  font-size: 0.75rem;
+  font-family: ui-monospace, monospace;
+  color: rgba(209, 213, 219, 1);
+}
+
+/* ========== Details card ========== */
+.tuong-performance.luxury-streaming .tp-details-card {
+  background: var(--tp-surface);
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.tuong-performance.luxury-streaming .tp-details-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1.5rem;
+}
+
+.tuong-performance.luxury-streaming .tp-details-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--tp-accent);
+  margin: 0 0 0.5rem;
+}
+
+.tuong-performance.luxury-streaming .tp-details-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--tp-text-muted);
+  line-height: 1;
+}
+
+.tuong-performance.luxury-streaming .tp-details-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  vertical-align: middle;
+}
+
+.tuong-performance.luxury-streaming .tp-meta-icon {
+  color: var(--tp-accent) !important;
+  font-size: 1.125rem !important;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tuong-performance.luxury-streaming .tp-details-meta .tp-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tuong-performance.luxury-streaming .tp-details-meta .tp-rating .material-symbols-outlined {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tuong-performance.luxury-streaming .tp-rating {
+  font-weight: 700;
+  color: var(--tp-text);
+}
+
+.tuong-performance.luxury-streaming .tp-details-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.tuong-performance.luxury-streaming .tp-circle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.75rem;
+  border-radius: 9999px;
+  color: var(--tp-accent);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tuong-performance.luxury-streaming .tp-circle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tuong-performance.luxury-streaming .tp-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 767px) {
+  .tuong-performance.luxury-streaming .tp-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tuong-performance.luxury-streaming .tp-detail-section h3.tp-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--tp-text);
+  margin: 0 0 1rem;
+}
+
+.tuong-performance.luxury-streaming .tp-accent {
+  color: var(--tp-accent) !important;
+}
+
+.tuong-performance.luxury-streaming .tp-section-text {
+  color: rgba(209, 213, 219, 1);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  font-weight: 300;
+  margin: 0;
+}
+
+.tuong-performance.luxury-streaming .tp-glow-quote {
+  color: var(--tp-glow);
+  font-style: italic;
+}
+
+.tuong-performance.luxury-streaming .tp-scenes-section .tp-section-heading {
+  margin-bottom: 1rem;
+}
+
+.tuong-performance.luxury-streaming .tp-scenes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tuong-performance.luxury-streaming .tp-scene-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.tuong-performance.luxury-streaming .tp-scene-item:hover {
+  border-color: rgba(160, 22, 22, 0.4);
+}
+
+.tuong-performance.luxury-streaming .tp-scene-time {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  color: var(--tp-accent);
+  width: 3rem;
+  flex-shrink: 0;
+}
+
+.tuong-performance.luxury-streaming .tp-scene-desc {
+  font-size: 0.875rem;
+  color: rgba(229, 231, 235, 1);
+  margin: 0;
+}
+
+.tuong-performance.luxury-streaming .tp-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding-top: 1rem;
+}
+
+.tuong-performance.luxury-streaming .tp-btn-gold {
+  flex: 1;
+  min-width: 200px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--tp-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: box-shadow 0.3s, background 0.3s;
+  box-shadow: 0 0 20px rgba(160, 22, 22, 0.4);
+}
+
+.tuong-performance.luxury-streaming .tp-btn-gold:hover {
+  box-shadow: 0 0 30px rgba(196, 30, 30, 0.5);
+  background: var(--tp-glow);
+}
+
+.tuong-performance.luxury-streaming .tp-btn-red {
+  flex: 1;
+  min-width: 200px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: rgba(160, 22, 22, 0.2);
+  color: var(--tp-text);
+  border: 2px solid var(--tp-primary);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: box-shadow 0.3s, background 0.3s;
+  box-shadow: 0 0 20px rgba(160, 22, 22, 0.3);
+}
+
+.tuong-performance.luxury-streaming .tp-btn-red:hover {
+  box-shadow: 0 0 25px rgba(160, 22, 22, 0.5);
+  background: var(--tp-primary);
+  border-color: var(--tp-glow);
+}
+
+.tuong-performance.luxury-streaming .tp-footer-line {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to right, transparent, var(--tp-primary), transparent);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tuong-performance.luxury-streaming .tp-other-tab {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.tuong-performance.luxury-streaming .tp-about .tp-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.tuong-performance.luxury-streaming .tp-info-card {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: var(--tp-surface);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tuong-performance.luxury-streaming .tp-info-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.5rem;
 }
 
 /* Header — cách trên, thu hẹp gần bằng text, bóng mờ */

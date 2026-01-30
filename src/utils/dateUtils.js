@@ -20,6 +20,32 @@ export function formatDateTimeISO(dateStr) {
   return d.toLocaleString()
 }
 
+/** Time as HH:mm:ss (e.g. 19:00:00) */
+export function formatTimeHHMMSS(dateStr) {
+  const d = parseISO(dateStr)
+  if (!d) return ''
+  const h = d.getHours()
+  const m = d.getMinutes()
+  const s = d.getSeconds()
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${pad(h)}:${pad(m)}:${pad(s)}`
+}
+
+/** Date as d/M/yyyy (e.g. 12/3/2026) */
+export function formatDateShort(dateStr) {
+  const d = parseISO(dateStr)
+  if (!d) return ''
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
+}
+
+/** Date for sidebar e.g. 12/03/2026 */
+export function formatDateSidebar(dateStr) {
+  const d = parseISO(dateStr)
+  if (!d) return ''
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`
+}
+
 export function groupByDate(events) {
   const map = new Map()
   events.forEach(ev => {

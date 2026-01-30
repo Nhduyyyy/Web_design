@@ -119,6 +119,18 @@ const TABS = [
   { id: 'about', label: 'Giới thiệu', icon: '📚' }
 ]
 
+// Chuyển centi-giây (currentTime) thành chuỗi "M:SS" hoặc "H:MM:SS"
+function formatTime(centisec) {
+  if (centisec == null || centisec < 0) return '0:00'
+  const totalSec = Math.floor(centisec / 100)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  const pad = (n) => String(n).padStart(2, '0')
+  if (h > 0) return `${h}:${pad(m)}:${pad(s)}`
+  return `${m}:${pad(s)}`
+}
+
 // Small helper to highlight matched query in UI — file-local, lightweight
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -135,13 +147,22 @@ function Highlight({ text = '', query = '' }) {
     </span>
   )
 }
-function TuongPerformance() {
+function TuongPerformance({ setActiveSection }) {
   const [activeTab, setActiveTab] = useState('watch')
-  const [selectedPerformance, setSelectedPerformance] = useState(null)
+  const [selectedPerformance, setSelectedPerformance] = useState(() => performances[0] ?? null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0) // centiseconds
   const [progressPercent, setProgressPercent] = useState(0)
   const [showInteractiveScene, setShowInteractiveScene] = useState(false)
+
+  // Tổng thời lượng vở (từ duration "90 phút" -> phút; centiseconds = phút * 60 * 100)
+  const totalMinutes = useMemo(() => {
+    const d = selectedPerformance?.duration
+    if (!d) return 0
+    const m = String(d).match(/\d+/)
+    return m ? parseInt(m[0], 10) : 0
+  }, [selectedPerformance?.duration])
+  const totalCentisec = totalMinutes * 60 * 100
 
   // Search UI (watch tab)
   const [searchQuery, setSearchQuery] = useState('')
@@ -176,6 +197,7 @@ function TuongPerformance() {
   }, [debouncedQuery])
 
   const handlePlay = () => {
+    if (totalCentisec <= 0) return
     setIsPlaying(true)
     const interval = setInterval(() => {
       setCurrentTime((prev) => {
@@ -218,257 +240,250 @@ function TuongPerformance() {
   }
 
   return (
-    <div className="tuong-performance">
-      <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="performance-header"
-        >
-          <h2 className="section-title">Xem Tuồng</h2>
-          <p className="section-subtitle">
-            Khám phá các vở Tuồng truyền thống Việt Nam
-          </p>
-          <nav className="performance-tabs" aria-label="Chọn mục">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                className={`performance-tab ${activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <span className="tab-icon">{tab.icon}</span>
-                <span className="tab-label">{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </motion.div>
+    <div className="tuong-performance luxury-streaming">
+      <header className="tp-header">
+        <nav className="tp-header-nav" aria-label="Chọn mục">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`tp-nav-link ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className="tp-tab-icon">{tab.icon}</span>
+              <span className="tp-tab-label">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+      </header>
 
-        {activeTab === 'watch' && (
-        <div className="performance-content">
-          <div className="performance-list">
-            <h3>Danh Sách Vở Tuồng</h3>
-
-            <div className="performance-search" aria-hidden={activeTab !== 'watch'}>
-              <div className="search-bar" role="search" aria-label="Tìm vở diễn">
-                <input
-                  className="search-input"
-                  placeholder="Tìm vở, thể loại, cảnh..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  aria-label="Tìm vở, thể loại, cảnh"
-                />
-                {searchQuery ? (
-                  <button className="search-clear" aria-label="Xóa tìm kiếm" onClick={() => setSearchQuery('')}>✕</button>
-                ) : null}
-                <div className="search-count" aria-live="polite">{filteredPerformances.length} kết quả</div>
-              </div>
+      {activeTab === 'watch' && (
+        <main className="tp-main">
+          <div className="tp-sidebar">
+            <div className="tp-sidebar-head">
+              <h2 className="tp-sidebar-title">Danh Sách Vở Tuồng</h2>
+              <span className="tp-sidebar-count">{filteredPerformances.length} Tác phẩm</span>
             </div>
-
-            <div className="performance-grid">
-              {filteredPerformances.map((performance, index) => (
-                <motion.div
-                  key={performance.id}
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.06 }}
-                  className={`performance-card ${
-                    selectedPerformance?.id === performance.id ? 'selected' : ''
-                  }`}
-                  onClick={() => setSelectedPerformance(performance)}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div className="performance-thumbnail">
-                    <div className="thumbnail-placeholder">
-                      <span style={{ fontSize: '4rem' }}>🎭</span>
+            <div className="tp-play-list custom-scrollbar">
+              {filteredPerformances.map((performance) => {
+                const isSelected = selectedPerformance?.id === performance.id
+                return (
+                  <div
+                    key={performance.id}
+                    role="button"
+                    tabIndex={0}
+                    className={`tp-play-card ${isSelected ? 'selected gold-gradient-border' : ''}`}
+                    onClick={() => setSelectedPerformance(performance)}
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedPerformance(performance)}
+                  >
+                    <div className="tp-play-card-inner">
+                      <div className="tp-play-card-thumb">
+                        <img
+                          src={performance.thumb || '/backgrounds/bec029d1937648da5a7c3ac4205a7af3.jpg'}
+                          alt=""
+                          className={isSelected ? '' : 'opacity-60'}
+                        />
+                        {isSelected && (
+                          <div className="tp-play-card-overlay">
+                            <span className="material-symbols-outlined">play_circle</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="tp-play-card-body">
+                        <div className="tp-play-card-meta">
+                          <span className={`tp-tag tp-tag-${performance.categoryStyle || 'primary'}`}>
+                            {performance.category}
+                          </span>
+                          <span className="tp-duration">
+                            <span className="material-symbols-outlined">schedule</span>
+                            {performance.duration}
+                          </span>
+                        </div>
+                        <h3 className="tp-play-card-title">{performance.title}</h3>
+                        <p className="tp-play-card-desc">{performance.description}</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="performance-info">
-                    <h4><Highlight text={performance.title} query={debouncedQuery} /></h4>
-                    <p><Highlight text={performance.description} query={debouncedQuery} /></p>
-                    <div className="performance-meta">
-                      <span>⏱️ {performance.duration}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
-        <div className="main-content custom-scrollbar">
-          <div className="video-block red-glow">
-            <div className="video-stage">
+          <div className="tp-content custom-scrollbar">
+            <div className="tp-video-block">
               <img
-                className="video-bg"
+                className="tp-video-bg"
                 src={selectedPerformance?.thumb || '/backgrounds/bec029d1937648da5a7c3ac4205a7af3.jpg'}
                 alt=""
               />
-              <div className="video-overlay">
+              <div className="tp-video-overlay">
                 <button
                   type="button"
-                  className="video-play-btn"
+                  className="tp-video-play-btn"
                   onClick={isPlaying ? handlePause : handlePlay}
                   aria-label={isPlaying ? 'Tạm dừng' : 'Phát'}
                 >
-                  <span className="material-icons-round">play_arrow</span>
+                  <span className="material-symbols-outlined">play_arrow</span>
                 </button>
-                <p className="font-display video-prompt">Nhấn Play để xem</p>
+                <p className="tp-video-prompt">Nhấn Play để xem</p>
               </div>
-            </div>
-            <div className="video-controls">
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: `${progressPercent || (totalCentisec ? (currentTime / totalCentisec) * 100 : 0)}%` }}>
-                  <span className="progress-knob" />
-                </div>
-              </div>
-              <div className="controls-row">
-                <div className="controls-left">
-                  <button type="button" className="control-icon" onClick={isPlaying ? handlePause : handlePlay}>
-                    <span className="material-icons-round">play_arrow</span>
-                  </button>
-                  <button type="button" className="control-icon">
-                    <span className="material-icons-round">volume_up</span>
-                  </button>
-                  <span className="time-text">
-                    {formatTime(currentTime)} / {totalMinutes}:00
-                  </span>
-                </div>
-                <div className="controls-right">
-                  <button type="button" className="control-icon">
-                    <span className="material-icons-round">settings</span>
-                  </button>
-                  <button type="button" className="control-icon">
-                    <span className="material-icons-round">fullscreen</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {selectedPerformance && (
-            <div className="details-block">
-              <div className="details-header">
-                <div>
-                  <h2 className="font-display details-title">{selectedPerformance.title}</h2>
-                  <div className="details-meta">
-                    <span>
-                      <span className="material-icons-round">calendar_today</span>
-                      {selectedPerformance.era}
-                    </span>
-                    <span>
-                      <span className="material-icons-round">person</span>
-                      {selectedPerformance.metaType}
-                    </span>
-                    <span className="rating">
-                      <span className="material-icons-round">star</span>
-                      {selectedPerformance.rating}/5.0
-                    </span>
+              <div className="tp-video-controls">
+                <div className="tp-progress-track">
+                  <div
+                    className="tp-progress-fill"
+                    style={{ width: `${progressPercent || (totalCentisec ? (currentTime / totalCentisec) * 100 : 0)}%` }}
+                  >
+                    <span className="tp-progress-knob" />
                   </div>
                 </div>
-                <div className="details-actions">
-                  <button type="button" className="circle-btn">
-                    <span className="material-icons-round">share</span>
-                  </button>
-                  <button type="button" className="circle-btn">
-                    <span className="material-icons-round">bookmark_border</span>
-                  </button>
+                <div className="tp-controls-row">
+                  <div className="tp-controls-left">
+                    <button type="button" className="tp-control-icon" onClick={isPlaying ? handlePause : handlePlay}>
+                      <span className="material-symbols-outlined">play_arrow</span>
+                    </button>
+                    <button type="button" className="tp-control-icon">
+                      <span className="material-symbols-outlined">volume_up</span>
+                    </button>
+                    <span className="tp-time-text">
+                      {formatTime(currentTime)} / {totalMinutes}:00
+                    </span>
+                  </div>
+                  <div className="tp-controls-right">
+                    <button type="button" className="tp-control-icon">
+                      <span className="material-symbols-outlined">settings</span>
+                    </button>
+                    <button type="button" className="tp-control-icon">
+                      <span className="material-symbols-outlined">fullscreen</span>
+                    </button>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div className="details-grid">
-                <section className="detail-section">
-                  <h3 className="font-display section-heading">
-                    <span className="material-icons-round">menu_book</span>
-                    Nội dung
-                  </h3>
-                  <p className="section-text">
-                    {selectedPerformance.id === 3 ? (
-                      <>
-                        Dựa theo nhân vật lịch sử thời nhà Trần. Khi quân Nguyên – Mông xâm lược, Trần Bình Trọng bị bắt. Quân giặc dụ dỗ ông làm vua bù nhìn để phản bội Tổ quốc. Ông kiên quyết từ chối và nói câu nổi tiếng:{' '}
-                        <span className="highlight-quote">"Ta thà làm quỷ nước Nam, còn hơn làm vương đất Bắc."</span>
-                        {' '}Cuối cùng, ông hi sinh anh dũng.
-                      </>
-                    ) : (
-                      selectedPerformance.content
-                    )}
-                  </p>
-                </section>
-                <section className="detail-section">
-                  <h3 className="font-display section-heading">
-                    <span className="material-icons-round">auto_awesome</span>
-                    Ý nghĩa
-                  </h3>
-                  <p className="section-text">{selectedPerformance.meaning}</p>
-                </section>
-              </div>
-
-              <section className="scenes-section">
-                <h3 className="font-display section-heading">Các cảnh chính</h3>
-                <div className="scenes-list">
-                  {selectedPerformance.scenes.map((scene, idx) => (
-                    <div key={idx} className="scene-item">
-                      <span className="scene-time">{scene.time}</span>
-                      <p className="scene-desc">{scene.name}</p>
+            {selectedPerformance && (
+              <div className="tp-details-card">
+                <div className="tp-details-head">
+                  <div>
+                    <h2 className="tp-details-title">{selectedPerformance.title}</h2>
+                    <div className="tp-details-meta">
+                      <span>
+                        <span className="material-symbols-outlined tp-meta-icon">calendar_today</span>
+                        {selectedPerformance.era}
+                      </span>
+                      <span>
+                        <span className="material-symbols-outlined tp-meta-icon">person</span>
+                        {selectedPerformance.metaType}
+                      </span>
+                      <span className="tp-rating">
+                        <span className="material-symbols-outlined">star</span>
+                        {selectedPerformance.rating}/5.0
+                      </span>
                     </div>
-                  ))}
+                  </div>
+                  <div className="tp-details-actions">
+                    <button type="button" className="tp-circle-btn">
+                      <span className="material-symbols-outlined">share</span>
+                    </button>
+                    <button type="button" className="tp-circle-btn">
+                      <span className="material-symbols-outlined">bookmark</span>
+                    </button>
+                  </div>
                 </div>
-                
-                <div className="player-actions">
+                <div className="tp-details-grid">
+                  <section className="tp-detail-section">
+                    <h3 className="tp-section-heading">
+                      <span className="material-symbols-outlined tp-accent">menu_book</span>
+                      Nội dung
+                    </h3>
+                    <p className="tp-section-text">
+                      {selectedPerformance.id === 3 ? (
+                        <>
+                          Dựa theo nhân vật lịch sử thời nhà Trần. Khi quân Nguyên – Mông xâm lược, Trần Bình Trọng bị bắt. Quân giặc dụ dỗ ông làm vua bù nhìn để phản bội Tổ quốc. Ông kiên quyết từ chối và nói câu nổi tiếng:{' '}
+                          <span className="tp-glow-quote">"Ta thà làm quỷ nước Nam, còn hơn làm vương đất Bắc."</span>
+                          {' '}Cuối cùng, ông hi sinh anh dũng.
+                        </>
+                      ) : (
+                        selectedPerformance.content
+                      )}
+                    </p>
+                  </section>
+                  <section className="tp-detail-section">
+                    <h3 className="tp-section-heading">
+                      <span className="material-symbols-outlined tp-accent">auto_awesome</span>
+                      Ý nghĩa
+                    </h3>
+                    <p className="tp-section-text">{selectedPerformance.meaning}</p>
+                  </section>
+                </div>
+                <section className="tp-scenes-section">
+                  <h3 className="tp-section-heading">Các cảnh chính</h3>
+                  <div className="tp-scenes-list">
+                    {selectedPerformance.scenes.map((scene, idx) => (
+                      <div key={idx} className="tp-scene-item">
+                        <span className="tp-scene-time">{scene.time}</span>
+                        <p className="tp-scene-desc">{scene.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+                <div className="tp-cta-row">
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="interactive-btn"
+                    type="button"
+                    className="tp-btn-gold"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setShowInteractiveScene(true)}
                   >
-                    🎯 Khám Phá Cảnh Tương Tác
+                    <span className="material-symbols-outlined">flare</span>
+                    Khám Phá Cảnh Tương Tác
                   </motion.button>
                   <motion.a
-                    href="#"
-                    className="interactive-btn secondary"
-                    whileHover={{ scale: 1.03 }}
+                    href="https://www.nhahatdal.vn/dat-ve"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="tp-btn-red"
+                    whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={(e) => e.preventDefault()}
                   >
-                    🎫 Đặt vé xem trực tiếp
+                    <span className="material-symbols-outlined">local_activity</span>
+                    Đặt vé xem trực tiếp
                   </motion.a>
                 </div>
               </div>
-            </motion.div>
-          )}
+            )}
+          </div>
+        </main>
+      )}
+
+      {activeTab === 'schedule' && (
+        <div className="tp-other-tab">
+          <Schedule />
         </div>
-        )}
-
-        {activeTab === 'schedule' && (
-          <div className="performance-schedule">
-            <Schedule />
-          </div>
-        )}
-
-        {activeTab === 'livestream' && (
-          <div className="performance-livestream">
-            <LiveStream />
-          </div>
-        )}
-
-        {activeTab === 'events' && (
-          <div className="performance-events">
-            <Events />
-          </div>
-        )}
-
-        {activeTab === 'about' && (
-        <div className="performance-info-section performance-info-section-standalone">
-          <h3>Về Nghệ Thuật Tuồng</h3>
-          <div className="info-grid">
-            <div className="info-card">
-              <span className="info-icon">📚</span>
+      )}
+      {activeTab === 'livestream' && (
+        <div className="tp-other-tab">
+          <LiveStream />
+        </div>
+      )}
+      {activeTab === 'events' && (
+        <div className="tp-other-tab">
+          <Events />
+        </div>
+      )}
+      {activeTab === 'about' && (
+        <div className="tp-other-tab tp-about">
+          <h3 className="tp-sidebar-title">Về Nghệ Thuật Tuồng</h3>
+          <div className="tp-info-grid">
+            <div className="tp-info-card">
+              <span className="tp-info-icon">📚</span>
               <h4>Lịch Sử</h4>
               <p>Tuồng là loại hình nghệ thuật sân khấu cổ truyền của Việt Nam, xuất hiện từ thế kỷ 17</p>
             </div>
-          )}
+          </div>
         </div>
-      </main>
+      )}
+
+      <div className="tp-footer-line" aria-hidden="true" />
     </div>
   )
 }

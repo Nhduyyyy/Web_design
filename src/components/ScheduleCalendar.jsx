@@ -1,4 +1,5 @@
 import { groupByDate } from '../utils/dateUtils'
+import { deriveEventStatus } from '../utils/scheduleValidator'
 import './Schedule.css'
 
 export default function ScheduleCalendar({ events = [], onSelect = () => {} }) {

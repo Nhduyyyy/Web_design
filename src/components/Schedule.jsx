@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import ScheduleFilters from './ScheduleFilters'
-import ScheduleList from './ScheduleList'
 import ScheduleCalendar from './ScheduleCalendar'
 import BookingModal from './Booking/BookingModal'
-import { events as EVENTS, getCities, getValidatedEvents } from '../data/scheduleData'
-import { parseISO } from '../utils/dateUtils'
+import { getCities, getValidatedEvents } from '../data/scheduleData'
+import { parseISO, formatTimeHHMMSS, formatDateShort, formatDateSidebar } from '../utils/dateUtils'
 import { isEventVisible, deriveEventStatus } from '../utils/scheduleValidator'
 import './Schedule.css'
 
+const PER_PAGE = 3
+
 export default function Schedule() {
-  // initialize filters from URL
   const qp = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
   const initial = {
     city: qp.get('city') || '',
@@ -23,9 +22,9 @@ export default function Schedule() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [bookingEvent, setBookingEvent] = useState(null)
   const [isBookingOpen, setIsBookingOpen] = useState(false)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
-    // sync filters -> url (debounce not necessary for MVP)
     const sp = new URLSearchParams()
     if (filters.city) sp.set('city', filters.city)
     if (filters.from) sp.set('from', filters.from)
@@ -37,36 +36,42 @@ export default function Schedule() {
     window.history.replaceState({}, '', url)
   }, [filters])
 
-  // get validated events (and report invalid entries)
   const { events: VALID_EVENTS, invalid: INVALID_EVENTS } = useMemo(() => getValidatedEvents(), [])
   const cities = useMemo(() => getCities(VALID_EVENTS), [VALID_EVENTS])
 
   const filtered = useMemo(() => {
-    // Normalize filters -> Date objects (local timezone)
     let fromDate = null
     let toDate = null
-    if (filters.from) {
-      const d = parseISO(filters.from + 'T00:00:00')
-      fromDate = d
-    }
-    if (filters.to) {
-      const d = parseISO(filters.to + 'T23:59:59')
-      toDate = d
-    }
-
-    // If user provided invalid range, treat as no-range (ScheduleFilters prevents this in UI)
+    if (filters.from) fromDate = parseISO(filters.from + 'T00:00:00')
+    if (filters.to) toDate = parseISO(filters.to + 'T23:59:59')
     if (fromDate && toDate && fromDate > toDate) {
       fromDate = null
       toDate = null
     }
-
-    // Use helper logic for visibility
-    return VALID_EVENTS.filter(ev => {
-      return isEventVisible(ev, { city: filters.city, fromDate, toDate, q: filters.q })
-    }).sort((a, b) => new Date(a.startDatetime) - new Date(b.startDatetime))
+    return VALID_EVENTS.filter(ev =>
+      isEventVisible(ev, { city: filters.city, fromDate, toDate, q: filters.q })
+    ).sort((a, b) => new Date(a.startDatetime) - new Date(b.startDatetime))
   }, [filters, VALID_EVENTS])
 
-  // JSON-LD for the first few events (SEO-friendly when server renders / prerender)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
+  const paginatedEvents = useMemo(() => {
+    const start = (page - 1) * PER_PAGE
+    return filtered.slice(start, start + PER_PAGE)
+  }, [filtered, page])
+
+  useEffect(() => {
+    setPage(1)
+  }, [filters.city, filters.from, filters.to, filters.q])
+
+  const applyFilter = (changes) => {
+    setFilters(prev => ({ ...prev, ...changes }))
+  }
+
+  const clearFilters = () => {
+    setFilters({ city: '', from: '', to: '', q: '', view: filters.view || 'list' })
+    setPage(1)
+  }
+
   const jsonLd = useMemo(() => {
     const ld = filtered.slice(0, 5).map(ev => ({
       '@type': 'Event',
@@ -83,65 +88,276 @@ export default function Schedule() {
   }, [filtered])
 
   return (
-    <section className="schedule-page container">
-      <header className="schedule-hero">
-        <div>
-          <h2>Lịch diễn</h2>
-          <p className="lead">Danh sách vở, ngày‑giờ và địa điểm — lọc theo thành phố hoặc theo thời gian.</p>
-        </div>
+    <main className="schedule-page">
+      <header className="schedule-header">
+        <h1 className="schedule-title">Lịch diễn</h1>
+        <p className="schedule-lead">
+          Danh sách vở, ngày-giờ và địa điểm — lọc theo thành phố hoặc theo thời gian để tìm trải nghiệm nghệ thuật phù hợp nhất.
+        </p>
       </header>
 
-      {INVALID_EVENTS && INVALID_EVENTS.length > 0 && (
-        <div className="validation-banner" role="status" aria-live="polite">
-          <strong>Cảnh báo dữ liệu:</strong> {INVALID_EVENTS.length} sự kiện bị bỏ qua do lỗi định dạng. Kiểm tra console để biết chi tiết.
+      {INVALID_EVENTS?.length > 0 && (
+        <div className="schedule-validation" role="status" aria-live="polite">
+          <strong>Cảnh báo dữ liệu:</strong> {INVALID_EVENTS.length} sự kiện bị bỏ qua do lỗi định dạng.
         </div>
       )}
 
-      <ScheduleFilters cities={cities} filters={filters} onChange={setFilters} />
-
-      <main className="schedule-main">
-        {filters.view === 'list' ? (
-          <ScheduleList 
-            events={filtered} 
-            onSelect={setSelectedEvent}
-            onBook={(event) => {
-              setBookingEvent(event)
-              setIsBookingOpen(true)
-            }}
-          />
-        ) : (
-          <ScheduleCalendar events={filtered} onSelect={setSelectedEvent} />
-        )}
-
-        <aside className="schedule-side">
-          <div className="upcoming">
-            <h4>Sắp tới</h4>
-            {filtered.slice(0,3).map(ev => (
-              <div key={ev.id} className="up-item" onClick={() => setSelectedEvent(ev)}>
-                <div className="u-time">{new Date(ev.startDatetime).toLocaleString()}</div>
-                <div className="u-title">{ev.title}</div>
-              </div>
+      <div className="schedule-filters-bar glass">
+        <div className="schedule-field">
+          <label className="schedule-label">Thành phố</label>
+          <select
+            className="schedule-input"
+            value={filters.city || ''}
+            onChange={e => applyFilter({ city: e.target.value })}
+          >
+            <option value="">Tất cả các thành phố</option>
+            {cities.map(c => (
+              <option key={c} value={c}>{c}</option>
             ))}
-            {!filtered.length && <div className="muted">Không có sự kiện</div>}
+          </select>
+        </div>
+        <div className="schedule-field schedule-field-range">
+          <div className="schedule-field-half">
+            <label className="schedule-label">Từ ngày</label>
+            <input
+              type="date"
+              className="schedule-input"
+              value={filters.from || ''}
+              onChange={e => applyFilter({ from: e.target.value })}
+            />
+          </div>
+          <div className="schedule-field-half">
+            <label className="schedule-label">Đến ngày</label>
+            <input
+              type="date"
+              className="schedule-input"
+              value={filters.to || ''}
+              onChange={e => applyFilter({ to: e.target.value })}
+            />
+          </div>
+        </div>
+        <div className="schedule-field">
+          <label className="schedule-label">Tìm kiếm</label>
+          <input
+            type="text"
+            className="schedule-input"
+            placeholder="Tên vở, địa điểm..."
+            value={filters.q || ''}
+            onChange={e => applyFilter({ q: e.target.value })}
+          />
+        </div>
+        <div className="schedule-filters-actions">
+          <button
+            type="button"
+            className={`schedule-btn schedule-btn-primary ${filters.view === 'list' ? 'active' : ''}`}
+            onClick={() => applyFilter({ view: 'list' })}
+          >
+            Danh sách
+          </button>
+          <button
+            type="button"
+            className={`schedule-btn schedule-btn-outline ${filters.view === 'calendar' ? 'active' : ''}`}
+            onClick={() => applyFilter({ view: 'calendar' })}
+          >
+            Lịch
+          </button>
+          <button
+            type="button"
+            className="schedule-btn-icon"
+            onClick={clearFilters}
+            title="Xóa bộ lọc"
+            aria-label="Xóa bộ lọc"
+          >
+            <span className="material-symbols-outlined">refresh</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="schedule-grid">
+        <div className="schedule-main-col">
+          {filters.view === 'calendar' ? (
+            <div className="schedule-calendar-wrap">
+              <ScheduleCalendar events={filtered} onSelect={setSelectedEvent} />
+            </div>
+          ) : (
+            <>
+              {paginatedEvents.length === 0 ? (
+                <div className="schedule-empty">Không có lịch trong khoảng đã chọn.</div>
+              ) : (
+                <div className="schedule-list">
+                  {paginatedEvents.map(ev => (
+                    <article
+                      key={ev.id}
+                      className={`schedule-card glass gold-border ${ev.status === 'canceled' ? 'canceled' : ''}`}
+                    >
+                      <div className="schedule-card-left">
+                        <div className="schedule-card-time">{formatTimeHHMMSS(ev.startDatetime)}</div>
+                        <div className="schedule-card-date">{formatDateShort(ev.startDatetime)}</div>
+                        <div className="schedule-card-venue">
+                          <span className="material-symbols-outlined">location_on</span>
+                          {ev.venue?.name} — {ev.venue?.city}
+                        </div>
+                      </div>
+                      <div className="schedule-card-right">
+                        <div className="schedule-card-head">
+                          <h3 className="schedule-card-title">{ev.title}</h3>
+                          {ev.status !== 'canceled' && (
+                            <span className="schedule-card-tag">Upcoming</span>
+                          )}
+                          {ev.status === 'canceled' && (
+                            <span className="schedule-card-tag canceled">Hủy</span>
+                          )}
+                        </div>
+                        <p className="schedule-card-desc">{ev.description}</p>
+                        <div className="schedule-card-actions">
+                          {ev.status !== 'canceled' && (
+                            <button
+                              type="button"
+                              className="schedule-btn schedule-btn-primary schedule-btn-glow"
+                              onClick={() => {
+                                setBookingEvent(ev)
+                                setIsBookingOpen(true)
+                              }}
+                            >
+                              <span className="material-symbols-outlined">confirmation_number</span>
+                              Mua vé
+                            </button>
+                          )}
+                          {ev.ticketUrl ? (
+                            <a
+                              href={ev.ticketUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="schedule-btn schedule-btn-outline"
+                            >
+                              Link ngoài
+                            </a>
+                          ) : (
+                            ev.status !== 'canceled' && (
+                              <button
+                                type="button"
+                                className="schedule-btn schedule-btn-outline"
+                                onClick={() => setSelectedEvent(ev)}
+                              >
+                                Chi tiết
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <aside className="schedule-sidebar">
+          <div className="schedule-widget glass">
+            <div className="schedule-widget-header schedule-widget-header-red">
+              <h2 className="schedule-widget-title">
+                <span className="material-symbols-outlined">event</span>
+                Sắp tới
+              </h2>
+            </div>
+            <div className="schedule-widget-body">
+              {filtered.slice(0, 3).map((ev, idx) => (
+                <div
+                  key={ev.id}
+                  className={`schedule-upcoming-item ${idx === 0 ? 'first' : ''}`}
+                  onClick={() => setSelectedEvent(ev)}
+                  onKeyDown={e => e.key === 'Enter' && setSelectedEvent(ev)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className="schedule-upcoming-meta">
+                    <span className={idx === 0 ? 'schedule-upcoming-date primary' : 'schedule-upcoming-date'}>
+                      {formatDateSidebar(ev.startDatetime)}
+                    </span>
+                    <span className="schedule-upcoming-time">{formatTimeHHMMSS(ev.startDatetime)}</span>
+                  </div>
+                  <h4 className="schedule-upcoming-title">{ev.title.replace(/^Tuồng:\s*/i, '')}</h4>
+                  <p className="schedule-upcoming-venue">{ev.venue?.name}</p>
+                </div>
+              ))}
+              {filtered.length === 0 && (
+                <div className="schedule-upcoming-empty">Không có sự kiện</div>
+              )}
+            </div>
+            <div className="schedule-widget-tip">
+              <h5 className="schedule-tip-title">
+                <span className="material-symbols-outlined">lightbulb</span>
+                Mẹo nhỏ
+              </h5>
+              <p className="schedule-tip-text">
+                Chọn một ngày hoặc thành phố để thu hẹp kết quả. Dùng nút &quot;Lịch&quot; để xem dạng agenda trực quan hơn cho tuần này.
+              </p>
+            </div>
           </div>
 
-          <div className="tips">
-            <h4>Tip</h4>
-            <p>Chọn một ngày hoặc thành phố để thu hẹp kết quả. Dùng nút "Lịch" để xem dạng agenda.</p>
+          <div className="schedule-widget glass gold-border schedule-widget-history">
+            <span className="material-symbols-outlined schedule-history-icon">history_edu</span>
+            <h3 className="schedule-history-title">Lịch Sử Nghệ Thuật</h3>
+            <p className="schedule-history-text">
+              Tuồng là loại hình nghệ thuật sân khấu cổ truyền của Việt Nam, xuất hiện từ thế kỷ 17 và đạt đến đỉnh cao vào triều Nguyễn.
+            </p>
+            <a href="#about" className="schedule-history-link">
+              Khám phá thêm
+              <span className="material-symbols-outlined">arrow_forward</span>
+            </a>
           </div>
         </aside>
-      </main>
+      </div>
+
+      {filters.view === 'list' && filtered.length > 0 && (
+        <div className="schedule-pagination">
+          <button
+            type="button"
+            className="schedule-pagination-btn"
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            aria-label="Trang trước"
+          >
+            <span className="material-symbols-outlined">chevron_left</span>
+          </button>
+          <span className="schedule-pagination-text">
+            <span className="current">{String(page).padStart(2, '0')}</span>
+            {' / '}
+            <span>{String(totalPages).padStart(2, '0')}</span>
+          </span>
+          <button
+            type="button"
+            className="schedule-pagination-btn"
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            aria-label="Trang sau"
+          >
+            <span className="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      )}
 
       {selectedEvent && (
-        <div className="event-detail" role="dialog" aria-modal="true">
-          <div className="detail-card">
-            <button className="close" onClick={() => setSelectedEvent(null)}>✕</button>
-            <h3>{selectedEvent.title}</h3>
-            <div className="meta">{new Date(selectedEvent.startDatetime).toLocaleString()} — {selectedEvent.venue?.name}, {selectedEvent.venue?.city}</div>
-            <p>{selectedEvent.description}</p>
+        <div className="schedule-detail-overlay" role="dialog" aria-modal="true">
+          <div className="schedule-detail-card glass gold-border">
+            <button
+              type="button"
+              className="schedule-detail-close"
+              onClick={() => setSelectedEvent(null)}
+              aria-label="Đóng"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <h3 className="schedule-detail-title">{selectedEvent.title}</h3>
+            <div className="schedule-detail-meta">
+              {new Date(selectedEvent.startDatetime).toLocaleString()} — {selectedEvent.venue?.name}, {selectedEvent.venue?.city}
+            </div>
+            <p className="schedule-detail-desc">{selectedEvent.description}</p>
             {selectedEvent.status !== 'canceled' && (
-              <button 
-                className="btn" 
+              <button
+                type="button"
+                className="schedule-btn schedule-btn-primary"
                 onClick={() => {
                   setBookingEvent(selectedEvent)
                   setIsBookingOpen(true)
@@ -152,11 +368,16 @@ export default function Schedule() {
               </button>
             )}
             {selectedEvent.ticketUrl && (
-              <a className="btn ghost" href={selectedEvent.ticketUrl} target="_blank" rel="noreferrer">
-                Mua vé (Link ngoài)
+              <a className="schedule-btn schedule-btn-outline" href={selectedEvent.ticketUrl} target="_blank" rel="noreferrer">
+                Link ngoài
               </a>
             )}
-            <div className="status-row"><strong>Trạng thái:</strong> <span className={`status ${selectedEvent.status}`}>{selectedEvent.status}</span></div>
+            <div className="schedule-detail-status">
+              <strong>Trạng thái:</strong>{' '}
+              <span className={`schedule-status-badge ${selectedEvent.status} ${deriveEventStatus(selectedEvent)}`}>
+                {selectedEvent.status === 'canceled' ? 'Hủy' : deriveEventStatus(selectedEvent)}
+              </span>
+            </div>
           </div>
         </div>
       )}
@@ -173,6 +394,6 @@ export default function Schedule() {
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
       )}
-    </section>
+    </main>
   )
 }
