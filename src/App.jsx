@@ -6,9 +6,15 @@ import MaskGallery from './components/MaskGallery'
 import CharacterShowcase from './components/CharacterShowcase'
 import CameraExperience from './components/CameraExperience'
 import TuongPerformance from './components/TuongPerformance'
-import TryRoleExperience from './components/TryRoleExperience'
 import ScrollProgress from './components/ScrollProgress'
+import ItemDetailModal from './components/ItemDetailModal'
 import './styles/App.css'
+
+function getItemType(item) {
+  if (!item) return 'mask'
+  if (item.costume != null) return 'character'
+  return 'mask'
+}
 
 function App() {
   const [selectedItem, setSelectedItem] = useState(null)
@@ -47,11 +53,15 @@ function App() {
       )}
 
       {activeSection === 'watch' && (
-        <TuongPerformance />
+        <TuongPerformance setActiveSection={setActiveSection} />
       )}
 
-      {activeSection === 'tryRole' && (
-        <TryRoleExperience />
+      {selectedItem && (
+        <ItemDetailModal
+          item={selectedItem}
+          type={getItemType(selectedItem)}
+          onClose={() => setSelectedItem(null)}
+        />
       )}
     </div>
   )

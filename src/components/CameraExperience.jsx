@@ -11,12 +11,12 @@ function getMaskImageUrl(imagePath) {
   return window.location.origin + encodeURI(path)
 }
 
-// Ảnh nền từ public/backgrounds (không dấu cách — tránh lỗi load trên Mac)
+// Ảnh nền từ public/backgrounds — nhãn theo mẫu Premium
 const BACKGROUND_IMAGES = [
   { id: 0, path: null, label: 'Không nền' },
-  { id: 1, path: '/backgrounds/580081de0d4e4238f2435f48b510249f.jpg', label: 'Nền 1' },
-  { id: 2, path: '/backgrounds/86d43775d9b7e5099c3a5bb74ddc17bd.jpg', label: 'Nền 2' },
-  { id: 3, path: '/backgrounds/bec029d1937648da5a7c3ac4205a7af3.jpg', label: 'Nền 3' },
+  { id: 1, path: '/backgrounds/580081de0d4e4238f2435f48b510249f.jpg', label: 'Hoàng Cung' },
+  { id: 2, path: '/backgrounds/86d43775d9b7e5099c3a5bb74ddc17bd.jpg', label: 'Sơn Thủy' },
+  { id: 3, path: '/backgrounds/bec029d1937648da5a7c3ac4205a7af3.jpg', label: 'Đình Làng' },
   { id: 4, path: '/backgrounds/d5ae63e2b4e5c731cd19b2564c246b26.jpg', label: 'Nền 4' },
   { id: 5, path: '/backgrounds/d8aa722a4883585459eb023c344be145.jpg', label: 'Nền 5' }
 ]
@@ -121,53 +121,44 @@ function CameraExperience() {
     setShowShareHint(true)
   }
 
-  return (
-    <div className="camera-experience">
-      <div className="experience-container">
-        <motion.header
-          className="experience-header"
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="header-badge">🎭 Trải nghiệm</div>
-          <h1 className="experience-title">Thử Mặt Nạ Tuồng với Camera</h1>
-          <p className="experience-lead">
-            Chọn mặt nạ, bật camera và chụp ảnh với nền sân khấu — mặt nạ sẽ bám theo khuôn mặt bạn.
-          </p>
-        </motion.header>
+  // Tự ẩn toast "Ảnh đã tải về" sau 4 giây
+  useEffect(() => {
+    if (!showShareHint) return
+    const timer = setTimeout(() => setShowShareHint(false), 4000)
+    return () => clearTimeout(timer)
+  }, [showShareHint])
 
-        <div className="experience-main">
-          <motion.section
-            className="stage-section"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-          >
-            <div className="stage-frame">
+  return (
+    <div className={`camera-experience exp-premium ${isCameraActive ? 'exp-footer-visible' : ''}`}>
+      <header className="exp-header">
+        <h1 className="exp-title">Thử Mặt Nạ Tuồng</h1>
+        <p className="exp-lead">
+          Khám phá nghệ thuật truyền thống qua công nghệ AR. Chọn mặt nạ và hòa mình vào không gian sân khấu cổ điển.
+        </p>
+      </header>
+
+      <main className="exp-main">
+        <div className="exp-grid">
+          <div className="exp-left">
+            <div className="camera-frame">
               {!isCameraActive ? (
-                <motion.div
-                  className="stage-placeholder"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <div className="placeholder-ring">
-                    <span className="placeholder-icon">📷</span>
+                <div className="camera-placeholder">
+                  <div className="camera-placeholder-icon">
+                    <span className="material-symbols-outlined" aria-hidden>photo_camera</span>
                   </div>
-                  <p className="placeholder-title">Sân khấu của bạn</p>
-                  <p className="placeholder-desc">Bật camera để bắt đầu thử mặt nạ Tuồng</p>
-                  <motion.button
+                  <h3 className="camera-placeholder-title">Sân khấu của bạn</h3>
+                  <p className="camera-placeholder-desc">Bật camera để bắt đầu trải nghiệm mặt nạ Tuồng</p>
+                  <button
                     type="button"
-                    className="placeholder-cta"
+                    className="gold-gradient-btn exp-btn-camera"
                     onClick={() => setIsCameraActive(true)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                   >
+                    <span className="material-symbols-outlined" aria-hidden>videocam</span>
                     Bật Camera
-                  </motion.button>
-                </motion.div>
+                  </button>
+                </div>
               ) : (
-                <div className="stage-viewport">
+                <div className="camera-viewport">
                   {useAR && selectedMask ? (
                     <FaceMaskAR
                       selectedMask={selectedMask}
@@ -195,62 +186,43 @@ function CameraExperience() {
                   )}
                 </div>
               )}
+              {isCameraActive && (
+                <div className="camera-live-badge">
+                  <span className="camera-live-dot" />
+                  <span>Live Preview</span>
+                </div>
+              )}
             </div>
 
-            {isCameraActive && (
-              <div className="stage-controls">
-                <motion.button
-                  type="button"
-                  className="stage-btn stage-btn-toggle active"
-                  onClick={() => setIsCameraActive(false)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <span className="stage-btn-icon">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M6 6h12v12H6z"/></svg>
-                  </span>
-                  <span>Tắt camera</span>
-                </motion.button>
-                {selectedMask && (
-                  <motion.button
-                    type="button"
-                    className="stage-btn stage-btn-capture"
-                    onClick={capturePhoto}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <span className="stage-btn-icon">
-                      <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" fill="none"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
-                    </span>
-                    <span>Chụp ảnh</span>
-                  </motion.button>
-                )}
+            <div className="glass-panel exp-guide">
+              <div className="exp-guide-heading">
+                <span className="material-symbols-outlined exp-guide-icon" aria-hidden>info</span>
+                <h4 className="exp-guide-title">Hướng dẫn nhanh</h4>
               </div>
-            )}
-          </motion.section>
+              <ul className="exp-guide-list">
+                <li><span className="exp-guide-num">1.</span> Chọn mặt nạ phù hợp với nhân vật bạn muốn hóa thân.</li>
+                <li><span className="exp-guide-num">2.</span> Chọn phông nền sân khấu truyền thống.</li>
+                <li><span className="exp-guide-num">3.</span> Chụp ảnh và chia sẻ khoảnh khắc nghệ thuật của bạn.</li>
+              </ul>
+            </div>
+          </div>
 
-          <motion.aside
-            className="panel-section"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
-          >
-            <div className="panel-card panel-masks">
-              <h2 className="panel-title">
-                <span className="panel-title-icon">🎭</span>
-                Chọn mặt nạ
-              </h2>
-              <div className="mask-grid">
+          <aside className="exp-sidebar">
+            <section className="glass-panel exp-panel exp-panel-masks">
+              <div className="exp-panel-head">
+                <div className="exp-panel-head-inner">
+                  <span className="material-symbols-outlined exp-panel-icon" aria-hidden>theater_comedy</span>
+                  <h3 className="exp-panel-title">Chọn mặt nạ</h3>
+                </div>
+                <span className="exp-panel-count">{maskData.length} Mẫu có sẵn</span>
+              </div>
+              <div className="mask-grid custom-scrollbar">
                 {maskData.map((mask) => (
-                  <motion.button
+                  <button
                     key={mask.id}
                     type="button"
                     className={`mask-card ${selectedMask?.id === mask.id ? 'selected' : ''}`}
                     onClick={() => handleMaskSelect(mask)}
-                    whileHover={{ y: -4 }}
-                    whileTap={{ scale: 0.97 }}
                   >
                     <div className="mask-card-preview">
                       {mask.imagePath ? (
@@ -260,90 +232,134 @@ function CameraExperience() {
                       )}
                     </div>
                     <span className="mask-card-name">{mask.name}</span>
-                  </motion.button>
+                  </button>
                 ))}
               </div>
-            </div>
+            </section>
 
-            <div className="panel-card panel-backgrounds">
-              <h2 className="panel-title">
-                <span className="panel-title-icon">🖼️</span>
-                Nền ảnh
-              </h2>
-              <p className="panel-hint">Nền sẽ hiển thị khi bật camera và dùng khi chụp ảnh.</p>
+            <section className="glass-panel exp-panel exp-panel-backgrounds">
+              <div className="exp-panel-head">
+                <span className="material-symbols-outlined exp-panel-icon" aria-hidden>landscape</span>
+                <h3 className="exp-panel-title">Nền sân khấu</h3>
+              </div>
               <div className="background-grid">
                 {BACKGROUND_IMAGES.map((bg) => (
-                  <motion.button
+                  <button
                     key={bg.id}
                     type="button"
                     className={`bg-thumb ${selectedBackground?.id === bg.id ? 'selected' : ''} ${!bg.path ? 'no-bg' : ''}`}
                     onClick={() => setSelectedBackground(bg)}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
                   >
                     {bg.path ? (
-                      <img src={bg.path} alt={bg.label} loading="lazy" />
+                      <>
+                        <img src={bg.path} alt={bg.label} loading="lazy" />
+                        {selectedBackground?.id === bg.id && <div className="bg-thumb-overlay" />}
+                      </>
                     ) : (
-                      <span className="bg-thumb-empty">✕</span>
+                      <span className="bg-thumb-empty material-symbols-outlined" aria-hidden>block</span>
                     )}
-                    <span className="bg-thumb-label">{bg.label}</span>
-                  </motion.button>
+                    <span className={`bg-thumb-label ${selectedBackground?.id === bg.id ? 'selected' : ''}`}>{bg.label}</span>
+                  </button>
                 ))}
               </div>
-            </div>
+            </section>
 
-            <div className="panel-card panel-ar-toggle">
-              <label className="ar-toggle">
-                <input
-                  type="checkbox"
-                  checked={useAR}
-                  onChange={(e) => {
-                    setUseAR(e.target.checked)
-                    if (e.target.checked && selectedMask) setShowMaskOverlay(true)
-                  }}
-                />
-                <span className="ar-toggle-slider" />
-                <span className="ar-toggle-label">Face AR — mặt nạ bám theo khuôn mặt</span>
-              </label>
+            <div className="glass-panel exp-panel exp-panel-settings">
+              <div className="exp-settings-row">
+                <div className="exp-settings-label-wrap">
+                  <span className="material-symbols-outlined exp-settings-icon" aria-hidden>face</span>
+                  <div>
+                    <p className="exp-settings-label">Face AR Tracking</p>
+                    <p className="exp-settings-desc">Tự động bám theo khuôn mặt</p>
+                  </div>
+                </div>
+                <label className="exp-toggle">
+                  <input
+                    type="checkbox"
+                    checked={useAR}
+                    onChange={(e) => {
+                      setUseAR(e.target.checked)
+                      if (e.target.checked && selectedMask) setShowMaskOverlay(true)
+                    }}
+                  />
+                  <span className="exp-toggle-slider" />
+                </label>
+              </div>
+              <button type="button" className="exp-btn-settings">
+                <span className="material-symbols-outlined" aria-hidden>settings</span>
+                Cấu hình camera
+              </button>
             </div>
-
-            {selectedMask && (
-              <motion.div
-                className="panel-card panel-selected-info"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-              >
-                <p className="selected-label">Đang dùng</p>
-                <p className="selected-name">{selectedMask.name}</p>
-                <p className="selected-desc">{selectedMask.description}</p>
-              </motion.div>
-            )}
-          </motion.aside>
+          </aside>
         </div>
+      </main>
 
-        <motion.details className="experience-instructions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-          <summary>Hướng dẫn nhanh</summary>
-          <ol>
-            <li>Nhấn <strong>Bật camera</strong> và cho phép trình duyệt dùng camera.</li>
-            <li>Chọn một mặt nạ và (tuỳ chọn) chọn nền ảnh.</li>
-            <li>Bật <strong>Face AR</strong> để mặt nạ bám theo khuôn mặt.</li>
-            <li>Nhấn <strong>Chụp ảnh</strong> để tải ảnh về máy.</li>
-          </ol>
-          <p className="instructions-tip">💡 Ánh sáng đủ và nhìn thẳng camera giúp nhận diện mặt tốt hơn.</p>
-        </motion.details>
+      <AnimatePresence>
+        {isCameraActive && (
+          <motion.footer
+            className="exp-footer glass-panel"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="exp-footer-inner">
+              <div className="exp-footer-users">
+                <div className="exp-footer-avatars">
+                  <span className="exp-avatar" />
+                  <span className="exp-avatar" />
+                  <span className="exp-avatar" />
+                </div>
+                <p className="exp-footer-text">Hơn <strong>1,240</strong> người đang cùng trải nghiệm</p>
+              </div>
+              <div className="exp-footer-actions">
+                <button
+                  type="button"
+                  className="exp-btn-outline"
+                  onClick={() => setIsCameraActive(false)}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  className="gold-gradient-btn exp-btn-capture"
+                  onClick={capturePhoto}
+                >
+                  <span className="material-symbols-outlined" aria-hidden>photo_camera</span>
+                  Chụp & Lưu Ảnh
+                </button>
+              </div>
+              <div className="exp-footer-share">
+                <button type="button" className="exp-share-btn" aria-label="Chia sẻ Facebook" />
+                <button type="button" className="exp-share-btn" aria-label="Chia sẻ Twitter" />
+              </div>
+            </div>
+          </motion.footer>
+        )}
+      </AnimatePresence>
 
+      <AnimatePresence>
         {showShareHint && (
           <motion.div
             className="share-toast"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.25 }}
           >
             <span className="share-toast-icon">✓</span>
             <p>Ảnh đã tải về. Chia sẻ với <strong>#TuongVietNam</strong> nhé!</p>
+            <button
+              type="button"
+              className="share-toast-close"
+              onClick={() => setShowShareHint(false)}
+              aria-label="Đóng"
+            >
+              ×
+            </button>
           </motion.div>
         )}
-      </div>
+      </AnimatePresence>
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </div>
   )
