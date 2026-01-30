@@ -1,0 +1,101 @@
+/* Import Google Font - Great Vibes */
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Allura&family=Alex+Brush&family=Dancing+Script:wght@400;700&display=swap');
+
+/* Base style cho chữ nghệ thuật */
+.art-text {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(72px, 12vw, 140px);
+  text-align: center;
+  letter-spacing: 3px;
+  margin: 0;
+  padding: 20px;
+  position: relative;
+  z-index: 15;
+  user-select: none;
+  font-weight: 700;
+}
+
+@keyframes fadeInText {
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* Variant 1: Vàng với glow đơn giản */
+.art-text-gold-glow {
+  color: #ffd36a;
+  text-shadow:
+    0 0 5px rgba(255, 200, 100, 0.6),
+    0 0 15px rgba(255, 180, 80, 0.5),
+    0 0 30px rgba(255, 140, 50, 0.4);
+}
+
+/* Variant 2: Vàng ánh kim gradient - Tối ưu */
+.art-text-gold-gradient {
+  background: linear-gradient(90deg,
+      #f4e4c1,
+      #d4af37,
+      #c9a961,
+      #d4af37,
+      #f4e4c1);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 5s linear infinite;
+  filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.7)) drop-shadow(2px 2px 6px rgba(0, 0, 0, 0.6));
+  will-change: background-position;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* Variant 3: Vàng kim loại với viền */
+.art-text-gold-metallic {
+  color: #ffd700;
+  text-shadow:
+    0 0 10px rgba(255, 215, 0, 0.8),
+    0 0 20px rgba(255, 180, 0, 0.6),
+    0 0 40px rgba(255, 140, 0, 0.4),
+    2px 2px 4px rgba(0, 0, 0, 0.3);
+  -webkit-text-stroke: 1px rgba(255, 200, 100, 0.3);
+}
+
+/* Variant 4: Trắng ánh vàng (elegant) */
+.art-text-white-gold {
+  color: #fff;
+  text-shadow:
+    0 0 10px rgba(255, 215, 0, 0.8),
+    0 0 20px rgba(255, 200, 100, 0.6),
+    0 0 40px rgba(255, 180, 80, 0.4),
+    0 0 60px rgba(255, 160, 60, 0.2);
+}
+
+/* Animation nhấp nháy nhẹ (optional) */
+@keyframes gentle-glow {
+
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.2);
+  }
+}
+
+.art-text-animated {
+  animation: gentle-glow 3s ease-in-out infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .art-text {
+    font-size: clamp(36px, 10vw, 72px);
+    letter-spacing: 1px;
+  }
+}

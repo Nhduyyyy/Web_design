@@ -1,61 +1,131 @@
-import { motion } from 'framer-motion'
+import { useRef, useState, useEffect } from 'react'
+import { gsap } from 'gsap'
 import './Hero.css'
+import ArtisticText from './ArtisticText'
 
-function Hero({ setActiveSection }) {
+function Hero() {
+  const videoRef = useRef(null);
+  const [showImage, setShowImage] = useState(false);
+  const [showBackground, setShowBackground] = useState(false);
+  const spotlightsRef = useRef([]);
+  const coneBeamsRef = useRef([]);
+  const heroRef = useRef(null);
+
+  useEffect(() => {
+    // Giảm số lượng spotlight và tối ưu animation
+    const zones = [
+      { xMin: -300, xMax: 300, yMin: -200, yMax: 200 },
+      { xMin: -250, xMax: 350, yMin: -150, yMax: 250 },
+      { xMin: -350, xMax: 250, yMin: -250, yMax: 150 }
+    ];
+    
+    spotlightsRef.current.forEach((spotlight, index) => {
+      if (!spotlight) return;
+      
+      const zone = zones[index];
+      const delay = index * 0.3;
+      
+      // Animation di chuyển - tối ưu với duration dài hơn
+      const moveAnimation = () => {
+        gsap.to(spotlight, {
+          x: gsap.utils.random(zone.xMin, zone.xMax),
+          y: gsap.utils.random(zone.yMin, zone.yMax),
+          duration: gsap.utils.random(2, 3.5),
+          ease: "power1.inOut",
+          onComplete: moveAnimation
+        });
+      };
+      
+      gsap.delayedCall(delay, moveAnimation);
+      
+      // Chỉ giữ opacity animation, bỏ scale
+      gsap.to(spotlight, {
+        opacity: gsap.utils.random(0.6, 0.9),
+        duration: 1.5,
+        repeat: -1,
+        yoyo: true,
+        ease: "power1.inOut"
+      });
+    });
+
+    // Tối ưu cone beam - chỉ opacity
+    coneBeamsRef.current.forEach((beam) => {
+      if (!beam) return;
+      
+      gsap.to(beam, {
+        opacity: 0.6,
+        duration: 2,
+        repeat: -1,
+        yoyo: true,
+        ease: "power1.inOut"
+      });
+    });
+
+    return () => {
+      gsap.killTweensOf(spotlightsRef.current);
+      gsap.killTweensOf(coneBeamsRef.current);
+    };
+  }, []);
+
+  const handleClick = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+        setTimeout(() => {
+          setShowImage(true);
+          setShowBackground(true);
+        }, 1000);
+      }
+    }
+  };
+
   return (
-    <section className="hero">
-      <div className="hero-content">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="hero-text"
-        >
-          <h1 className="hero-title">
-            Khám Phá Nghệ Thuật <span className="highlight">Tuồng</span> Việt Nam
-          </h1>
-          <p className="hero-subtitle">
-            Trải nghiệm nghệ thuật truyền thống qua công nghệ hiện đại. 
-            Tương tác với mặt nạ, trang phục và nhân vật Tuồng một cách sống động.
-          </p>
-          <div className="hero-buttons">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="btn-primary"
-              onClick={() => {
-                setActiveSection('home')
-                setTimeout(() => document.getElementById('mask-gallery')?.scrollIntoView({ behavior: 'smooth' }), 100)
-              }}
-            >
-              Bắt Đầu Khám Phá
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="btn-secondary"
-              onClick={() => setActiveSection('experience')}
-            >
-              Trải Nghiệm AR
-            </motion.button>
-          </div>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="hero-visual"
-        >
-          <div className="mask-preview">
-            <div className="mask-icon">🎭</div>
-            <div className="floating-elements">
-              <span className="floating-icon">👑</span>
-              <span className="floating-icon">⚔️</span>
-              <span className="floating-icon">🎪</span>
-            </div>
-          </div>
-        </motion.div>
+    <section ref={heroRef} className={`hero ${showImage ? 'show-image' : ''} ${showBackground ? 'show-background' : ''}`} onClick={handleClick}>
+      {/* Cone Beams - Ánh đèn hình nón từ trên xuống - ĐỨNG YÊN Ở GIỮA */}
+      <div className="cone-beams-container">
+        <div
+          ref={el => coneBeamsRef.current[0] = el}
+          className="cone-beam cone-beam-center"
+        />
       </div>
+
+      {/* Spotlights - Giảm từ 5 xuống 3 */}
+      <div className="spotlights-container">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            ref={el => spotlightsRef.current[i] = el}
+            className="spotlight"
+            style={{
+              left: `${20 + i * 30}%`,
+              top: `${30 + (i % 2) * 30}%`
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Artistic Text - Giữa màn hình (z-index: 2.5) */}
+      {showImage && (
+        <div className="hero-text-container">
+          <ArtisticText text="Văn Hóa Nghệ Thuật" variant="gold-gradient" />
+        </div>
+      )}
+
+      {/* Background - Đặt sau ảnh giữa (z-index: 3) */}
+      <div className="hero-background"></div>
+
+      <video
+        ref={videoRef}
+        className="hero-video"
+        muted
+        playsInline
+        preload="metadata"
+        disablePictureInPicture
+        controlsList="nodownload nofullscreen noremoteplayback"
+        poster=""
+      >
+        <source src="/src/img/Untitled video - Made with Clipchamp (2).mp4" type="video/mp4" />
+      </video>
     </section>
   )
 }
