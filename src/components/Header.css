@@ -1,82 +1,99 @@
+/* ===== Header — gọn, dễ nhìn, dễ bấm ===== */
 .header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  background: rgba(18, 14, 24, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: var(--space-md) var(--space-lg);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-lg);
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--accent-gold);
+  gap: var(--space-sm);
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.logo:hover {
+  color: var(--gold-light);
 }
 
 .logo-icon {
-  font-size: 2rem;
+  font-size: 1.75rem;
+  line-height: 1;
 }
 
 .logo h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: inherit;
+  font-weight: inherit;
+  margin: 0;
 }
 
 .nav {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: center;
 }
 
 .nav-btn {
-  padding: 0.75rem 1.5rem;
-  background: transparent;
-  border: 2px solid transparent;
-  color: white;
-  font-size: 1rem;
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.9rem;
   font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .nav-btn:hover {
-  background: rgba(255, 215, 0, 0.1);
-  border-color: var(--accent-gold);
-  transform: translateY(-2px);
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+  border-color: var(--border-subtle);
 }
 
 .nav-btn.active {
-  background: var(--accent-gold);
-  color: var(--dark-bg);
-  border-color: var(--accent-gold);
+  color: var(--bg-dark);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.nav-btn.active:hover {
+  background: var(--gold-light);
+  border-color: var(--gold-light);
 }
 
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
-    gap: 1rem;
+    padding: var(--space-md);
   }
-  
+
   .nav {
-    flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .nav-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.85rem;
   }
 }
-
-

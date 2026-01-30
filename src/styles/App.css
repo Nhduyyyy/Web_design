@@ -1,10 +1,35 @@
+/* ===== App wrapper ===== */
 .app {
   width: 100%;
+  min-height: 100vh;
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(45, 27, 78, 0.4) 0%, transparent 50%),
+              var(--bg-dark);
 }
 
 .section {
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
-  scroll-snap-align: start;
   position: relative;
+}
+
+/* ===== Home layout — phân tách rõ, không rối ===== */
+.home-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.home-section {
+  width: 100%;
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-2xl);
+}
+
+.home-section + .home-section {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.home-section-characters {
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-2xl);
 }

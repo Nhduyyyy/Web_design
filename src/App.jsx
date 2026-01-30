@@ -21,21 +21,24 @@ function App() {
       
       {activeSection === 'home' && (
         <motion.div
+          className="home-layout"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
           <Hero setActiveSection={setActiveSection} />
-          <div id="mask-gallery">
-            <MaskGallery 
-              selectedItem={selectedItem} 
+          <section id="mask-gallery" className="home-section">
+            <MaskGallery
+              selectedItem={selectedItem}
               setSelectedItem={setSelectedItem}
             />
-          </div>
-          <CharacterShowcase 
-            selectedItem={selectedItem} 
-            setSelectedItem={setSelectedItem}
-          />
+          </section>
+          <section className="home-section home-section-characters">
+            <CharacterShowcase
+              selectedItem={selectedItem}
+              setSelectedItem={setSelectedItem}
+            />
+          </section>
         </motion.div>
       )}
 

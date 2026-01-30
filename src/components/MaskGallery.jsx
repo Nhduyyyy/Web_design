@@ -3,6 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { maskData } from '../data/tuongData'
 import './MaskGallery.css'
 
+function getMaskImageUrl(imagePath) {
+  if (!imagePath || imagePath.startsWith('http')) return imagePath
+  const path = imagePath.normalize('NFD')
+  return window.location.origin + encodeURI(path)
+}
+
 function MaskGallery({ selectedItem, setSelectedItem }) {
   const [hoveredMask, setHoveredMask] = useState(null)
 
@@ -10,57 +16,54 @@ function MaskGallery({ selectedItem, setSelectedItem }) {
     <section className="mask-gallery">
       <div className="container">
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="section-title"
+          className="mask-gallery-title"
         >
           Bộ Sưu Tập Mặt Nạ Tuồng
         </motion.h2>
-        <p className="section-subtitle">
-          Click vào mặt nạ để khám phá ý nghĩa và lịch sử
+        <p className="mask-gallery-subtitle">
+          Chọn mặt nạ để xem thông tin — thử đeo mặt nạ tại mục Trải nghiệm
         </p>
-        
         <div className="mask-grid">
           {maskData.map((mask, index) => (
-            <motion.div
+            <motion.button
+              type="button"
               key={mask.id}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: Math.min(index * 0.05, 0.3) }}
               className={`mask-card ${selectedItem?.id === mask.id ? 'selected' : ''}`}
-              onHoverStart={() => setHoveredMask(mask.id)}
-              onHoverEnd={() => setHoveredMask(null)}
+              onMouseEnter={() => setHoveredMask(mask.id)}
+              onMouseLeave={() => setHoveredMask(null)}
               onClick={() => setSelectedItem(mask)}
-              whileHover={{ y: -10, scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -6 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <div 
-                className="mask-icon-large"
-                style={{ 
-                  backgroundColor: mask.color + '20',
-                  borderColor: mask.color
-                }}
-              >
-                <span style={{ fontSize: '4rem' }}>{mask.emoji}</span>
+              <div className="mask-card-preview">
+                {mask.imagePath ? (
+                  <img src={getMaskImageUrl(mask.imagePath)} alt={mask.name} loading="lazy" />
+                ) : (
+                  <span className="mask-card-emoji">{mask.emoji}</span>
+                )}
               </div>
-              <h3 className="mask-name">{mask.name}</h3>
-              <p className="mask-description">{mask.description}</p>
-              
+              <h3 className="mask-card-name">{mask.name}</h3>
+              <p className="mask-card-desc">{mask.description}</p>
               <AnimatePresence>
                 {hoveredMask === mask.id && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mask-hover-info"
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="mask-card-hint"
                   >
-                    <p className="hover-text">Click để tìm hiểu thêm →</p>
-                  </motion.div>
+                    Xem chi tiết
+                  </motion.span>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </motion.button>
           ))}
         </div>
       </div>

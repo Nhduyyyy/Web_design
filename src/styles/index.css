@@ -1,30 +1,121 @@
-* {
+/* ===== Design system — Tuồng Việt Nam ===== */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
 :root {
+  /* Màu chủ đạo — sân khấu Tuồng */
+  --gold: #d4af37;
+  --gold-light: #e8c547;
+  --gold-dark: #b8962e;
+  --bg-dark: #120e18;
+  --bg-card: rgba(255, 255, 255, 0.06);
+  --bg-card-hover: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(212, 175, 55, 0.25);
+  --border-active: rgba(212, 175, 55, 0.6);
+  --text-primary: #f5f0e8;
+  --text-secondary: rgba(245, 240, 232, 0.8);
+  --text-muted: rgba(245, 240, 232, 0.6);
+  /* Legacy (giữ tương thích) */
+  --accent-gold: #d4af37;
+  --dark-bg: #120e18;
   --primary-color: #c41e3a;
   --secondary-color: #d4af37;
-  --dark-bg: #1a1a1a;
-  --light-bg: #f5f5f5;
-  --text-primary: #333;
-  --text-secondary: #666;
-  --accent-gold: #ffd700;
+  --light-bg: #1a1520;
+  --text-primary-legacy: #f5f0e8;
+  --text-secondary-legacy: rgba(245, 240, 232, 0.8);
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  /* Shadow */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.25);
+  --shadow-gold: 0 4px 20px rgba(212, 175, 55, 0.2);
 }
 
 html {
-  scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg-dark);
   color: var(--text-primary);
-  overflow-x: hidden;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 #root {
   width: 100%;
+  min-height: 100vh;
+}
+
+/* Container chung */
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
+}
+
+/* Tiêu đề section chung */
+.section-title {
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: var(--space-sm);
+  letter-spacing: -0.02em;
+}
+
+.section-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 520px;
+  margin: 0 auto var(--space-2xl);
+}
+
+/* Nút chung */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--bg-dark);
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Focus visible */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
