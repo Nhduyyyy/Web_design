@@ -2,89 +2,108 @@ import { useRef, useState, useEffect } from 'react'
 import { gsap } from 'gsap'
 import './Hero.css'
 import ArtisticText from './ArtisticText'
+import logoMoMan from '../img/logo_mo_man.png'
 
-function Hero({ setActiveSection }) {
+function Hero() {
   const videoRef = useRef(null);
   const [showImage, setShowImage] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
+  const [hasClicked, setHasClicked] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
   const spotlightsRef = useRef([]);
   const coneBeamsRef = useRef([]);
   const heroRef = useRef(null);
 
   useEffect(() => {
-    // Giảm số lượng spotlight và tối ưu animation
-    const zones = [
-      { xMin: -300, xMax: 300, yMin: -200, yMax: 200 },
-      { xMin: -250, xMax: 350, yMin: -150, yMax: 250 },
-      { xMin: -350, xMax: 250, yMin: -250, yMax: 150 }
-    ];
-    
-    spotlightsRef.current.forEach((spotlight, index) => {
-      if (!spotlight) return;
+    // Delay 1s trước khi spotlight xuất hiện
+    const spotlightTimer = setTimeout(() => {
+      // Giảm số lượng spotlight và tối ưu animation
+      const zones = [
+        { xMin: -300, xMax: 300, yMin: -200, yMax: 200 },
+        { xMin: -250, xMax: 350, yMin: -150, yMax: 250 },
+        { xMin: -350, xMax: 250, yMin: -250, yMax: 150 }
+      ];
       
-      const zone = zones[index];
-      const delay = index * 0.3;
-      
-      // Animation di chuyển - tối ưu với duration dài hơn
-      const moveAnimation = () => {
+      spotlightsRef.current.forEach((spotlight, index) => {
+        if (!spotlight) return;
+        
+        const zone = zones[index];
+        const delay = index * 0.3;
+        
+        // Fade in spotlight
+        gsap.fromTo(spotlight, 
+          { opacity: 0 },
+          { opacity: 0.7, duration: 0.8, ease: "power2.out" }
+        );
+        
+        // Animation di chuyển - tối ưu với duration dài hơn
+        const moveAnimation = () => {
+          gsap.to(spotlight, {
+            x: gsap.utils.random(zone.xMin, zone.xMax),
+            y: gsap.utils.random(zone.yMin, zone.yMax),
+            duration: gsap.utils.random(2, 3.5),
+            ease: "power1.inOut",
+            onComplete: moveAnimation
+          });
+        };
+        
+        gsap.delayedCall(delay, moveAnimation);
+        
+        // Chỉ giữ opacity animation, bỏ scale
         gsap.to(spotlight, {
-          x: gsap.utils.random(zone.xMin, zone.xMax),
-          y: gsap.utils.random(zone.yMin, zone.yMax),
-          duration: gsap.utils.random(2, 3.5),
-          ease: "power1.inOut",
-          onComplete: moveAnimation
+          opacity: gsap.utils.random(0.6, 0.9),
+          duration: 1.5,
+          repeat: -1,
+          yoyo: true,
+          ease: "power1.inOut"
         });
-      };
-      
-      gsap.delayedCall(delay, moveAnimation);
-      
-      // Chỉ giữ opacity animation, bỏ scale
-      gsap.to(spotlight, {
-        opacity: gsap.utils.random(0.6, 0.9),
-        duration: 1.5,
-        repeat: -1,
-        yoyo: true,
-        ease: "power1.inOut"
       });
-    });
 
-    // Tối ưu cone beam - chỉ opacity
-    coneBeamsRef.current.forEach((beam) => {
-      if (!beam) return;
-      
-      gsap.to(beam, {
-        opacity: 0.6,
-        duration: 2,
-        repeat: -1,
-        yoyo: true,
-        ease: "power1.inOut"
+      // Tối ưu cone beam - chỉ opacity
+      coneBeamsRef.current.forEach((beam) => {
+        if (!beam) return;
+        
+        gsap.to(beam, {
+          opacity: 0.6,
+          duration: 2,
+          repeat: -1,
+          yoyo: true,
+          ease: "power1.inOut"
+        });
       });
-    });
+    }, 1000); // Delay 1 giây
 
     return () => {
+      clearTimeout(spotlightTimer);
       gsap.killTweensOf(spotlightsRef.current);
       gsap.killTweensOf(coneBeamsRef.current);
     };
   }, []);
 
-  const handleClick = () => {
+  const handleKhaiTuong = (e) => {
+    e.stopPropagation(); // Ngăn event bubble lên section
+    setShowIntro(false);
     if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
-        setTimeout(() => {
-          setShowImage(true);
-          setShowBackground(true);
-        }, 1000);
-      }
+      videoRef.current.play();
+      setHasClicked(true);
+      setTimeout(() => {
+        setShowImage(true);
+        setShowBackground(true);
+      }, 1000);
     }
   };
 
   return (
-    <section
-      ref={heroRef}
-      className={`hero ${showImage ? 'show-image' : ''} ${showBackground ? 'show-background' : ''}`}
-      onClick={handleClick}
-    >
+    <section ref={heroRef} className={`hero ${showImage ? 'show-image' : ''} ${showBackground ? 'show-background' : ''}`}>
+      {/* Logo và Button Intro */}
+      {showIntro && (
+        <div className="intro-overlay">
+          <img src={logoMoMan} alt="Logo Tuồng Opera" className="intro-logo" />
+          <button className="khai-tuong-btn" onClick={handleKhaiTuong}>
+            Khai tuồng!
+          </button>
+        </div>
+      )}
       {/* Cone Beams - Ánh đèn hình nón từ trên xuống - ĐỨNG YÊN Ở GIỮA */}
       <div className="cone-beams-container">
         <div
@@ -111,7 +130,17 @@ function Hero({ setActiveSection }) {
       {/* Artistic Text - Giữa màn hình (z-index: 2.5) */}
       {showImage && (
         <div className="hero-text-container">
-          <ArtisticText text="Văn Hóa Nghệ Thuật" variant="gold-gradient" />
+          <div className="hero-text-wrapper">
+            <div className="hero-subtitle">GÌN GIỮ DI SẢN</div>
+            <ArtisticText text="Văn Hóa Nghệ Thuật" variant="gold-gradient" />
+            <p className="hero-description">
+              "Khám phá vẻ đẹp truyền thống của nghệ thuật Tuồng Việt Nam – Nơi tinh hoa hội tụ qua từng giai điệu, mặt nạ và điệu bộ điêu luyện."
+            </p>
+            <div className="hero-buttons">
+              <button className="hero-btn hero-btn-primary">KHÁM PHÁ NGAY</button>
+              <button className="hero-btn hero-btn-secondary">XEM TRAILER</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -130,19 +159,6 @@ function Hero({ setActiveSection }) {
       >
         <source src="/src/img/Untitled video - Made with Clipchamp (2).mp4" type="video/mp4" />
       </video>
-
-      <div className="hero-cta">
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={(e) => {
-            e.stopPropagation()
-            setActiveSection?.('learning')
-          }}
-        >
-          Bắt đầu học về Tuồng
-        </button>
-      </div>
     </section>
   )
 }

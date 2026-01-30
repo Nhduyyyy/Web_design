@@ -1,101 +1,150 @@
-/* Import Google Font - Great Vibes */
+/* Load font local để tránh FOUT (Flash of Unstyled Text) */
+@font-face {
+  font-family: 'Great Vibes';
+  /* Tên font để sử dụng trong CSS */
+  font-style: normal;
+  /* Kiểu chữ thường (không nghiêng) */
+  font-weight: 400;
+  /* Độ đậm chữ (400 = normal) */
+  font-display: block;
+  /* Chặn hiển thị cho đến khi font load xong - tránh nhảy chữ */
+  src: url('/fonts/GreatVibes-Regular.ttf') format('truetype');
+  /* Đường dẫn file font local */
+}
+
+/* Fallback: Import Google Font nếu local không load được */
 @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Allura&family=Alex+Brush&family=Dancing+Script:wght@400;700&display=swap');
 
 /* Base style cho chữ nghệ thuật */
 .art-text {
   font-family: 'Great Vibes', cursive;
+  /* Font chữ viết tay nghệ thuật, fallback sang cursive */
   font-size: clamp(72px, 12vw, 140px);
+  /* Kích thước responsive: min 72px, max 140px, giữa là 12% viewport */
   text-align: center;
+  /* Căn giữa chữ */
   letter-spacing: 3px;
+  /* Khoảng cách giữa các chữ cái */
   margin: 0;
+  /* Bỏ margin mặc định */
   padding: 20px;
+  /* Khoảng đệm xung quanh */
   position: relative;
+  /* Để có thể dùng z-index */
   z-index: 15;
+  /* Đặt lên trên các element khác */
   user-select: none;
-  font-weight: 700;
-}
+  /* Không cho phép người dùng bôi đen chọn text */
+  font-weight: 400;
+  /* Độ đậm chữ normal (Great Vibes chỉ có weight 400) */
+  -webkit-font-smoothing: antialiased;
+  /* Làm mượt font trên webkit browsers (Chrome, Safari) */
+  -moz-osx-font-smoothing: grayscale;
+  /* Làm mượt font trên Firefox macOS */
+  text-rendering: optimizeLegibility;
+  /* Tối ưu hiển thị chữ, cải thiện kerning */
 
-@keyframes fadeInText {
-  to {
-    opacity: 1;
-    filter: blur(0);
-  }
-}
+  /* Tăng độ dày chữ bằng text-stroke */
+  -webkit-text-stroke: 1px rgba(254, 221, 84, 0.4);
 
-/* Variant 1: Vàng với glow đơn giản */
-.art-text-gold-glow {
-  color: #ffd36a;
-  text-shadow:
-    0 0 5px rgba(255, 200, 100, 0.6),
-    0 0 15px rgba(255, 180, 80, 0.5),
-    0 0 30px rgba(255, 140, 50, 0.4);
-}
-
-/* Variant 2: Vàng ánh kim gradient - Tối ưu */
-.art-text-gold-gradient {
-  background: linear-gradient(90deg,
-      #f4e4c1,
-      #d4af37,
-      #c9a961,
-      #d4af37,
-      #f4e4c1);
-  background-size: 200% auto;
+  /* Gradient từ trên xuống dưới: sáng → đậm với chút đỏ cam */
+  background: linear-gradient(180deg,
+      #FCF18F 0%,
+      #FDE97D 20%,
+      #FEE068 40%,
+      #FED955 60%,
+      #FEBB54 80%,
+      #FF9A44 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: shimmer 5s linear infinite;
-  filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.7)) drop-shadow(2px 2px 6px rgba(0, 0, 0, 0.6));
-  will-change: background-position;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+
+  /* Glow với chút cam đỏ */
+  text-shadow:
+    0 0 10px rgba(254, 221, 84, 0.7),
+    0 0 20px rgba(255, 180, 80, 0.5),
+    0 0 40px rgba(255, 140, 60, 0.4),
+    0 0 60px rgba(255, 100, 40, 0.2);
+
+  /* Filter với tone cam */
+  filter: drop-shadow(0 2px 3px rgba(255, 140, 60, 0.4));
 }
 
+/* Halo sáng phía sau - tạo hiệu ứng ánh sáng mờ */
+.art-text::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: #ffae42;
+  filter: blur(20px);
+  opacity: 0.6;
+  transform: scale(1.05);
+}
+
+/* Ánh kim lấp lánh - overlay trên một phần chữ */
+.art-text::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  font-family: 'Great Vibes', cursive;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(110deg,
+      transparent 0%,
+      transparent 30%,
+      rgba(255, 215, 0, 0.3) 40%,
+      rgba(255, 223, 0, 0.8) 47%,
+      rgba(255, 235, 100, 1) 50%,
+      rgba(255, 215, 0, 0.8) 53%,
+      rgba(255, 215, 0, 0.3) 60%,
+      transparent 70%,
+      transparent 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 100%;
+  background-position: -200% 0;
+  animation: shimmer 4s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* Animation ánh kim chạy qua chữ */
 @keyframes shimmer {
-  to {
-    background-position: 200% center;
+  0% {
+    background-position: -200% 0;
   }
-}
 
-/* Variant 3: Vàng kim loại với viền */
-.art-text-gold-metallic {
-  color: #ffd700;
-  text-shadow:
-    0 0 10px rgba(255, 215, 0, 0.8),
-    0 0 20px rgba(255, 180, 0, 0.6),
-    0 0 40px rgba(255, 140, 0, 0.4),
-    2px 2px 4px rgba(0, 0, 0, 0.3);
-  -webkit-text-stroke: 1px rgba(255, 200, 100, 0.3);
-}
+  70% {
+    background-position: 200% 0;
+  }
 
-/* Variant 4: Trắng ánh vàng (elegant) */
-.art-text-white-gold {
-  color: #fff;
-  text-shadow:
-    0 0 10px rgba(255, 215, 0, 0.8),
-    0 0 20px rgba(255, 200, 100, 0.6),
-    0 0 40px rgba(255, 180, 80, 0.4),
-    0 0 60px rgba(255, 160, 60, 0.2);
-}
-
-/* Animation nhấp nháy nhẹ (optional) */
-@keyframes gentle-glow {
-
-  0%,
   100% {
-    filter: brightness(1);
-  }
-
-  50% {
-    filter: brightness(1.2);
+    background-position: 200% 0;
   }
 }
 
-.art-text-animated {
-  animation: gentle-glow 3s ease-in-out infinite;
-}
 
-/* Responsive */
+
+/* Responsive cho màn hình nhỏ */
 @media (max-width: 768px) {
   .art-text {
     font-size: clamp(36px, 10vw, 72px);
+    /* Giảm kích thước: min 36px, max 72px */
     letter-spacing: 1px;
+    /* Giảm khoảng cách chữ */
+  }
+
+  .art-text::before {
+    filter: blur(15px);
+    /* Giảm blur trên mobile để tối ưu performance */
   }
 }

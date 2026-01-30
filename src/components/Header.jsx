@@ -1,7 +1,10 @@
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import './Header.css'
 
 function Header({ activeSection, setActiveSection }) {
+  const navigate = useNavigate()
+
   return (
     <motion.header 
       className="header"
@@ -10,17 +13,11 @@ function Header({ activeSection, setActiveSection }) {
       transition={{ duration: 0.5 }}
     >
       <div className="header-content">
-        <div className="logo">
+        <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">🎭</span>
           <h1>Tuồng Việt Nam</h1>
         </div>
         <nav className="nav">
-          <button 
-            className={`nav-btn ${activeSection === 'home' ? 'active' : ''}`}
-            onClick={() => setActiveSection('home')}
-          >
-            Trang Chủ
-          </button>
           <button 
             className={`nav-btn ${activeSection === 'experience' ? 'active' : ''}`}
             onClick={() => setActiveSection('experience')}

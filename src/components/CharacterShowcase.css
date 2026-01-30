@@ -1,133 +1,208 @@
+/* Page 3: Character Showcase - Theme đen với điểm nhấn đỏ, vàng kim */
 .character-showcase {
-  padding: 0 var(--space-lg);
-  background: var(--bg-card);
-  max-width: 1000px;
-  margin: 0 auto;
+  width: 100%;
+  height: 100vh;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #000000 0%, #0a0000 25%, #1a0000 50%, #0a0000 75%, #000000 100%);
+  position: relative;
+  overflow-y: auto;
 }
 
-.character-showcase .section-subtitle {
-  color: var(--text-secondary);
-  text-align: center;
-  margin-bottom: var(--space-xl);
-  font-size: 0.95rem;
+/* Hiệu ứng ánh sáng vàng kim phía sau */
+.character-showcase::before {
+  content: '';
+  position: absolute;
+  top: 30%;
+  left: 20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(254, 221, 84, 0.1) 0%, transparent 70%);
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.character-showcase::after {
+  content: '';
+  position: absolute;
+  bottom: 20%;
+  right: 20%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(220, 20, 20, 0.12) 0%, transparent 70%);
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .character-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-xl);
-  margin-top: var(--space-lg);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
+  margin-top: 2rem;
+  position: relative;
+  z-index: 1;
 }
 
+/* Card với gradient đen đỏ và viền vàng */
 .character-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  border-radius: var(--radius-xl);
-  padding: var(--space-xl);
+  background: linear-gradient(145deg, rgba(30, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.95) 100%);
+  backdrop-filter: blur(15px);
+  border-radius: 25px;
+  padding: 2.5rem;
   cursor: pointer;
-  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-  border: 1px solid var(--border-subtle);
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border: 2px solid rgba(254, 221, 84, 0.4);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hiệu ứng gradient chạy viền */
+.character-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(45deg, 
+    #FED955 0%, 
+    #FF9A44 25%, 
+    #DC1414 50%, 
+    #FF9A44 75%, 
+    #FED955 100%);
+  border-radius: 25px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+.character-card:hover::before {
+  opacity: 0.6;
+  animation: borderGlow 2s linear infinite;
+}
+
+@keyframes borderGlow {
+  0%, 100% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(20deg);
+  }
 }
 
 .character-card:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-active);
-  box-shadow: var(--shadow-gold);
+  background: linear-gradient(145deg, rgba(50, 5, 0, 0.9) 0%, rgba(10, 0, 0, 0.98) 100%);
+  border-color: #FED955;
+  box-shadow: 
+    0 0 40px rgba(254, 221, 84, 0.5),
+    0 0 80px rgba(220, 20, 20, 0.3),
+    inset 0 0 30px rgba(255, 154, 68, 0.15);
+  transform: translateY(-15px) scale(1.03);
 }
 
-.character-card.selected {
-  border-color: var(--gold);
-  background: rgba(212, 175, 55, 0.08);
-  box-shadow: var(--shadow-gold);
-}
-
+/* Avatar với viền gradient vàng đỏ */
 .character-avatar {
-  width: 140px;
-  height: 140px;
-  background: rgba(212, 175, 55, 0.08);
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(254, 221, 84, 0.15) 0%, rgba(220, 20, 20, 0.1) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--space-lg);
-  border: 2px solid var(--border-subtle);
-  overflow: hidden;
+  margin-bottom: 1.5rem;
+  border: 4px solid;
+  border-image: linear-gradient(135deg, #FED955, #FF9A44, #DC1414) 1;
+  position: relative;
+  transition: all 0.4s ease;
 }
 
-.character-mask-img {
-  width: 85%;
-  height: 85%;
-  object-fit: contain;
-}
-
-.character-emoji {
-  font-size: 4rem;
+.character-card:hover .character-avatar {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 
+    0 0 40px rgba(254, 221, 84, 0.6),
+    inset 0 0 30px rgba(255, 154, 68, 0.3);
 }
 
 .character-info {
   width: 100%;
 }
 
+/* Tên nhân vật với gradient vàng cam */
 .character-name {
-  font-size: 1.35rem;
-  color: var(--gold);
-  margin-bottom: var(--space-xs);
+  font-size: 1.8rem;
+  background: linear-gradient(180deg, #FCF18F 0%, #FED955 50%, #FF9A44 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  text-shadow: 0 0 20px rgba(254, 221, 84, 0.3);
 }
 
+/* Loại nhân vật với màu trắng */
 .character-type {
-  display: inline-block;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  margin-bottom: var(--space-md);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  margin-bottom: 1rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.2rem 0.6rem;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-sm);
+  letter-spacing: 2px;
+  font-weight: 500;
 }
 
+/* Preview trang phục với viền vàng */
 .costume-preview {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
-  margin: var(--space-sm) 0;
-  padding: 0.4rem 0.9rem;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-md);
+  gap: 0.8rem;
+  margin: 1.5rem 0;
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(135deg, rgba(254, 221, 84, 0.1) 0%, rgba(220, 20, 20, 0.1) 100%);
+  border-radius: 15px;
+  border: 1px solid rgba(254, 221, 84, 0.3);
 }
 
 .costume-color {
-  width: 20px;
-  height: 20px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
-  border: 2px solid var(--text-muted);
+  border: 3px solid #FED955;
+  box-shadow: 0 0 15px rgba(254, 221, 84, 0.4);
 }
 
 .costume-text {
-  color: var(--text-secondary);
+  color: #FED955;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
+  text-shadow: 0 0 10px rgba(254, 221, 84, 0.3);
 }
 
+/* Câu chuyện với màu trắng */
 .character-story {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.6;
-  margin-top: var(--space-md);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-top: 1rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
+  .character-showcase {
+    padding: 3rem 1.5rem;
+  }
+
   .character-grid {
     grid-template-columns: 1fr;
-    max-width: 360px;
-    margin-left: auto;
-    margin-right: auto;
+    gap: 2rem;
+  }
+
+  .character-avatar {
+    width: 130px;
+    height: 130px;
+  }
+
+  .character-name {
+    font-size: 1.5rem;
   }
 }

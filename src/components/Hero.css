@@ -7,6 +7,8 @@
   overflow: hidden;
   margin: 0;
   padding: 0;
+  border: none;
+  outline: none;
 }
 
 /* Spotlights Container */
@@ -72,7 +74,7 @@
       rgba(255, 255, 150, 0.3) 50%,
       transparent 100%);
   filter: blur(12px);
-  opacity: 0.75;
+  opacity: 0;
   transform: translate(-50%, -50%);
   will-change: transform, opacity;
 }
@@ -123,7 +125,7 @@
 /* Artistic Text Container - Giữa màn hình */
 .hero-text-container {
   position: absolute;
-  top: 50%;
+  top: 52%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 6;
@@ -132,6 +134,131 @@
   justify-content: center;
   align-items: center;
   pointer-events: none;
+  opacity: 0;
+  animation: fadeInText 1.5s ease-out forwards;
+}
+
+.hero-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Subtitle - GÌN GIỮ DI SẢN */
+.hero-subtitle {
+  color: rgba(254, 221, 84, 0.8);
+  font-size: 1.5rem;
+  letter-spacing: 6px;
+  font-weight: 500;
+  text-transform: uppercase;
+  text-align: center;
+  animation: fadeInSubtitle 1.5s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+/* Description text */
+.hero-description {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  font-style: italic;
+  text-align: center;
+  max-width: 900px;
+  line-height: 1.6;
+  margin: 0 2rem;
+  animation: fadeInDescription 1.5s ease-out 0.6s forwards;
+  opacity: 0;
+}
+
+/* Buttons container */
+.hero-buttons {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  animation: fadeInButtons 1.5s ease-out 0.9s forwards;
+  opacity: 0;
+}
+
+/* Button styles */
+.hero-btn {
+  padding: 1rem 2.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.hero-btn-primary {
+  background: linear-gradient(135deg, #FED955 0%, #FF9A44 100%);
+  color: #000000;
+  box-shadow: 0 4px 15px rgba(254, 221, 84, 0.4);
+}
+
+.hero-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(254, 221, 84, 0.6);
+}
+
+.hero-btn-secondary {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(254, 221, 84, 0.5);
+}
+
+.hero-btn-secondary:hover {
+  background: rgba(254, 221, 84, 0.1);
+  border-color: #FED955;
+  color: #FED955;
+  transform: translateY(-2px);
+}
+
+@keyframes fadeInDescription {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInButtons {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInSubtitle {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animation fade in cho chữ */
+@keyframes fadeInText {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
 }
 
 /* Background - Đặt sau ảnh giữa */
@@ -190,8 +317,100 @@
   display: block;
   z-index: 1;
   object-fit: cover;
-  transform: translateZ(0);
+  transform: translateZ(0) translateX(-2px);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   image-rendering: optimizeSpeed;
+  border: none;
+  outline: none;
+  margin: 0;
+  padding: 0;
+}
+
+
+/* Intro Overlay - Logo và Button */
+.intro-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  background: transparent;
+  z-index: 100;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.intro-logo {
+  max-width: 200px;
+  width: 60%;
+  height: auto;
+  filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
+}
+
+.khai-tuong-btn {
+  padding: 0.875rem 2.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #000000;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border: 2px solid #FFD700;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 0 20px rgba(255, 215, 0, 0.4),
+    0 5px 20px rgba(0, 0, 0, 0.3);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.khai-tuong-btn:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #FFA500 0%, #FFD700 100%);
+  box-shadow: 
+    0 0 30px rgba(255, 215, 0, 0.6),
+    0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.khai-tuong-btn:active {
+  transform: scale(0.98);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .intro-logo {
+    max-width: 150px;
+  }
+
+  .khai-tuong-btn {
+    padding: 0.75rem 2rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .intro-logo {
+    max-width: 120px;
+  }
+
+  .khai-tuong-btn {
+    padding: 0.625rem 1.75rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+  }
 }

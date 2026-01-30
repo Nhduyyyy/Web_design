@@ -1,0 +1,123 @@
+/* Header Landing - dạng viên nhộng floating */
+.header-landing {
+  position: fixed;
+  top: 0.75rem;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Nav pill - viên nhộng */
+.nav-pill-landing {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  border-radius: 50px;
+  border: 1px solid rgba(254, 221, 84, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+}
+
+.nav-btn-landing {
+  padding: 0.75rem 2rem;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.nav-btn-landing:hover {
+  color: #FED955;
+  background: rgba(254, 221, 84, 0.1);
+}
+
+.nav-btn-landing.active {
+  background: linear-gradient(135deg, #FED955 0%, #FF9A44 100%);
+  color: #000000;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(254, 221, 84, 0.4);
+}
+
+/* Nút Trải Nghiệm đặc biệt - tách riêng ở bên phải */
+.nav-btn-experience {
+  position: fixed;
+  top: 0.75rem;
+  right: 2rem;
+  z-index: 1001;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #FED955 0%, #FF9A44 100%);
+  border: none;
+  color: #000000;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  pointer-events: auto;
+  box-shadow: 0 4px 15px rgba(254, 221, 84, 0.4);
+}
+
+.nav-btn-experience:hover {
+  background: linear-gradient(135deg, #FF9A44 0%, #FED955 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(254, 221, 84, 0.6);
+}
+
+@media (max-width: 768px) {
+  .header-landing {
+    top: 1rem;
+  }
+
+  .nav-pill-landing {
+    padding: 0.4rem;
+    gap: 0.3rem;
+  }
+
+  .nav-btn-landing {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+
+  .nav-btn-experience {
+    top: 1rem;
+    right: 1rem;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-landing {
+    top: 0.5rem;
+  }
+
+  .nav-pill-landing {
+    margin: 0 0.5rem;
+  }
+
+  .nav-btn-landing {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .nav-btn-experience {
+    top: 4rem;
+    right: 50%;
+    transform: translateX(50%);
+    padding: 0.5rem 1.2rem;
+    font-size: 0.85rem;
+  }
+}

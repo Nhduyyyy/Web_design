@@ -1,11 +1,19 @@
 import './PageTwo.css'
+import tuongDoImage from '../img/tuong-do.jpg'
 
 function PageTwo() {
   return (
     <section className="page-two">
       <div className="page-two-content">
-        <h2 className="page-two-title">Khám Phá Tuồng</h2>
-        <p className="page-two-subtitle">Nghệ thuật truyền thống Việt Nam</p>
+        <div className="page-two-header">
+          <div className="header-text">
+            <h2 className="page-two-title">Khám Phá Tuồng</h2>
+            <p className="page-two-subtitle">Nghệ thuật truyền thống Việt Nam</p>
+          </div>
+          <div className="header-image">
+            <img src={tuongDoImage} alt="Tuồng Đồ - Nghệ thuật truyền thống" />
+          </div>
+        </div>
         
         <div className="features-grid">
           <div className="feature-card">
