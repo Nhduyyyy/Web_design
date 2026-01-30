@@ -8,6 +8,7 @@ import CameraExperience from './components/CameraExperience'
 import TuongPerformance from './components/TuongPerformance'
 import ScrollProgress from './components/ScrollProgress'
 import ItemDetailModal from './components/ItemDetailModal'
+import LearningPage from './components/LearningPage'
 import './styles/App.css'
 
 function getItemType(item) {
@@ -62,6 +63,14 @@ function App() {
           type={getItemType(selectedItem)}
           onClose={() => setSelectedItem(null)}
         />
+      )}
+
+      {activeSection === 'learning' && (
+        <LearningPage />
+      )}
+
+      {activeSection === 'learning' && (
+        <LearningPage />
       )}
     </div>
   )

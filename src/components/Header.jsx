@@ -33,6 +33,18 @@ function Header({ activeSection, setActiveSection }) {
           >
             Xem Tuồng
           </button>
+          <button 
+            className={`nav-btn ${activeSection === 'tryRole' ? 'active' : ''}`}
+            onClick={() => setActiveSection('tryRole')}
+          >
+            Thử vai
+          </button>
+          <button 
+            className={`nav-btn ${activeSection === 'learning' ? 'active' : ''}`}
+            onClick={() => setActiveSection('learning')}
+          >
+            Học tập
+          </button>
         </nav>
       </div>
     </motion.header>
