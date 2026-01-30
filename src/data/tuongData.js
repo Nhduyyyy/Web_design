@@ -31,7 +31,7 @@ export const glossaryData = [
   { id: 'vo-thuat', term: 'Võ thuật Tuồng', definition: 'Động tác múa võ trên sân khấu, mô phỏng chiến đấu. Tạo tính kịch và thẩm mỹ cho cảnh đánh nhau.', emoji: '🥋' }
 ]
 
-// maskId: mặt nạ dùng khi "Thử vai" — nhân vật hóa thân bằng mặt nạ đó
+// maskId: mặt nạ tương ứng với nhân vật (dùng cho AR / hiển thị)
 export const characterData = [
   {
     id: 1,

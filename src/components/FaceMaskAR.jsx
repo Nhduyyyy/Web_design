@@ -336,14 +336,29 @@ function FaceMaskAR({ selectedMask, isActive, captureCanvasRef, backgroundImageU
     if (!mask || !faceData) return
 
     const { x, y, width, height, landmarks } = faceData
-    
+
+    // Anchor: dùng mũi làm tâm mặt nạ để ôm mặt tự nhiên hơn
+    let anchorX = x
+    let anchorY = y
+    if (landmarks) {
+      const nose = landmarks.getNose()
+      if (nose && nose.length >= 4) {
+        const noseTip = nose[3]
+        anchorX = noseTip.x
+        anchorY = noseTip.y
+      } else {
+        anchorY = y + height * 0.04
+      }
+    } else {
+      anchorY = y + height * 0.04
+    }
+
     ctx.save()
-    ctx.translate(x, y)
-    
-    // Calculate rotation if landmarks are available
+    ctx.translate(anchorX, anchorY)
+
+    // Góc xoay theo hai mắt
     let rotation = 0
     if (landmarks) {
-      // Calculate face angle from eye positions
       const leftEye = landmarks.getLeftEye()
       const rightEye = landmarks.getRightEye()
       if (leftEye.length > 0 && rightEye.length > 0) {
@@ -363,35 +378,45 @@ function FaceMaskAR({ selectedMask, isActive, captureCanvasRef, backgroundImageU
       }
     }
 
-    // Create mask shape - điều chỉnh vừa với khuôn mặt (nhỏ hơn để không to quá)
-    const maskWidth = width * 0.88
-    const maskHeight = height * 0.88
+    // Kích thước mặt nạ: lấy theo hàm (jaw) để ôm mặt, hơi lớn hơn một chút
+    let maskWidth = width * 0.95
+    let maskHeight = height * 0.95
+    if (landmarks) {
+      const jaw = landmarks.getJawOutline()
+      if (jaw && jaw.length >= 15) {
+        const left = jaw[0]
+        const right = jaw[14]
+        const jawWidth = Math.hypot(right.x - left.x, right.y - left.y)
+        maskWidth = Math.max(maskWidth, jawWidth * 1.08)
+        const nose = landmarks.getNose()
+        const jawBottom = jaw[7]
+        if (nose && nose.length > 0 && jawBottom) {
+          const noseY = nose[3] ? nose[3].y : nose[0].y
+          const faceHeight = Math.abs(jawBottom.y - noseY) * 2.2
+          maskHeight = Math.max(maskHeight, Math.min(faceHeight, height * 1.05))
+        }
+      }
+    }
 
     // Nếu có ảnh mặt nạ thật, sử dụng ảnh đó
     if (maskImageRef.current && mask.imagePath) {
-      // Draw mask image - không dùng clipping để hiển thị đầy đủ
       ctx.save()
-      
-      // Draw the mask image với tỷ lệ phù hợp
+
       const img = maskImageRef.current
       const imgAspect = img.width / img.height
       const maskAspect = maskWidth / maskHeight
-      
+
       let drawWidth = maskWidth
       let drawHeight = maskHeight
-      
-      // Scale để fit to container nhưng giữ nguyên tỷ lệ
+
       if (imgAspect > maskAspect) {
-        // Image is wider, fit to height và mở rộng width
         drawHeight = maskHeight
         drawWidth = drawHeight * imgAspect
       } else {
-        // Image is taller, fit to width và mở rộng height
         drawWidth = maskWidth
         drawHeight = drawWidth / imgAspect
       }
-      
-      // Vẽ ảnh đầy đủ không bị cắt
+
       ctx.drawImage(
         img,
         -drawWidth / 2,
@@ -399,20 +424,19 @@ function FaceMaskAR({ selectedMask, isActive, captureCanvasRef, backgroundImageU
         drawWidth,
         drawHeight
       )
-      
+
       ctx.restore()
-      
-      // Add subtle glow effect (nhẹ hơn để không che ảnh)
+
       const outerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(drawWidth, drawHeight) / 2)
       outerGradient.addColorStop(0, mask.color + '20')
       outerGradient.addColorStop(0.8, mask.color + '05')
       outerGradient.addColorStop(1, 'transparent')
-      
+
       ctx.fillStyle = outerGradient
       ctx.beginPath()
       ctx.ellipse(0, 0, Math.max(drawWidth, drawHeight) / 2, Math.max(drawWidth, drawHeight) / 2, 0, 0, Math.PI * 2)
       ctx.fill()
-      
+
       ctx.restore()
       return
     }
