@@ -28,6 +28,7 @@ TestYTuongEXE/
 
 - 🎭 **Bộ Sưu Tập Mặt Nạ**: Khám phá các loại mặt nạ Tuồng với thông tin chi tiết
 - 👤 **Nhân Vật Tuồng**: Tìm hiểu về các nhân vật nổi tiếng và trang phục của họ
+- 📅 **Lịch diễn (MVP)**: Danh sách vở, ngày‑giờ, địa điểm — lọc theo thành phố và khoảng thời gian
 - 🤖 **AI Giải Thích**: Tương tác với AI để hiểu sâu hơn về ý nghĩa, lịch sử và vai trò
 - 📷 **Trải Nghiệm AR**: Thử nghiệm mặt nạ Tuồng với camera của bạn
 
@@ -72,6 +73,13 @@ npm run build
 - Framer Motion (animations)
 - Three.js / React Three Fiber (3D)
 - CSS3 với backdrop-filter
+
+## Validation & business rules (Lịch diễn)
+- Event phải có: `id`, `title`, `startDatetime` (ISO), `timezone`, `venue.{id,name,city}`. Các entry không hợp lệ sẽ bị bỏ qua và logged.  
+- Event `status`: one of `scheduled|canceled|postponed|draft`.  
+- Derived statuses: `ongoing`, `soon` (within 48h), `upcoming`, `past`; `canceled` luôn ưu tiên hiển thị.  
+- Filters are URL-sync'd and validated (invalid date ranges are rejected in the UI).  
+- For production: migrate events to a DB (Postgres/Supabase) and validate at API boundary.
 
 ## Lưu ý
 
