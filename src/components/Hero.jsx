@@ -3,7 +3,7 @@ import { gsap } from 'gsap'
 import './Hero.css'
 import ArtisticText from './ArtisticText'
 
-function Hero() {
+function Hero({ setActiveSection }) {
   const videoRef = useRef(null);
   const [showImage, setShowImage] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
@@ -80,7 +80,11 @@ function Hero() {
   };
 
   return (
-    <section ref={heroRef} className={`hero ${showImage ? 'show-image' : ''} ${showBackground ? 'show-background' : ''}`} onClick={handleClick}>
+    <section
+      ref={heroRef}
+      className={`hero ${showImage ? 'show-image' : ''} ${showBackground ? 'show-background' : ''}`}
+      onClick={handleClick}
+    >
       {/* Cone Beams - Ánh đèn hình nón từ trên xuống - ĐỨNG YÊN Ở GIỮA */}
       <div className="cone-beams-container">
         <div
@@ -126,6 +130,19 @@ function Hero() {
       >
         <source src="/src/img/Untitled video - Made with Clipchamp (2).mp4" type="video/mp4" />
       </video>
+
+      <div className="hero-cta">
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={(e) => {
+            e.stopPropagation()
+            setActiveSection?.('learning')
+          }}
+        >
+          Bắt đầu học về Tuồng
+        </button>
+      </div>
     </section>
   )
 }

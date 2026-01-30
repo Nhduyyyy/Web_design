@@ -8,6 +8,7 @@ import CameraExperience from './components/CameraExperience'
 import TuongPerformance from './components/TuongPerformance'
 import TryRoleExperience from './components/TryRoleExperience'
 import ScrollProgress from './components/ScrollProgress'
+import LearningPage from './components/LearningPage'
 import './styles/App.css'
 
 function App() {
@@ -52,6 +53,10 @@ function App() {
 
       {activeSection === 'tryRole' && (
         <TryRoleExperience />
+      )}
+
+      {activeSection === 'learning' && (
+        <LearningPage />
       )}
     </div>
   )
