@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { TextureLoader } from 'three'
 import { maskData } from '../data/tuongData'
 import { costumeData } from '../data/costumeData'
+import { objectModelsList } from '../data/sceneData'
 import { Model3DLoader } from './Model3D'
 import './Viewer3D.css'
 
@@ -901,10 +902,37 @@ function ProceduralCharacter3D({ character, costume, position }) {
   )
 }
 
+// Đạo cụ 3D — hiển thị model STL/GLB từ sceneData
+function Object3DView({ object, position }) {
+  if (!object?.modelPath) {
+    return (
+      <group position={position}>
+        <mesh>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#888" wireframe />
+        </mesh>
+        <Text position={[0, 0, 0.6]} fontSize={0.2} color="#fff" anchorX="center" anchorY="middle">
+          {object?.name || 'Đạo cụ'}
+        </Text>
+      </group>
+    )
+  }
+  return (
+    <Model3DLoader
+      modelPath={object.modelPath}
+      position={position}
+      scale={1.2}
+      autoRotate={true}
+      animationSpeed={0.8}
+    />
+  )
+}
+
 function Viewer3D() {
   const [selectedMask, setSelectedMask] = useState(maskData[0])
   const [selectedCostume, setSelectedCostume] = useState(costumeData[0])
-  const [viewMode, setViewMode] = useState('mask') // 'mask' or 'character'
+  const [selectedObject, setSelectedObject] = useState(objectModelsList[0] || null)
+  const [viewMode, setViewMode] = useState('mask') // 'mask' | 'character' | 'object'
   const [autoRotate, setAutoRotate] = useState(true)
 
   return (
@@ -939,6 +967,12 @@ function Viewer3D() {
                   onClick={() => setViewMode('character')}
                 >
                   👤 Nhân Vật
+                </button>
+                <button
+                  className={`mode-btn ${viewMode === 'object' ? 'active' : ''}`}
+                  onClick={() => setViewMode('object')}
+                >
+                  🛡️ Đạo Cụ
                 </button>
               </div>
             </div>
@@ -1001,6 +1035,28 @@ function Viewer3D() {
               </div>
             )}
 
+            {viewMode === 'object' && objectModelsList.length > 0 && (
+              <div className="control-section">
+                <h3>Chọn Đạo Cụ</h3>
+                <div className="mask-selector-3d object-selector">
+                  {objectModelsList.map((obj) => (
+                    <motion.button
+                      key={obj.listId || obj.id}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`mask-btn-3d ${
+                        selectedObject?.listId === obj.listId || selectedObject?.id === obj.id ? 'selected' : ''
+                      }`}
+                      onClick={() => setSelectedObject(obj)}
+                    >
+                      <span style={{ fontSize: '1.75rem' }}>{obj.emoji}</span>
+                      <span>{obj.name}</span>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="control-section">
               <h3>Điều Khiển</h3>
               <label className="toggle-control">
@@ -1013,7 +1069,7 @@ function Viewer3D() {
               </label>
             </div>
 
-            {viewMode === 'mask' ? (
+            {viewMode === 'mask' && (
               <div className="mask-info-3d">
                 <h4>{selectedMask.name}</h4>
                 <p>{selectedMask.description}</p>
@@ -1029,7 +1085,8 @@ function Viewer3D() {
                   </div>
                 </div>
               </div>
-            ) : (
+            )}
+            {viewMode === 'character' && (
               <div className="mask-info-3d">
                 <h4>{selectedCostume.name}</h4>
                 <p>{selectedCostume.description}</p>
@@ -1052,6 +1109,24 @@ function Viewer3D() {
                     <span className="info-value">{selectedCostume.details.meaning}</span>
                   </div>
                 </div>
+              </div>
+            )}
+            {viewMode === 'object' && selectedObject && (
+              <div className="mask-info-3d">
+                <h4>{selectedObject.name}</h4>
+                <p>{selectedObject.description}</p>
+                {selectedObject.details && (
+                  <div className="info-details">
+                    <div className="info-item">
+                      <span className="info-label">Chất liệu:</span>
+                      <span className="info-value">{selectedObject.details.material}</span>
+                    </div>
+                    <div className="info-item">
+                      <span className="info-label">Ý nghĩa:</span>
+                      <span className="info-value">{selectedObject.details.meaning}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1090,13 +1165,14 @@ function Viewer3D() {
                   maxDistance={10}
                 />
 
-                {viewMode === 'mask' ? (
+                {viewMode === 'mask' && (
                   <Mask3D
                     mask={selectedMask}
                     position={[0, 0, 0]}
                     rotation={[0, 0, 0]}
                   />
-                ) : (
+                )}
+                {viewMode === 'character' && (
                   <Character3D
                     character={{
                       emoji: '👤',
@@ -1105,6 +1181,9 @@ function Viewer3D() {
                     costume={selectedCostume}
                     position={[0, 0, 0]}
                   />
+                )}
+                {viewMode === 'object' && selectedObject && (
+                  <Object3DView object={selectedObject} position={[0, 0, 0]} />
                 )}
 
                 <Environment preset="studio" />
@@ -1119,7 +1198,7 @@ function Viewer3D() {
             <li>🖱️ Kéo chuột để xoay model</li>
             <li>🔍 Cuộn chuột để zoom in/out</li>
             <li>👆 Click và kéo để di chuyển góc nhìn</li>
-            <li>🎭 Chọn mặt nạ khác để xem model 3D tương ứng</li>
+            <li>🎭 Chọn Mặt nạ / Nhân vật / Đạo cụ để xem model 3D tương ứng</li>
           </ul>
         </div>
       </div>

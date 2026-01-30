@@ -332,6 +332,121 @@
   transform: translateY(-2px);
 }
 
+.player-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.interactive-btn.secondary {
+  background: transparent;
+  color: var(--accent-gold);
+  border: 2px solid var(--accent-gold);
+  box-shadow: none;
+}
+
+.interactive-btn.secondary:hover {
+  background: rgba(255, 215, 0, 0.15);
+  box-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
+}
+
+/* Lịch diễn */
+.schedule-section {
+  max-width: 1100px;
+  margin: 0 auto 3rem;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  padding: 2.5rem;
+  border-radius: 20px;
+  border: 2px solid rgba(255, 215, 0, 0.25);
+}
+
+.schedule-title {
+  color: white;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.schedule-icon {
+  font-size: 1.5rem;
+}
+
+.schedule-intro {
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.schedule-card {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 15px;
+  padding: 1.5rem;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.schedule-card:hover {
+  border-color: rgba(255, 215, 0, 0.5);
+  transform: translateY(-3px);
+}
+
+.schedule-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.schedule-card-header .schedule-emoji {
+  font-size: 2rem;
+}
+
+.schedule-card-header h4 {
+  color: var(--accent-gold);
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.schedule-details {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.schedule-cta {
+  display: inline-block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--accent-gold);
+  color: var(--dark-bg);
+  text-align: center;
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.schedule-cta:hover {
+  background: #e6c200;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
 .performance-info-section {
   max-width: 1200px;
   margin: 0 auto;

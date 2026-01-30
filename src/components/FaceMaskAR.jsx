@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import * as faceapi from 'face-api.js'
+import { getSegmenter, getPersonMaskIndex, releaseSegmenter } from '../utils/segmentPerson'
 import './FaceMaskAR.css'
 
-function FaceMaskAR({ selectedMask, isActive }) {
+function FaceMaskAR({ selectedMask, isActive, captureCanvasRef, backgroundImageUrl }) {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const animationFrameRef = useRef(null)
@@ -11,9 +12,36 @@ function FaceMaskAR({ selectedMask, isActive }) {
   const faceDetectionRef = useRef(null)
   const frameCountRef = useRef(0)
   const maskImageRef = useRef(null)
+  const backgroundImageRef = useRef(null)
+  const segmenterRef = useRef(null)
+  const lastSegmentMaskRef = useRef(null)
+  const maskCanvasRef = useRef(null)
+  const segmentTimestampRef = useRef(0)
+  const selectedMaskRef = useRef(null)
+
+  // Luôn trỏ tới mask đang chọn (để đổi mask không phải restart camera/nền)
+  useEffect(() => {
+    selectedMaskRef.current = selectedMask
+  }, [selectedMask])
+
+  // Load ảnh nền khi chọn nền (để tách nền + xem trước)
+  useEffect(() => {
+    if (backgroundImageUrl) {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => { backgroundImageRef.current = img }
+      img.onerror = () => { backgroundImageRef.current = null }
+      img.src = backgroundImageUrl
+      getSegmenter().then((seg) => { segmenterRef.current = seg }).catch(() => { segmenterRef.current = null })
+    } else {
+      backgroundImageRef.current = null
+    }
+  }, [backgroundImageUrl])
 
   // Load mask image if available
+  // macOS/filesystem dùng NFD (decomposed), code thường dùng NFC → chuẩn hóa NFD + encode URL
   useEffect(() => {
+    maskImageRef.current = null
     if (selectedMask?.imagePath) {
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -24,9 +52,11 @@ function FaceMaskAR({ selectedMask, isActive }) {
         console.warn('Failed to load mask image:', selectedMask.imagePath)
         maskImageRef.current = null
       }
-      img.src = selectedMask.imagePath
-    } else {
-      maskImageRef.current = null
+      const path = selectedMask.imagePath.startsWith('http')
+        ? selectedMask.imagePath
+        : selectedMask.imagePath.normalize('NFD') // Khớp tên file trên disk (macOS thường NFD)
+      const url = path.startsWith('http') ? path : (window.location.origin + encodeURI(path))
+      img.src = url
     }
   }, [selectedMask])
 
@@ -112,11 +142,16 @@ function FaceMaskAR({ selectedMask, isActive }) {
       const animate = () => {
         const canvas = canvasRef.current
         const video = videoRef.current
-        if (!canvas || !video || !isActive || !selectedMask || video.readyState !== 4) {
+        const currentMask = selectedMaskRef.current
+        if (!canvas || !video || !isActive || !currentMask || video.readyState !== 4) {
           if (isActive) {
             animationFrameRef.current = requestAnimationFrame(animate)
           }
           return
+        }
+
+        if (captureCanvasRef && typeof captureCanvasRef === 'object') {
+          captureCanvasRef.current = canvas
         }
 
         const ctx = canvas.getContext('2d')
@@ -125,7 +160,36 @@ function FaceMaskAR({ selectedMask, isActive }) {
 
         ctx.save()
         ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+        const bgImageLoaded = backgroundImageUrl && backgroundImageRef.current
+        if (bgImageLoaded) {
+          if (segmenterRef.current) {
+            const runSegment = frameCountRef.current % 3 === 0
+            if (runSegment) {
+              try {
+                const result = segmenterRef.current.segmentForVideo(video, segmentTimestampRef.current)
+                segmentTimestampRef.current += 33
+                const idx = getPersonMaskIndex(result)
+                if (idx >= 0 && result.confidenceMasks && result.confidenceMasks[idx]) {
+                  lastSegmentMaskRef.current = result.confidenceMasks[idx]
+                }
+              } catch (_) {}
+            }
+          }
+          if (lastSegmentMaskRef.current) {
+            try {
+              drawBackgroundWithMask(ctx, canvas, video, backgroundImageRef.current, lastSegmentMaskRef.current)
+            } catch (e) {
+              lastSegmentMaskRef.current = null
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+            }
+          } else {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          }
+        } else {
+          lastSegmentMaskRef.current = null
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+        }
 
         let faceData = null
         frameCountRef.current++
@@ -177,7 +241,7 @@ function FaceMaskAR({ selectedMask, isActive }) {
         }
 
         // Draw mask with face tracking
-        drawMaskOnFace(ctx, selectedMask, faceData)
+        drawMaskOnFace(ctx, currentMask, faceData)
 
         ctx.restore()
         animationFrameRef.current = requestAnimationFrame(animate)
@@ -199,8 +263,74 @@ function FaceMaskAR({ selectedMask, isActive }) {
         videoRef.current.srcObject = null
       }
       faceDetectionRef.current = null
+      segmenterRef.current = null
+      lastSegmentMaskRef.current = null
+      releaseSegmenter()
     }
-  }, [isActive, selectedMask, modelsLoaded])
+    if (captureCanvasRef && typeof captureCanvasRef === 'object') {
+      captureCanvasRef.current = null
+    }
+  }, [isActive, modelsLoaded])
+
+  /**
+   * Vẽ nền ảnh + người (từ video, dùng mask tách nền) lên canvas.
+   * Không dùng WebGL/DrawingUtils — chỉ 2D canvas để tránh lỗi môi trường.
+   */
+  function drawBackgroundWithMask(ctx, canvas, video, bgImage, confidenceMask) {
+    const w = canvas.width
+    const h = canvas.height
+    if (!w || !h) return
+
+    // 1. Vẽ nền ảnh (cover)
+    const imgAspect = bgImage.width / bgImage.height
+    const canvasAspect = w / h
+    let sw, sh, sx, sy
+    if (imgAspect > canvasAspect) {
+      sh = bgImage.height
+      sw = bgImage.height * canvasAspect
+      sx = (bgImage.width - sw) / 2
+      sy = 0
+    } else {
+      sw = bgImage.width
+      sh = bgImage.width / canvasAspect
+      sx = 0
+      sy = (bgImage.height - sh) / 2
+    }
+    ctx.drawImage(bgImage, sx, sy, sw, sh, 0, 0, w, h)
+
+    // 2. Lấy mask dạng Float32 (confidence)
+    let floatArr
+    try {
+      floatArr = confidenceMask.getAsFloat32Array()
+    } catch (_) {
+      return
+    }
+    const mw = confidenceMask.width
+    const mh = confidenceMask.height
+    if (!floatArr || !mw || !mh) return
+
+    // 3. Lớp người: vẽ video lên canvas tạm, áp alpha theo mask
+    const personCanvas = document.createElement('canvas')
+    personCanvas.width = w
+    personCanvas.height = h
+    const pCtx = personCanvas.getContext('2d')
+    pCtx.drawImage(video, 0, 0, w, h)
+    const imageData = pCtx.getImageData(0, 0, w, h)
+    const data = imageData.data
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4
+        const mx = Math.floor((x / w) * mw)
+        const my = Math.floor((y / h) * mh)
+        const mi = Math.min(my * mw + mx, floatArr.length - 1)
+        const alpha = Math.max(0, Math.min(1, floatArr[mi]))
+        data[i + 3] = Math.round(alpha * 255)
+      }
+    }
+    pCtx.putImageData(imageData, 0, 0)
+    ctx.drawImage(personCanvas, 0, 0, w, h)
+  }
 
   const drawMaskOnFace = (ctx, mask, faceData) => {
     if (!mask || !faceData) return
@@ -233,9 +363,9 @@ function FaceMaskAR({ selectedMask, isActive }) {
       }
     }
 
-    // Create mask shape - điều chỉnh vừa với khuôn mặt
-    const maskWidth = width * 1.15  // Giảm xuống để vừa mặt hơn
-    const maskHeight = height * 1.05  // Giảm xuống để vừa mặt hơn
+    // Create mask shape - điều chỉnh vừa với khuôn mặt (nhỏ hơn để không to quá)
+    const maskWidth = width * 0.88
+    const maskHeight = height * 0.88
 
     // Nếu có ảnh mặt nạ thật, sử dụng ảnh đó
     if (maskImageRef.current && mask.imagePath) {

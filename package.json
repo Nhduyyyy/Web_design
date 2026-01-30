@@ -12,6 +12,7 @@
     "@mediapipe/camera_utils": "^0.3.1640029074",
     "@mediapipe/drawing_utils": "^0.3.1620248257",
     "@mediapipe/face_mesh": "^0.4.1630673314",
+    "@mediapipe/tasks-vision": "^0.10.32",
     "@react-three/drei": "^9.88.13",
     "@react-three/fiber": "^8.15.11",
     "face-api.js": "^0.22.2",

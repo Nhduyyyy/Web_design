@@ -22,12 +22,6 @@ function Header({ activeSection, setActiveSection }) {
             Trang Chủ
           </button>
           <button 
-            className={`nav-btn ${activeSection === 'explore' ? 'active' : ''}`}
-            onClick={() => setActiveSection('explore')}
-          >
-            Khám Phá
-          </button>
-          <button 
             className={`nav-btn ${activeSection === 'experience' ? 'active' : ''}`}
             onClick={() => setActiveSection('experience')}
           >

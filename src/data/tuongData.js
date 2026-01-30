@@ -1,90 +1,34 @@
+// 15 mặt nạ đầu trong public/masks — tên và imagePath khớp với tên file
 export const maskData = [
-  {
-    id: 1,
-    name: 'Mặt Nạ Quan Văn',
-    emoji: '👑',
-    modelPath: '/models/masks/mat_na1.glb', // File 3D GLB
-    imagePath: '/masks/Ảnh_màn_hình_2026-01-28_lúc_13.43.50-removebg-preview.png', // Ảnh mặt nạ thật (fallback)
-    description: 'Mặt nạ đại diện cho các quan văn trong Tuồng',
-    color: '#4a90e2',
-    details: {
-      meaning: 'Tượng trưng cho trí tuệ, học vấn và sự uyên bác',
-      history: 'Xuất hiện từ thế kỷ 17, được sử dụng trong các vở Tuồng về triều đình',
-      role: 'Thường đóng vai các quan lại, thầy giáo, hoặc người có học thức',
-      characteristics: 'Màu sắc thường là xanh dương hoặc trắng, biểu thị sự thanh cao'
-    }
-  },
-  {
-    id: 2,
-    name: 'Mặt Nạ Quan Võ',
-    emoji: '⚔️',
-    modelPath: '/models/masks/mac_na2.glb', // File 3D GLB
-    imagePath: '/masks/Ảnh_màn_hình_2026-01-28_lúc_13.43.55-removebg-preview.png', // Ảnh mặt nạ thật (fallback)
-    description: 'Mặt nạ của các tướng quân, võ tướng',
-    color: '#e74c3c',
-    details: {
-      meaning: 'Biểu tượng của sức mạnh, lòng dũng cảm và lòng trung thành',
-      history: 'Có nguồn gốc từ các vở Tuồng về chiến tranh và anh hùng',
-      role: 'Đóng vai các tướng quân, anh hùng dân tộc, hoặc người bảo vệ',
-      characteristics: 'Màu đỏ hoặc đen, có đường nét mạnh mẽ, góc cạnh'
-    }
-  },
-  {
-    id: 3,
-    name: 'Mặt Nạ Hề',
-    emoji: '🤡',
-    imagePath: '/masks/Ảnh_màn_hình_2026-01-28_lúc_13.44.01-removebg-preview.png', // Ảnh mặt nạ thật
-    description: 'Mặt nạ của nhân vật hài, giải trí',
-    color: '#f39c12',
-    details: {
-      meaning: 'Đại diện cho sự hài hước, giải trí và làm nhẹ không khí',
-      history: 'Xuất hiện để cân bằng cảm xúc trong các vở Tuồng nghiêm túc',
-      role: 'Làm cho khán giả cười, giải tỏa căng thẳng trong vở diễn',
-      characteristics: 'Màu sắc tươi sáng, nét mặt vui vẻ, thường có mũi to'
-    }
-  },
-  {
-    id: 4,
-    name: 'Mặt Nạ Nữ',
-    emoji: '💃',
-    imagePath: '/masks/Ảnh_màn_hình_2026-01-28_lúc_13.44.05-removebg-preview.png', // Ảnh mặt nạ thật
-    description: 'Mặt nạ của các nhân vật nữ trong Tuồng',
-    color: '#e91e63',
-    details: {
-      meaning: 'Tượng trưng cho vẻ đẹp, sự dịu dàng và nữ tính',
-      history: 'Phát triển để thể hiện các nhân vật nữ trong Tuồng cổ điển',
-      role: 'Đóng vai công chúa, tiên nữ, hoặc các nhân vật nữ chính',
-      characteristics: 'Đường nét mềm mại, màu sắc nhẹ nhàng như hồng, vàng'
-    }
-  },
-  {
-    id: 5,
-    name: 'Mặt Nạ Quỷ',
-    emoji: '👹',
-    imagePath: '/masks/Ảnh_màn_hình_2026-01-28_lúc_13.44.16-removebg-preview.png', // Ảnh mặt nạ thật
-    description: 'Mặt nạ của các nhân vật phản diện',
-    color: '#8e44ad',
-    details: {
-      meaning: 'Đại diện cho cái ác, sự phản bội và thử thách',
-      history: 'Sử dụng để tạo sự tương phản với các nhân vật chính diện',
-      role: 'Đóng vai kẻ thù, phản diện, hoặc nhân vật gây xung đột',
-      characteristics: 'Màu tối, đường nét dữ tợn, thường có răng nanh hoặc sừng'
-    }
-  },
-  {
-    id: 6,
-    name: 'Mặt Nạ Thần',
-    emoji: '✨',
-    imagePath: '/masks/Ảnh_màn_hình_2026-01-28_lúc_13.44.21-removebg-preview.png', // Ảnh mặt nạ thật
-    description: 'Mặt nạ của các vị thần, tiên',
-    color: '#00bcd4',
-    details: {
-      meaning: 'Tượng trưng cho quyền năng siêu nhiên, sự thiêng liêng',
-      history: 'Xuất hiện trong các vở Tuồng về thần thoại và tôn giáo',
-      role: 'Đóng vai các vị thần, tiên, hoặc nhân vật có quyền năng đặc biệt',
-      characteristics: 'Màu sắc sáng, có ánh sáng hoặc hoa văn đặc biệt'
-    }
-  }
+  { id: 1, name: 'Ác Bá', emoji: '🎭', imagePath: '/masks/Ác_bá-removebg-preview.png', description: 'Mặt nạ Tuồng Ác Bá', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 2, name: 'Ác Tăng (Tuồng Sơn Hậu)', emoji: '🎭', imagePath: '/masks/Ác_tăng-__tuồng_sơn_hậu-removebg-preview.png', description: 'Mặt nạ Ác Tăng - Tuồng Sơn Hậu', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 3, name: 'Báo Công (Tuồng Nam Bộ)', emoji: '🎭', imagePath: '/masks/bao_công__tuồng_nam_bộ_-removebg-preview.png', description: 'Mặt nạ Báo Công - Tuồng Nam Bộ', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 4, name: 'Báo Công (Tuồng Xử Án)', emoji: '🎭', imagePath: '/masks/bao_công__tuồng_xử_án_-removebg-preview.png', description: 'Mặt nạ Báo Công - Tuồng Xử Án', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 5, name: 'Bác Vương', emoji: '🎭', imagePath: '/masks/bác_vương-removebg-preview.png', description: 'Mặt nạ Tuồng Bác Vương', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 6, name: 'Bát Vương', emoji: '🎭', imagePath: '/masks/bát_vương-removebg-preview.png', description: 'Mặt nạ Tuồng Bát Vương', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 7, name: 'Bạch Viên', emoji: '🎭', imagePath: '/masks/bạch_viên-removebg-preview.png', description: 'Mặt nạ Tuồng Bạch Viên', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 8, name: 'Bạt Dõng', emoji: '🎭', imagePath: '/masks/bạt_dõng-removebg-preview.png', description: 'Mặt nạ Tuồng Bạt Dõng', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 9, name: 'Bình Vương', emoji: '🎭', imagePath: '/masks/bình_vương-removebg-preview.png', description: 'Mặt nạ Tuồng Bình Vương', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 10, name: 'Cáp Tô Văn', emoji: '🎭', imagePath: '/masks/cáp_tô_văn-removebg-preview.png', description: 'Mặt nạ Tuồng Cáp Tô Văn', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 11, name: 'Cát Thượng Hùng', emoji: '🎭', imagePath: '/masks/cát_thượng_hùng-removebg-preview.png', description: 'Mặt nạ Tuồng Cát Thượng Hùng', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 12, name: 'Châu Du', emoji: '🎭', imagePath: '/masks/châu_du-removebg-preview.png', description: 'Mặt nạ Tuồng Châu Du', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 13, name: 'Châu Thương', emoji: '🎭', imagePath: '/masks/châu_thương-removebg-preview.png', description: 'Mặt nạ Tuồng Châu Thương', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 14, name: 'Châu Xương', emoji: '🎭', imagePath: '/masks/châu_xương-removebg-preview.png', description: 'Mặt nạ Tuồng Châu Xương', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } },
+  { id: 15, name: 'Công Tử Bột', emoji: '🎭', imagePath: '/masks/công_tử_bột-removebg-preview.png', description: 'Mặt nạ Tuồng Công Tử Bột', color: '#4a90e2', details: { meaning: 'Nhân vật Tuồng', history: 'Truyền thống Tuồng Việt Nam', role: 'Mặt nạ Tuồng', characteristics: 'Đặc trưng Tuồng' } }
+]
+
+// Từ điển thuật ngữ Tuồng - dùng cho tab Khám Phá
+export const glossaryData = [
+  { id: 'tuong', term: 'Tuồng', definition: 'Loại hình sân khấu cổ truyền Việt Nam, kết hợp hát, múa, võ thuật và diễn xuất. Ra đời khoảng thế kỷ 17, phát triển mạnh ở Nam Trung Bộ.', emoji: '🎭' },
+  { id: 'mat-na', term: 'Mặt nạ Tuồng', definition: 'Đạo cụ đặc trưng để hóa thân nhân vật. Mỗi loại mặt nạ thể hiện tính cách, địa vị (quan văn, quan võ, hề, nữ, quỷ, thần).', emoji: '🎭' },
+  { id: 'quan-van', term: 'Quan văn', definition: 'Vai quan lại bên văn — trí tuệ, học vấn. Trang phục thường xanh/trắng, đạo cụ: sách, bút, quạt.', emoji: '👑' },
+  { id: 'quan-vo', term: 'Quan võ', definition: 'Vai tướng quân, anh hùng — dũng cảm, trung thành. Trang phục đỏ/đen, đạo cụ: kiếm, khiên, cờ.', emoji: '⚔️' },
+  { id: 'he', term: 'Hề', definition: 'Nhân vật hài, giải trí trong vở. Làm nhẹ không khí, đôi khi đả kích xã hội qua lời nói hài hước.', emoji: '🤡' },
+  { id: 'lan-dieu', term: 'Làn điệu', definition: 'Giai điệu, làn hát đặc trưng của Tuồng. Mỗi vai, mỗi tình huống có làn điệu riêng (oán, than, hùng...).', emoji: '🎵' },
+  { id: 'tuong-tich', term: 'Tuồng tích', definition: 'Cốt truyện, kịch bản của vở Tuồng. Nhiều tích lấy từ Tam Quốc, Thị Kính, truyện dân gian.', emoji: '📜' },
+  { id: 'dao-cu', term: 'Đạo cụ', definition: 'Đồ dùng trên sân khấu: kiếm, quạt, cờ, trống, ngựa gỗ... Mỗi đạo cụ mang ý nghĩa biểu tượng.', emoji: '🛡️' },
+  { id: 'trang-phuc', term: 'Trang phục Tuồng', definition: 'Áo, mũ, giày theo từng vai (long bào, áo giáp, áo dài...). Màu sắc và họa tiết thể hiện địa vị, tính cách.', emoji: '👗' },
+  { id: 'vo-thuat', term: 'Võ thuật Tuồng', definition: 'Động tác múa võ trên sân khấu, mô phỏng chiến đấu. Tạo tính kịch và thẩm mỹ cho cảnh đánh nhau.', emoji: '🥋' }
 ]
 
 export const characterData = [

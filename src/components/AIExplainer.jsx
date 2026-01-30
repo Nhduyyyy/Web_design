@@ -1,26 +1,47 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { maskData, characterData } from '../data/tuongData'
+import { maskData, characterData, glossaryData } from '../data/tuongData'
 import './AIExplainer.css'
 
+const TAB_MASK = 'mask'
+const TAB_CHARACTER = 'character'
+const TAB_GLOSSARY = 'glossary'
+
 function AIExplainer({ selectedItem }) {
+  const [activeTab, setActiveTab] = useState(TAB_MASK)
   const [isTyping, setIsTyping] = useState(false)
   const [displayedText, setDisplayedText] = useState('')
   const [currentItem, setCurrentItem] = useState(selectedItem || maskData[0])
+  const [currentGlossary, setCurrentGlossary] = useState(glossaryData[0])
 
   useEffect(() => {
     if (selectedItem) {
       setCurrentItem(selectedItem)
+      setActiveTab(selectedItem.details ? TAB_MASK : TAB_CHARACTER)
     }
   }, [selectedItem])
 
   useEffect(() => {
-    if (currentItem) {
+    setDisplayedText('')
+    if (activeTab === TAB_GLOSSARY && currentGlossary) {
       setIsTyping(true)
-      setDisplayedText('')
+      const fullText = `📖 ${currentGlossary.term}\n\n${currentGlossary.definition}`
+      let index = 0
+      const typingInterval = setInterval(() => {
+        if (index < fullText.length) {
+          setDisplayedText(fullText.slice(0, index + 1))
+          index++
+        } else {
+          setIsTyping(false)
+          clearInterval(typingInterval)
+        }
+      }, 25)
+      return () => clearInterval(typingInterval)
+    }
+    if ((activeTab === TAB_MASK || activeTab === TAB_CHARACTER) && currentItem) {
+      setIsTyping(true)
       const fullText = generateExplanation(currentItem)
       let index = 0
-      
       const typingInterval = setInterval(() => {
         if (index < fullText.length) {
           setDisplayedText(fullText.slice(0, index + 1))
@@ -30,21 +51,20 @@ function AIExplainer({ selectedItem }) {
           clearInterval(typingInterval)
         }
       }, 30)
-
       return () => clearInterval(typingInterval)
     }
-  }, [currentItem])
+  }, [currentItem, activeTab, currentGlossary])
 
   const generateExplanation = (item) => {
-    if (item.details) {
-      // It's a mask
+    if (!item) return ''
+    if (item.details && item.details.meaning) {
       return `🎭 ${item.name}\n\n` +
              `📖 Ý Nghĩa: ${item.details.meaning}\n\n` +
              `📚 Lịch Sử: ${item.details.history}\n\n` +
              `🎪 Vai Trò: ${item.details.role}\n\n` +
              `✨ Đặc Điểm: ${item.details.characteristics}`
-    } else {
-      // It's a character
+    }
+    if (item.costume) {
       return `👤 ${item.name} - ${item.type}\n\n` +
              `🎭 Vai Trò: ${item.role}\n\n` +
              `👗 Trang Phục:\n` +
@@ -53,7 +73,28 @@ function AIExplainer({ selectedItem }) {
              `   - Ý nghĩa: ${item.costume.meaning}\n\n` +
              `📖 Câu Chuyện: ${item.story}`
     }
+    return ''
   }
+
+  const getListForTab = () => {
+    if (activeTab === TAB_MASK) return maskData
+    if (activeTab === TAB_CHARACTER) return characterData
+    return glossaryData
+  }
+
+  const handleSelect = (item) => {
+    if (activeTab === TAB_GLOSSARY) setCurrentGlossary(item)
+    else setCurrentItem(item)
+  }
+
+  const getCurrentDisplay = () => {
+    if (activeTab === TAB_GLOSSARY) {
+      return { emoji: currentGlossary?.emoji, name: currentGlossary?.term }
+    }
+    return { emoji: currentItem?.emoji || '🎭', name: currentItem?.name }
+  }
+
+  const showQuickFacts = activeTab === TAB_MASK && currentItem?.details
 
   return (
     <div className="ai-explainer">
@@ -64,45 +105,49 @@ function AIExplainer({ selectedItem }) {
           className="explainer-header"
         >
           <h2 className="section-title">
-            <span className="ai-icon">🤖</span> AI Giải Thích
+            <span className="ai-icon">🤖</span> Khám Phá Tuồng
           </h2>
           <p className="section-subtitle">
-            Tìm hiểu chi tiết về từng yếu tố của Tuồng
+            Tìm hiểu mặt nạ, nhân vật và thuật ngữ Tuồng
           </p>
         </motion.div>
 
         <div className="explainer-content">
           <div className="item-selector">
-            <h3>Chọn để khám phá:</h3>
+            <h3>Chọn chủ đề:</h3>
             <div className="selector-buttons">
-              <button 
-                className="selector-tab"
-                onClick={() => setCurrentItem(maskData[0])}
+              <button
+                className={`selector-tab ${activeTab === TAB_MASK ? 'active' : ''}`}
+                onClick={() => { setActiveTab(TAB_MASK); setCurrentItem(maskData[0]) }}
               >
-                Mặt Nạ
+                🎭 Mặt Nạ
               </button>
-              <button 
-                className="selector-tab"
-                onClick={() => setCurrentItem(characterData[0])}
+              <button
+                className={`selector-tab ${activeTab === TAB_CHARACTER ? 'active' : ''}`}
+                onClick={() => { setActiveTab(TAB_CHARACTER); setCurrentItem(characterData[0]) }}
               >
-                Nhân Vật
+                👤 Nhân Vật
+              </button>
+              <button
+                className={`selector-tab ${activeTab === TAB_GLOSSARY ? 'active' : ''}`}
+                onClick={() => { setActiveTab(TAB_GLOSSARY); setCurrentGlossary(glossaryData[0]) }}
+              >
+                📖 Thuật Ngữ
               </button>
             </div>
           </div>
 
           <motion.div
-            key={currentItem?.id}
-            initial={{ opacity: 0, scale: 0.9 }}
+            key={activeTab === TAB_GLOSSARY ? currentGlossary?.id : currentItem?.id}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             className="explanation-card"
           >
             <div className="item-display">
               <div className="item-icon-large">
-                <span style={{ fontSize: '6rem' }}>
-                  {currentItem?.emoji || '🎭'}
-                </span>
+                <span style={{ fontSize: '5rem' }}>{getCurrentDisplay().emoji}</span>
               </div>
-              <h3 className="item-title">{currentItem?.name}</h3>
+              <h3 className="item-title">{getCurrentDisplay().name}</h3>
             </div>
 
             <div className="explanation-text">
@@ -111,7 +156,7 @@ function AIExplainer({ selectedItem }) {
                 <div className="message-content">
                   <AnimatePresence mode="wait">
                     <motion.pre
-                      key={displayedText}
+                      key={displayedText.slice(0, 20)}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -125,7 +170,7 @@ function AIExplainer({ selectedItem }) {
               </div>
             </div>
 
-            {currentItem?.details && (
+            {showQuickFacts && (
               <div className="quick-facts">
                 <h4>Thông Tin Nhanh</h4>
                 <div className="facts-grid">
@@ -147,18 +192,18 @@ function AIExplainer({ selectedItem }) {
           </motion.div>
 
           <div className="item-list">
-            <h4>Khám phá thêm:</h4>
+            <h4>Khám phá thêm — {activeTab === TAB_MASK ? 'Mặt nạ' : activeTab === TAB_CHARACTER ? 'Nhân vật' : 'Thuật ngữ'}:</h4>
             <div className="item-mini-grid">
-              {(currentItem?.details ? maskData : characterData).slice(0, 3).map((item) => (
+              {getListForTab().map((item) => (
                 <motion.button
                   key={item.id}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="mini-item"
-                  onClick={() => setCurrentItem(item)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`mini-item ${(activeTab === TAB_GLOSSARY ? currentGlossary?.id === item.id : currentItem?.id === item.id) ? 'selected' : ''}`}
+                  onClick={() => handleSelect(item)}
                 >
-                  <span style={{ fontSize: '2rem' }}>{item.emoji}</span>
-                  <span>{item.name}</span>
+                  <span style={{ fontSize: '1.8rem' }}>{item.emoji}</span>
+                  <span>{item.name || item.term}</span>
                 </motion.button>
               ))}
             </div>

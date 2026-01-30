@@ -47,7 +47,12 @@
 
 .mode-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.mask-selector-3d.object-selector .mask-btn-3d span:last-child {
+  font-size: 0.9rem;
 }
 
 .mode-btn {

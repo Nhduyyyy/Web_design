@@ -23,7 +23,10 @@ function Hero({ setActiveSection }) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="btn-primary"
-              onClick={() => setActiveSection('explore')}
+              onClick={() => {
+                setActiveSection('home')
+                setTimeout(() => document.getElementById('mask-gallery')?.scrollIntoView({ behavior: 'smooth' }), 100)
+              }}
             >
               Bắt Đầu Khám Phá
             </motion.button>

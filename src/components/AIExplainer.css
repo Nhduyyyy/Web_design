@@ -63,8 +63,18 @@
   transition: all 0.3s ease;
 }
 
-.selector-tab:hover {
-  background: rgba(255, 215, 0, 0.2);
+.selector-tab:hover,
+.selector-tab.active {
+  background: rgba(255, 215, 0, 0.25);
+  border-color: var(--accent-gold);
+}
+
+.selector-tab.active {
+  font-weight: 600;
+}
+
+.mini-item.selected {
+  background: rgba(255, 215, 0, 0.25);
   border-color: var(--accent-gold);
 }
 

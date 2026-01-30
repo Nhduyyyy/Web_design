@@ -4,7 +4,6 @@ import Header from './components/Header'
 import Hero from './components/Hero'
 import MaskGallery from './components/MaskGallery'
 import CharacterShowcase from './components/CharacterShowcase'
-import AIExplainer from './components/AIExplainer'
 import CameraExperience from './components/CameraExperience'
 import TuongPerformance from './components/TuongPerformance'
 import Viewer3D from './components/Viewer3D'
@@ -27,19 +26,17 @@ function App() {
           transition={{ duration: 0.5 }}
         >
           <Hero setActiveSection={setActiveSection} />
-          <MaskGallery 
-            selectedItem={selectedItem} 
-            setSelectedItem={setSelectedItem}
-          />
+          <div id="mask-gallery">
+            <MaskGallery 
+              selectedItem={selectedItem} 
+              setSelectedItem={setSelectedItem}
+            />
+          </div>
           <CharacterShowcase 
             selectedItem={selectedItem} 
             setSelectedItem={setSelectedItem}
           />
         </motion.div>
-      )}
-
-      {activeSection === 'explore' && (
-        <AIExplainer selectedItem={selectedItem} />
       )}
 
       {activeSection === 'experience' && (

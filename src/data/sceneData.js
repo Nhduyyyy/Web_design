@@ -333,4 +333,20 @@ export const sceneList = [
   { id: 3, name: 'Cảnh 3: Doanh Trại', sceneId: 3 }
 ]
 
+// Danh sách đạo cụ có file 3D — dùng cho tab 3D View / Đạo cụ
+export function getObjectModelsList() {
+  const list = []
+  let idx = 0
+  Object.values(sceneObjects).forEach((arr) => {
+    arr.forEach((obj) => {
+      if (obj.modelPath) {
+        list.push({ ...obj, listId: ++idx })
+      }
+    })
+  })
+  return list
+}
+
+export const objectModelsList = getObjectModelsList()
+
 

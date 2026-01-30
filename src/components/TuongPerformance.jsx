@@ -43,6 +43,13 @@ const performances = [
   }
 ]
 
+// Lịch diễn mẫu — có thể kết nối API thật sau
+const scheduleData = [
+  { id: 1, title: 'Quan Công', venue: 'Nhà hát Tuồng Việt Nam', date: '15/02/2026', time: '19:30', city: 'Hà Nội' },
+  { id: 2, title: 'Thị Kính', venue: 'Nhà hát Nghệ thuật Truyền thống', date: '22/02/2026', time: '20:00', city: 'TP.HCM' },
+  { id: 3, title: 'Tam Quốc', venue: 'Trung tâm Văn hóa', date: '01/03/2026', time: '19:00', city: 'Đà Nẵng' }
+]
+
 function TuongPerformance() {
   const [selectedPerformance, setSelectedPerformance] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -211,18 +218,68 @@ function TuongPerformance() {
                   </ul>
                 </div>
                 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="interactive-btn"
-                  onClick={() => setShowInteractiveScene(true)}
-                >
-                  🎯 Khám Phá Cảnh Tương Tác
-                </motion.button>
+                <div className="player-actions">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="interactive-btn"
+                    onClick={() => setShowInteractiveScene(true)}
+                  >
+                    🎯 Khám Phá Cảnh Tương Tác
+                  </motion.button>
+                  <motion.a
+                    href="#"
+                    className="interactive-btn secondary"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    🎫 Đặt vé xem trực tiếp
+                  </motion.a>
+                </div>
               </div>
             </motion.div>
           )}
         </div>
+
+        <section className="schedule-section">
+          <h3 className="schedule-title">
+            <span className="schedule-icon">📅</span> Lịch Diễn Sắp Tới
+          </h3>
+          <p className="schedule-intro">
+            Xem Tuồng trực tiếp tại rạp — đặt vé trước để chọn chỗ ngồi đẹp.
+          </p>
+          <div className="schedule-grid">
+            {scheduleData.map((show) => (
+              <motion.div
+                key={show.id}
+                className="schedule-card"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: show.id * 0.1 }}
+              >
+                <div className="schedule-card-header">
+                  <span className="schedule-emoji">🎭</span>
+                  <h4>{show.title}</h4>
+                </div>
+                <ul className="schedule-details">
+                  <li>📍 {show.venue}</li>
+                  <li>🏙️ {show.city}</li>
+                  <li>📆 {show.date} — {show.time}</li>
+                </ul>
+                <motion.a
+                  href="#"
+                  className="schedule-cta"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={(e) => e.preventDefault()}
+                >
+                  🎫 Đặt vé
+                </motion.a>
+              </motion.div>
+            ))}
+          </div>
+        </section>
 
         <div className="performance-info-section">
           <h3>Về Nghệ Thuật Tuồng</h3>
