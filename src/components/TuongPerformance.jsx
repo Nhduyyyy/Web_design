@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import InteractiveScene from './InteractiveScene'
+import Schedule from './Schedule'
+import LiveStream from './LiveStream'
+import Events from './Events'
 import './TuongPerformance.css'
 
 const performances = [
@@ -106,22 +109,71 @@ const performances = [
   }
 ]
 
-function TuongPerformance({ setActiveSection }) {
-  const [selectedPerformance, setSelectedPerformance] = useState(performances[2]) // Trần Bình Trọng
+// Schedule uses shared `src/data/scheduleData.js` for the canonical event list
+
+const TABS = [
+  { id: 'watch', label: 'Vở diễn', icon: '🎬' },
+  { id: 'schedule', label: 'Lịch diễn', icon: '📅' },
+  { id: 'livestream', label: 'Live Stream', icon: '📡' },
+  { id: 'events', label: 'Sự Kiện', icon: '🎭' },
+  { id: 'about', label: 'Giới thiệu', icon: '📚' }
+]
+
+// Small helper to highlight matched query in UI — file-local, lightweight
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+function Highlight({ text = '', query = '' }) {
+  if (!query) return <span>{text}</span>
+  const re = new RegExp(`(${escapeRegExp(query)})`, 'gi')
+  const parts = String(text).split(re)
+  return (
+    <span>
+      {parts.map((part, i) => (
+        re.test(part) ? <mark key={i}>{part}</mark> : <span key={i}>{part}</span>
+      ))}
+    </span>
+  )
+}
+function TuongPerformance() {
+  const [activeTab, setActiveTab] = useState('watch')
+  const [selectedPerformance, setSelectedPerformance] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0) // centiseconds
   const [progressPercent, setProgressPercent] = useState(0)
   const [showInteractiveScene, setShowInteractiveScene] = useState(false)
 
-  const totalMinutes = selectedPerformance ? parseInt(selectedPerformance.durationShort?.replace(/\D/g, '') || '60', 10) : 60
-  const totalCentisec = totalMinutes * 60 * 100
+  // Search UI (watch tab)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const intervalRef = useRef(null)
 
-  const formatTime = (centisec) => {
-    const sec = Math.floor(centisec / 100)
-    const m = Math.floor(sec / 60)
-    const s = sec % 60
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-  }
+  // debounce search input (250ms)
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 250)
+    return () => clearTimeout(id)
+  }, [searchQuery])
+
+  // Filter performances by debounced query (cheap client-side filter)
+  const filteredPerformances = useMemo(() => {
+    const q = (debouncedQuery || '').toLowerCase()
+    if (!q) return performances
+    return performances.filter((p) => {
+      if (p.title?.toLowerCase().includes(q)) return true
+      if (p.description?.toLowerCase().includes(q)) return true
+      if (p.category?.toLowerCase().includes(q)) return true
+      if (p.scenes && p.scenes.some(s => s.name.toLowerCase().includes(q))) return true
+      return false
+    })
+  }, [debouncedQuery])
+
+  // Deselect selected performance if it is filtered out
+  useEffect(() => {
+    if (selectedPerformance && !filteredPerformances.find(p => p.id === selectedPerformance.id)) {
+      setSelectedPerformance(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery])
 
   const handlePlay = () => {
     setIsPlaying(true)
@@ -137,9 +189,23 @@ function TuongPerformance({ setActiveSection }) {
         return next
       })
     }, 100)
+    intervalRef.current = interval
   }
 
-  const handlePause = () => setIsPlaying(false)
+  const handlePause = () => {
+    setIsPlaying(false)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+  }
+
+  // cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [])
 
   if (showInteractiveScene && selectedPerformance) {
     return (
@@ -152,53 +218,83 @@ function TuongPerformance({ setActiveSection }) {
   }
 
   return (
-    <div className="tuong-performance luxury-streaming">
-      <header className="tuong-streaming-header">
-        <nav className="header-nav">
-          <button type="button" className="nav-link active">VỞ DIỄN</button>
-          <button type="button" className="nav-link">LỊCH DIỄN</button>
-          <button type="button" className="nav-link">GIỚI THIỆU</button>
-        </nav>
-      </header>
-
-      <main className="tuong-streaming-main">
-        <div className="sidebar-plays">
-          <div className="sidebar-header">
-            <h2 className="font-display sidebar-title">Danh Sách Vở Tuồng</h2>
-            <span className="sidebar-count">{performances.length} TÁC PHẨM</span>
-          </div>
-          <div className="play-list custom-scrollbar">
-            {performances.map((p) => (
-              <motion.div
-                key={p.id}
-                className={`play-card ${selectedPerformance?.id === p.id ? 'selected gold-gradient-border' : ''}`}
-                onClick={() => setSelectedPerformance(p)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+    <div className="tuong-performance">
+      <div className="container">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="performance-header"
+        >
+          <h2 className="section-title">Xem Tuồng</h2>
+          <p className="section-subtitle">
+            Khám phá các vở Tuồng truyền thống Việt Nam
+          </p>
+          <nav className="performance-tabs" aria-label="Chọn mục">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`performance-tab ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
               >
-                <div className="play-card-inner">
-                  <div className="play-card-thumb">
-                    <img src={p.thumb} alt="" />
-                    <div className="play-card-overlay">
-                      <span className="material-icons-round">play_circle</span>
-                    </div>
-                  </div>
-                  <div className="play-card-body">
-                    <div className="play-card-meta">
-                      <span className={`tag tag-${p.categoryStyle || 'accent'}`}>{p.category}</span>
-                      <span className="duration">
-                        <span className="material-icons-round">schedule</span>
-                        {p.durationShort}
-                      </span>
-                    </div>
-                    <h3 className="font-display play-card-title">{p.title}</h3>
-                    <p className="play-card-desc">{p.description}</p>
-                  </div>
-                </div>
-              </motion.div>
+                <span className="tab-icon">{tab.icon}</span>
+                <span className="tab-label">{tab.label}</span>
+              </button>
             ))}
+          </nav>
+        </motion.div>
+
+        {activeTab === 'watch' && (
+        <div className="performance-content">
+          <div className="performance-list">
+            <h3>Danh Sách Vở Tuồng</h3>
+
+            <div className="performance-search" aria-hidden={activeTab !== 'watch'}>
+              <div className="search-bar" role="search" aria-label="Tìm vở diễn">
+                <input
+                  className="search-input"
+                  placeholder="Tìm vở, thể loại, cảnh..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Tìm vở, thể loại, cảnh"
+                />
+                {searchQuery ? (
+                  <button className="search-clear" aria-label="Xóa tìm kiếm" onClick={() => setSearchQuery('')}>✕</button>
+                ) : null}
+                <div className="search-count" aria-live="polite">{filteredPerformances.length} kết quả</div>
+              </div>
+            </div>
+
+            <div className="performance-grid">
+              {filteredPerformances.map((performance, index) => (
+                <motion.div
+                  key={performance.id}
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.06 }}
+                  className={`performance-card ${
+                    selectedPerformance?.id === performance.id ? 'selected' : ''
+                  }`}
+                  onClick={() => setSelectedPerformance(performance)}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <div className="performance-thumbnail">
+                    <div className="thumbnail-placeholder">
+                      <span style={{ fontSize: '4rem' }}>🎭</span>
+                    </div>
+                  </div>
+                  <div className="performance-info">
+                    <h4><Highlight text={performance.title} query={debouncedQuery} /></h4>
+                    <p><Highlight text={performance.description} query={debouncedQuery} /></p>
+                    <div className="performance-meta">
+                      <span>⏱️ {performance.duration}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
 
         <div className="main-content custom-scrollbar">
           <div className="video-block red-glow">
@@ -317,29 +413,58 @@ function TuongPerformance({ setActiveSection }) {
                     </div>
                   ))}
                 </div>
-              </section>
-
-              <div className="cta-row">
-                <motion.button
-                  type="button"
-                  className="btn-gold"
-                  onClick={() => setShowInteractiveScene(true)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <span className="material-icons-round">flare</span>
-                  Khám Phá Cảnh Tương Tác
-                </motion.button>
-                <motion.button
-                  type="button"
-                  className="btn-outline-red"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <span className="material-icons-round">local_activity</span>
-                  Đặt vé xem trực tiếp
-                </motion.button>
+                
+                <div className="player-actions">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="interactive-btn"
+                    onClick={() => setShowInteractiveScene(true)}
+                  >
+                    🎯 Khám Phá Cảnh Tương Tác
+                  </motion.button>
+                  <motion.a
+                    href="#"
+                    className="interactive-btn secondary"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    🎫 Đặt vé xem trực tiếp
+                  </motion.a>
+                </div>
               </div>
+            </motion.div>
+          )}
+        </div>
+        )}
+
+        {activeTab === 'schedule' && (
+          <div className="performance-schedule">
+            <Schedule />
+          </div>
+        )}
+
+        {activeTab === 'livestream' && (
+          <div className="performance-livestream">
+            <LiveStream />
+          </div>
+        )}
+
+        {activeTab === 'events' && (
+          <div className="performance-events">
+            <Events />
+          </div>
+        )}
+
+        {activeTab === 'about' && (
+        <div className="performance-info-section performance-info-section-standalone">
+          <h3>Về Nghệ Thuật Tuồng</h3>
+          <div className="info-grid">
+            <div className="info-card">
+              <span className="info-icon">📚</span>
+              <h4>Lịch Sử</h4>
+              <p>Tuồng là loại hình nghệ thuật sân khấu cổ truyền của Việt Nam, xuất hiện từ thế kỷ 17</p>
             </div>
           )}
         </div>
