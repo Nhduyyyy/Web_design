@@ -1,0 +1,210 @@
+/* Trang Giới thiệu — Về Nghệ Thuật Tuồng (theo HTML mẫu) */
+
+.about-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, #120808 0%, #1a0a0a 35%, #2d0f0f 60%, transparent 85%),
+    linear-gradient(180deg, #0f0808 0%, #1f0a0a 25%, #3d0f0f 50%, #4a1515 75%, #551a1a 100%);
+  color: #e2e8f0;
+  font-family: 'Be Vietnam Pro', 'Inter', system-ui, sans-serif;
+  padding: 6.5rem 0 4rem;
+}
+
+.about-page-inner {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ========== Header ========== */
+.about-header {
+  margin-bottom: 5rem;
+  text-align: center;
+  position: relative;
+}
+
+.about-header-line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -2rem);
+  width: 8rem;
+  height: 4px;
+  background: rgba(212, 175, 55, 0.2);
+}
+
+.about-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.gold-gradient-text {
+  background: linear-gradient(to bottom, #D4AF37 0%, #F1D592 50%, #B8860B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.about-intro {
+  max-width: 42rem;
+  margin: 0 auto;
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ========== Grid 3 cột ========== */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .about-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ========== Premium card ========== */
+.about-card.premium-card {
+  background: linear-gradient(145deg, #121212 0%, #080808 100%);
+  border-top: 2px solid #E63946;
+  box-shadow: 0 -10px 20px -10px rgba(230, 57, 70, 0.3);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+    box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.about-card.premium-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 -12px 25px -5px rgba(230, 57, 70, 0.5), 0 10px 20px rgba(0, 0, 0, 0.5);
+}
+
+.about-card-icon-wrap {
+  margin-bottom: 1.5rem;
+}
+
+.about-card-icon-wrap .about-card-icon,
+.about-page .about-card .material-symbols-outlined.about-card-icon {
+  font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 48;
+  color: #D4AF37;
+  font-size: 3rem;
+}
+
+.about-card-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #D4AF37;
+  margin: 0 0 1rem 0;
+  transition: color 0.3s;
+}
+
+.about-card.premium-card:hover .about-card-title {
+  color: #fff;
+}
+
+.about-card-desc {
+  color: #94a3b8;
+  line-height: 1.6;
+  margin: 0 0 2rem 0;
+  flex-grow: 1;
+  font-size: 0.9375rem;
+}
+
+.about-card-cta {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(230, 57, 70, 0.8);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.about-card-cta:hover {
+  color: #E63946;
+}
+
+.about-card-cta-icon {
+  margin-left: 0.5rem;
+  font-size: 1rem !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  color: inherit !important;
+}
+
+/* Ornament (icon mờ góc phải dưới) */
+.about-card-ornament {
+  position: absolute;
+  bottom: -2.5rem;
+  right: -2.5rem;
+  pointer-events: none;
+  opacity: 0.15;
+  filter: brightness(0) saturate(100%) invert(75%) sepia(44%) saturate(441%) hue-rotate(3deg) brightness(91%) contrast(88%);
+  transition: transform 0.7s;
+}
+
+.about-card.premium-card:hover .about-card-ornament {
+  transform: scale(1.1);
+}
+
+.about-card-ornament .material-symbols-outlined {
+  font-size: 11.25rem;
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 48;
+  color: #D4AF37;
+}
+
+/* ========== Footer ========== */
+.about-footer {
+  margin-top: 6rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.about-footer-deco {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.about-footer-line {
+  display: inline-block;
+  width: 3rem;
+  height: 1px;
+  background: rgba(212, 175, 55, 0.3);
+}
+
+.about-footer-icon {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  color: #D4AF37 !important;
+  font-size: 1.25rem;
+}
+
+.about-footer-copy {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #64748b;
+}

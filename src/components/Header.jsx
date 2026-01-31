@@ -37,16 +37,16 @@ function Header({ activeSection, setActiveSection }) {
         {/* Right Navigation */}
         <div className="header-right">
           <button 
-            className={`header-btn ${activeSection === 'tryRole' ? 'active' : ''}`}
-            onClick={() => setActiveSection('tryRole')}
-          >
-            Thử vai
-          </button>
-          <button 
             className={`header-btn ${activeSection === 'learning' ? 'active' : ''}`}
             onClick={() => setActiveSection('learning')}
           >
             Học tập
+          </button>
+          <button 
+            className={`header-btn ${activeSection === 'tryRole' ? 'active' : ''}`}
+            onClick={() => setActiveSection('tryRole')}
+          >
+            Giới thiệu
           </button>
         </div>
       </div>

@@ -112,11 +112,10 @@ const performances = [
 // Schedule uses shared `src/data/scheduleData.js` for the canonical event list
 
 const TABS = [
-  { id: 'watch', label: 'Vở diễn', icon: '🎬' },
-  { id: 'schedule', label: 'Lịch diễn', icon: '📅' },
-  { id: 'livestream', label: 'Live Stream', icon: '📡' },
-  { id: 'events', label: 'Sự Kiện', icon: '🎭' },
-  { id: 'about', label: 'Giới thiệu', icon: '📚' }
+  { id: 'watch', label: 'Vở diễn' },
+  { id: 'schedule', label: 'Lịch diễn' },
+  { id: 'livestream', label: 'Live Stream' },
+  { id: 'events', label: 'Sự Kiện' }
 ]
 
 // Chuyển centi-giây (currentTime) thành chuỗi "M:SS" hoặc "H:MM:SS"
@@ -250,7 +249,6 @@ function TuongPerformance({ setActiveSection }) {
               className={`tp-nav-link ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
             >
-              <span className="tp-tab-icon">{tab.icon}</span>
               <span className="tp-tab-label">{tab.label}</span>
             </button>
           ))}
@@ -258,7 +256,12 @@ function TuongPerformance({ setActiveSection }) {
       </header>
 
       {activeTab === 'watch' && (
-        <main className="tp-main">
+        <motion.main
+          className="tp-main"
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
           <div className="tp-sidebar">
             <div className="tp-sidebar-head">
               <h2 className="tp-sidebar-title">Danh Sách Vở Tuồng</h2>
@@ -452,13 +455,18 @@ function TuongPerformance({ setActiveSection }) {
               </div>
             )}
           </div>
-        </main>
+        </motion.main>
       )}
 
       {activeTab === 'schedule' && (
-        <div className="tp-other-tab">
+        <motion.div
+          className="tp-other-tab"
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
           <Schedule />
-        </div>
+        </motion.div>
       )}
       {activeTab === 'livestream' && (
         <div className="tp-other-tab">
@@ -468,18 +476,6 @@ function TuongPerformance({ setActiveSection }) {
       {activeTab === 'events' && (
         <div className="tp-other-tab">
           <Events />
-        </div>
-      )}
-      {activeTab === 'about' && (
-        <div className="tp-other-tab tp-about">
-          <h3 className="tp-sidebar-title">Về Nghệ Thuật Tuồng</h3>
-          <div className="tp-info-grid">
-            <div className="tp-info-card">
-              <span className="tp-info-icon">📚</span>
-              <h4>Lịch Sử</h4>
-              <p>Tuồng là loại hình nghệ thuật sân khấu cổ truyền của Việt Nam, xuất hiện từ thế kỷ 17</p>
-            </div>
-          </div>
         </div>
       )}
 

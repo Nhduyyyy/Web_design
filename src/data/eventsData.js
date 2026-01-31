@@ -1,4 +1,16 @@
-// Events data: Workshops, Tours, Meet Artists
+// Events data: Workshops, Tours, Meet Artists — thumbnail từ public/weights + public/characters (tránh trùng)
+
+const THUMBNAIL_IMAGES = [
+  '/weights/1d8b9717-9762-4cf0-8319-2d2d94adcb9e.jpg',
+  '/weights/image.jpg',
+  '/characters/nv đào.png',
+  '/characters/nv kép.png',
+  '/characters/nv lão.png',
+  '/characters/nv mụ.png',
+  '/characters/nv nịnh.png',
+  '/characters/nv tướng.png',
+  '/characters/nv yêu đạo.png'
+]
 
 export const events = [
   {
@@ -6,7 +18,7 @@ export const events = [
     type: 'workshop',
     title: 'Workshop Vẽ Mặt Nạ Tuồng',
     description: 'Học cách vẽ mặt nạ Tuồng truyền thống với nghệ sĩ chuyên nghiệp. Bạn sẽ được hướng dẫn từng bước để tạo ra chiếc mặt nạ của riêng mình.',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Workshop+Vẽ+Mặt+Nạ',
+    thumbnail: THUMBNAIL_IMAGES[2],
     date: '2026-03-20T10:00:00+07:00',
     duration: 180, // minutes
     venue: {
@@ -28,7 +40,7 @@ export const events = [
     type: 'workshop',
     title: 'Workshop Hóa Trang Cơ Bản Tuồng',
     description: 'Khám phá nghệ thuật hóa trang Tuồng. Học các kỹ thuật cơ bản để tạo ra các nhân vật Tuồng cổ điển.',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Workshop+Hóa+Trang',
+    thumbnail: THUMBNAIL_IMAGES[3],
     date: '2026-03-22T14:00:00+07:00',
     duration: 120, // minutes
     venue: {
@@ -50,7 +62,7 @@ export const events = [
     type: 'tour',
     title: 'Tour Backstage - Khám Phá Hậu Trường',
     description: 'Tham quan hậu trường nhà hát, xem cách chuẩn bị cho một buổi diễn Tuồng. Gặp gỡ đội ngũ kỹ thuật và nghệ sĩ.',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Tour+Backstage',
+    thumbnail: THUMBNAIL_IMAGES[4],
     date: '2026-03-18T09:00:00+07:00',
     duration: 90, // minutes
     venue: {
@@ -72,7 +84,7 @@ export const events = [
     type: 'tour',
     title: 'Tour Backstage - Đà Nẵng',
     description: 'Khám phá hậu trường tại Đà Nẵng, tìm hiểu về quy trình sản xuất và chuẩn bị cho các vở diễn.',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Tour+Backstage+DN',
+    thumbnail: THUMBNAIL_IMAGES[5],
     date: '2026-03-25T10:00:00+07:00',
     duration: 90,
     venue: {
@@ -94,7 +106,7 @@ export const events = [
     type: 'meet-artist',
     title: 'Gặp Gỡ Nghệ Sĩ - Buổi Trò Chuyện Đặc Biệt',
     description: 'Gặp gỡ và trò chuyện với các nghệ sĩ Tuồng nổi tiếng. Tìm hiểu về cuộc sống và sự nghiệp của họ.',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Gặp+Gỡ+Nghệ+Sĩ',
+    thumbnail: THUMBNAIL_IMAGES[6],
     date: '2026-03-21T19:00:00+07:00',
     duration: 120,
     venue: {
@@ -116,7 +128,7 @@ export const events = [
     type: 'meet-artist',
     title: 'Gặp Gỡ Nghệ Sĩ - Masterclass',
     description: 'Lớp học đặc biệt với nghệ sĩ master. Học các kỹ thuật nâng cao và chia sẻ kinh nghiệm.',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Masterclass',
+    thumbnail: THUMBNAIL_IMAGES[7],
     date: '2026-03-24T15:00:00+07:00',
     duration: 150,
     venue: {
@@ -138,7 +150,7 @@ export const events = [
     type: 'workshop',
     title: 'Workshop Vẽ Mặt Nạ - Trẻ Em',
     description: 'Workshop đặc biệt dành cho trẻ em từ 8-15 tuổi. Học vẽ mặt nạ Tuồng trong môi trường vui vẻ và an toàn.',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Workshop+Trẻ+Em',
+    thumbnail: THUMBNAIL_IMAGES[8],
     date: '2026-03-19T09:00:00+07:00',
     duration: 120,
     venue: {
@@ -182,6 +194,17 @@ export function formatEventDate(dateString) {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+/** Định dạng cho card: "09:00 Thứ Tư, 18 tháng 3, 2026" */
+export function formatEventDateForCard(dateString) {
+  const d = new Date(dateString)
+  const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false })
+  const weekday = d.toLocaleDateString('vi-VN', { weekday: 'long' })
+  const day = d.getDate()
+  const month = d.getMonth() + 1
+  const year = d.getFullYear()
+  return `${time} ${weekday}, ${day} tháng ${month}, ${year}`
 }
 
 export function formatDuration(minutes) {

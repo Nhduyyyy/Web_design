@@ -7,10 +7,10 @@ import { validateStreamAccess, validateReplayAccess, validatePayment } from '../
 import './LiveStream.css'
 
 const REPLAY_TYPES = [
-  { id: 'all', label: 'Tất cả', icon: '📺' },
-  { id: 'free', label: 'Miễn phí', icon: '🆓' },
-  { id: 'paid', label: 'Trả phí', icon: '💰' },
-  { id: 'ad-supported', label: 'Có quảng cáo', icon: '📢' }
+  { id: 'all', label: 'Tất cả' },
+  { id: 'free', label: 'Miễn phí' },
+  { id: 'paid', label: 'Trả phí' },
+  { id: 'ad-supported', label: 'Có quảng cáo' }
 ]
 
 export default function LiveStream() {
@@ -110,29 +110,20 @@ export default function LiveStream() {
       <div className="container">
         {/* Live Streams Section */}
         <section className="live-streams-section">
-          <div className="section-header">
-            <h2>📡 Live Stream</h2>
-            <p className="section-description">
-              Xem trực tiếp các buổi diễn Tuồng đang diễn ra hoặc sắp diễn ra
+          <header className="ls-header">
+            <h1 className="ls-header-title">Live Stream</h1>
+            <p className="ls-header-desc">
+              Trải nghiệm nghệ thuật Tuồng cổ truyền qua những buổi phát sóng trực tiếp chất lượng cao.
             </p>
-          </div>
+          </header>
 
           {streamError && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="stream-error"
-              style={{
-                background: '#fff1f2',
-                border: '2px solid #f44336',
-                color: '#c62828',
-                padding: '1rem',
-                borderRadius: '8px',
-                marginBottom: '1.5rem',
-                fontWeight: 600
-              }}
             >
-              ⚠️ {streamError}
+              {streamError}
             </motion.div>
           )}
 
@@ -150,26 +141,22 @@ export default function LiveStream() {
                   className={`stream-card ${stream.status}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  whileHover={{ scale: 1.02, y: -5 }}
+                  whileHover={{ y: -4 }}
                   onClick={() => handleWatchLive(stream)}
                 >
-                  <div className="stream-thumbnail">
+                  <div className="stream-thumbnail cinematic-gradient">
                     <img src={stream.thumbnail} alt={stream.title} />
                     {stream.status === 'live' && (
                       <div className="live-badge">
-                        <span className="live-dot"></span>
+                        <span className="live-dot" />
                         ĐANG PHÁT TRỰC TIẾP
                       </div>
                     )}
                     {stream.status === 'upcoming' && (
-                      <div className="upcoming-badge">
-                        SẮP PHÁT SÓNG
-                      </div>
+                      <div className="upcoming-badge">SẮP PHÁT SÓNG</div>
                     )}
                     {!stream.isFree && (
-                      <div className="price-badge">
-                        {formatPrice(stream.price)}
-                      </div>
+                      <div className="price-badge">{formatPrice(stream.price)}</div>
                     )}
                   </div>
                   <div className="stream-info">
@@ -177,30 +164,24 @@ export default function LiveStream() {
                     <p className="stream-description">{stream.description}</p>
                     <div className="stream-meta">
                       <div className="meta-item">
-                        <span className="meta-icon">👥</span>
-                        <span>{stream.viewers.toLocaleString()} người xem</span>
+                        <span className="meta-icon" aria-hidden />
+                        <span>{stream.status === 'live' ? `${stream.viewers.toLocaleString()} người đang xem` : 'Chưa bắt đầu'}</span>
                       </div>
                       <div className="meta-item">
-                        <span className="meta-icon">🏢</span>
+                        <span className="meta-icon" aria-hidden />
                         <span>{stream.partner}</span>
                       </div>
                       <div className="meta-item">
-                        <span className="meta-icon">🕐</span>
-                        <span>{new Date(stream.startTime).toLocaleString('vi-VN')}</span>
+                        <span className="meta-icon" aria-hidden />
+                        <span>{new Date(stream.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} • {new Date(stream.startTime).toLocaleDateString('vi-VN')}</span>
                       </div>
                     </div>
-                    <div className="stream-actions">
-                      {stream.status === 'live' && (
-                        <button className="btn-watch-live">
-                          ▶️ Xem ngay
-                        </button>
-                      )}
-                      {stream.status === 'upcoming' && (
-                        <button className="btn-watch-upcoming" disabled>
-                          ⏰ Sắp phát sóng
-                        </button>
-                      )}
-                    </div>
+                    {stream.status === 'live' && (
+                      <button type="button" className="btn-watch-live">Xem ngay</button>
+                    )}
+                    {stream.status === 'upcoming' && (
+                      <button type="button" className="btn-watch-upcoming">Đặt lịch nhắc</button>
+                    )}
                   </div>
                 </motion.div>
               ))}
@@ -210,23 +191,20 @@ export default function LiveStream() {
 
         {/* Replays Section */}
         <section className="replays-section">
-          <div className="section-header">
-            <h2>📼 Replay</h2>
-            <p className="section-description">
-              Xem lại các buổi diễn đã qua - miễn phí, trả phí hoặc với quảng cáo
-            </p>
-          </div>
+          <header className="ls-header">
+            <h2 className="ls-header-title">Replay</h2>
+            <p className="ls-header-desc">Xem lại các buổi diễn đã qua - miễn phí, trả phí hoặc với quảng cáo</p>
+          </header>
 
-          {/* Filter Tabs */}
           <div className="replay-filters">
             {REPLAY_TYPES.map((type) => (
               <button
                 key={type.id}
+                type="button"
                 className={`filter-tab ${replayFilter === type.id ? 'active' : ''}`}
                 onClick={() => setReplayFilter(type.id)}
               >
-                <span className="filter-icon">{type.icon}</span>
-                <span className="filter-label">{type.label}</span>
+                {type.label}
               </button>
             ))}
           </div>
@@ -244,27 +222,21 @@ export default function LiveStream() {
                   className="replay-card"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  whileHover={{ scale: 1.02, y: -5 }}
+                  whileHover={{ y: -4 }}
                 >
                   <div className="replay-thumbnail">
                     <img src={replay.thumbnail} alt={replay.title} />
                     <div className="replay-overlay">
-                      <div className="play-button">▶️</div>
+                      <div className="play-button" aria-hidden>▶</div>
                     </div>
                     {replay.accessType === 'paid' && (
-                      <div className="price-badge">
-                        {formatPrice(replay.price)}
-                      </div>
+                      <div className="price-badge">{formatPrice(replay.price)}</div>
                     )}
                     {replay.accessType === 'ad-supported' && (
-                      <div className="ad-badge">
-                        📢 Có quảng cáo
-                      </div>
+                      <div className="ad-badge">CÓ QUẢNG CÁO</div>
                     )}
                     {replay.accessType === 'free' && (
-                      <div className="free-badge">
-                        🆓 Miễn phí
-                      </div>
+                      <div className="free-badge">MIỄN PHÍ</div>
                     )}
                   </div>
                   <div className="replay-info">
@@ -272,31 +244,28 @@ export default function LiveStream() {
                     <p className="replay-description">{replay.description}</p>
                     <div className="replay-meta">
                       <div className="meta-item">
-                        <span className="meta-icon">⏱️</span>
                         <span>{formatDuration(replay.duration)}</span>
                       </div>
                       <div className="meta-item">
-                        <span className="meta-icon">👁️</span>
                         <span>{replay.views.toLocaleString()} lượt xem</span>
                       </div>
                       <div className="meta-item">
-                        <span className="meta-icon">📅</span>
                         <span>{new Date(replay.originalDate).toLocaleDateString('vi-VN')}</span>
                       </div>
-                      {replay.accessType === 'ad-supported' && (
+                      {replay.accessType === 'ad-supported' && replay.adCount && (
                         <div className="meta-item">
-                          <span className="meta-icon">📢</span>
                           <span>{replay.adCount} quảng cáo</span>
                         </div>
                       )}
                     </div>
                     <button
+                      type="button"
                       className={`btn-watch-replay ${replay.accessType}`}
                       onClick={() => handleWatchReplay(replay)}
                     >
-                      {replay.accessType === 'paid' && '💰 Mua và xem'}
-                      {replay.accessType === 'ad-supported' && '📢 Xem với quảng cáo'}
-                      {replay.accessType === 'free' && '▶️ Xem miễn phí'}
+                      {replay.accessType === 'paid' && 'Mua và xem'}
+                      {replay.accessType === 'ad-supported' && 'Xem với quảng cáo'}
+                      {replay.accessType === 'free' && 'Xem miễn phí'}
                     </button>
                   </div>
                 </motion.div>
@@ -339,16 +308,8 @@ export default function LiveStream() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="payment-error"
-                    style={{
-                      background: '#fff1f2',
-                      border: '2px solid #f44336',
-                      color: '#c62828',
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      marginBottom: '1rem'
-                    }}
                   >
-                    ⚠️ {paymentResult.message}
+                    {paymentResult.message}
                   </motion.div>
                 )}
               </AnimatePresence>

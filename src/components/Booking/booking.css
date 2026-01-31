@@ -1,9 +1,19 @@
-/* Booking Modal Styles */
+/* Booking Modal — đồng bộ với tông đỏ đậm + vàng của trang */
+:root {
+  --booking-primary: #A01616;
+  --booking-gold: #D4AF37;
+  --booking-bg: #1C1C1C;
+  --booking-surface: #121212;
+  --booking-text: #F5F5F5;
+  --booking-text-muted: rgba(248, 250, 252, 0.7);
+  --booking-border: rgba(212, 175, 55, 0.25);
+}
+
 .booking-modal-overlay {
   position: fixed;
   inset: 0;
-  background: linear-gradient(0deg, rgba(2, 6, 23, 0.7), rgba(2, 6, 23, 0.5));
-  backdrop-filter: blur(4px);
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,25 +23,28 @@
 }
 
 .booking-modal {
-  background: white;
+  background: var(--booking-bg);
+  border: 1px solid var(--booking-border);
   border-radius: 16px;
   max-width: 900px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(212, 175, 55, 0.1);
+  color: var(--booking-text);
+  font-family: 'Be Vietnam Pro', 'Inter', system-ui, sans-serif;
 }
 
 .booking-modal-close {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: transparent;
-  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--booking-border);
   font-size: 1.5rem;
   cursor: pointer;
-  color: #666;
+  color: var(--booking-text-muted);
   z-index: 10;
   width: 32px;
   height: 32px;
@@ -43,8 +56,8 @@
 }
 
 .booking-modal-close:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--booking-text);
 }
 
 /* Progress Steps */
@@ -52,8 +65,8 @@
   display: flex;
   justify-content: space-between;
   padding: 1.5rem 2rem;
-  border-bottom: 2px solid #f0f0f0;
-  background: linear-gradient(180deg, #fafafa, #fff);
+  border-bottom: 1px solid var(--booking-border);
+  background: var(--booking-surface);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -74,7 +87,7 @@
   left: 60%;
   right: -40%;
   height: 2px;
-  background: #e0e0e0;
+  background: rgba(255, 255, 255, 0.1);
   z-index: 0;
 }
 
@@ -84,15 +97,15 @@
 
 .progress-step.active::after,
 .progress-step.completed::after {
-  background: var(--accent, #e74c3c);
+  background: var(--booking-primary);
 }
 
 .step-number {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #e0e0e0;
-  color: #666;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--booking-text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -103,14 +116,15 @@
 }
 
 .progress-step.active .step-number {
-  background: var(--accent, #e74c3c);
+  background: var(--booking-primary);
   color: white;
   transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(160, 22, 22, 0.4);
 }
 
 .progress-step.completed .step-number {
-  background: #4caf50;
-  color: white;
+  background: var(--booking-gold);
+  color: #1a1a1a;
 }
 
 .progress-step.completed .step-number::after {
@@ -121,13 +135,17 @@
 .step-label {
   margin-top: 0.5rem;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--booking-text-muted);
   text-align: center;
 }
 
 .progress-step.active .step-label {
-  color: var(--accent, #e74c3c);
+  color: var(--booking-primary);
   font-weight: 600;
+}
+
+.progress-step.completed .step-label {
+  color: var(--booking-gold);
 }
 
 /* Step Content */
@@ -136,7 +154,8 @@
 }
 
 .event-info-header {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--booking-surface);
+  border: 1px solid var(--booking-border);
   padding: 1rem 1.5rem;
   border-radius: 12px;
   margin-bottom: 1.5rem;
@@ -144,15 +163,16 @@
 
 .event-info-header h3 {
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: var(--booking-text);
   font-size: 1.2rem;
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
 .event-info-meta {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  color: #666;
+  color: var(--booking-text-muted);
   font-size: 0.9rem;
 }
 
@@ -162,18 +182,20 @@
 
 .step-content h2 {
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: var(--booking-text);
   font-size: 1.5rem;
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
 .step-description {
-  color: #666;
+  color: var(--booking-text-muted);
   margin-bottom: 1.5rem;
 }
 
 /* Step 1: Select Show */
 .show-info-card {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--booking-surface);
+  border: 1px solid var(--booking-border);
   padding: 1.5rem;
   border-radius: 12px;
   margin-bottom: 1.5rem;
@@ -181,7 +203,8 @@
 
 .show-info-card h3 {
   margin: 0 0 1rem 0;
-  color: #333;
+  color: var(--booking-text);
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
 .show-details {
@@ -190,14 +213,14 @@
 
 .show-details p {
   margin: 0.5rem 0;
-  color: #555;
+  color: var(--booking-text-muted);
 }
 
 .show-description {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  color: #666;
+  border-top: 1px solid var(--booking-border);
+  color: var(--booking-text-muted);
   font-style: italic;
 }
 
@@ -212,21 +235,23 @@
 }
 
 .stage {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--booking-primary) 0%, #7A1111 100%);
   color: white;
   padding: 1rem 2rem;
   border-radius: 8px;
   font-weight: bold;
   font-size: 1.2rem;
   display: inline-block;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 20px rgba(160, 22, 22, 0.4), inset 0 0 8px rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
 .seating-chart-container {
   overflow-x: auto;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f9fafb;
+  background: var(--booking-surface);
+  border: 1px solid var(--booking-border);
   border-radius: 12px;
 }
 
@@ -246,7 +271,7 @@
   width: 30px;
   text-align: center;
   font-weight: bold;
-  color: #666;
+  color: var(--booking-text-muted);
   font-size: 0.9rem;
 }
 
@@ -260,9 +285,10 @@
 .seat {
   width: 35px;
   height: 35px;
-  border: 2px solid #ddd;
+  border: 2px solid var(--booking-border);
   border-radius: 6px;
-  background: white;
+  background: var(--booking-bg);
+  color: var(--booking-text-muted);
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: 600;
@@ -275,7 +301,7 @@
 
 .seat:hover:not(:disabled) {
   transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 12px rgba(160, 22, 22, 0.3);
 }
 
 .seat:disabled {
@@ -284,50 +310,53 @@
 }
 
 .seat-available {
-  background: #e8f5e9;
-  border-color: #4caf50;
-  color: #2e7d32;
+  background: rgba(212, 175, 55, 0.15);
+  border-color: var(--booking-gold);
+  color: var(--booking-gold);
 }
 
 .seat-selected {
-  background: var(--accent, #e74c3c);
-  border-color: var(--accent, #e74c3c);
+  background: var(--booking-primary);
+  border-color: var(--booking-primary);
   color: white;
   transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(160, 22, 22, 0.5);
 }
 
 .seat-occupied {
-  background: #ffebee;
-  border-color: #f44336;
-  color: #c62828;
+  background: rgba(160, 22, 22, 0.25);
+  border-color: rgba(160, 22, 22, 0.5);
+  color: var(--booking-text-muted);
 }
 
 .seat-vip {
-  border-color: #FFD700;
+  border-color: var(--booking-gold);
 }
 
 .seat-premium {
-  border-color: #FF6B6B;
+  border-color: var(--booking-primary);
 }
 
 .seat-standard {
-  border-color: #4ECDC4;
+  border-color: rgba(212, 175, 55, 0.5);
 }
 
 .seat-economy {
-  border-color: #95E1D3;
+  border-color: rgba(212, 175, 55, 0.35);
 }
 
 .seat-legend {
   margin: 1.5rem 0;
   padding: 1rem;
-  background: #f9fafb;
+  background: var(--booking-surface);
+  border: 1px solid var(--booking-border);
   border-radius: 8px;
 }
 
 .seat-legend h4 {
   margin: 0 0 0.75rem 0;
   font-size: 1rem;
+  color: var(--booking-text);
 }
 
 .legend-items {
@@ -341,21 +370,24 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.9rem;
+  color: var(--booking-text-muted);
 }
 
 .legend-seat {
   width: 24px;
   height: 24px;
-  border: 2px solid #ddd;
+  border: 2px solid var(--booking-border);
   border-radius: 4px;
 }
 
 .selected-seats-summary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--booking-primary) 0%, #7A1111 100%);
   color: white;
   padding: 1.5rem;
   border-radius: 12px;
   margin-bottom: 1.5rem;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: inset 0 0 12px rgba(212, 175, 55, 0.15);
 }
 
 .selected-seats-summary h4 {
@@ -370,7 +402,7 @@
 }
 
 .selected-seat-item {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   padding: 0.5rem 1rem;
   border-radius: 8px;
   display: flex;

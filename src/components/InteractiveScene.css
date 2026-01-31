@@ -7,7 +7,7 @@
   min-height: 100vh;
   background: var(--fp-bg);
   color: #fff;
-  font-family: 'Plus Jakarta Sans', 'Montserrat', sans-serif;
+  font-family: 'Be Vietnam Pro', 'Inter', system-ui, sans-serif;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;

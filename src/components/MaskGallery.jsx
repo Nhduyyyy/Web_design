@@ -3,6 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { maskData } from '../data/tuongData'
 import './MaskGallery.css'
 
+// Trên macOS tên file thường ở dạng NFD; chuẩn hóa path để ảnh load đúng từ public/masks
+function getMaskImageSrc(imagePath) {
+  if (!imagePath || imagePath.startsWith('http')) return imagePath
+  const i = imagePath.lastIndexOf('/')
+  const dir = i >= 0 ? imagePath.slice(0, i + 1) : ''
+  const file = i >= 0 ? imagePath.slice(i + 1) : imagePath
+  const nfdFile = file.normalize('NFD')
+  return dir + encodeURI(nfdFile)
+}
+
 function MaskGallery({ selectedItem, setSelectedItem }) {
   const [hoveredMask, setHoveredMask] = useState(null)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -184,12 +194,20 @@ function MaskGallery({ selectedItem, setSelectedItem }) {
                 >
                   <div
                     className="poster-image"
-                    style={{
-                      background: `linear-gradient(135deg, ${mask.color}40 0%, ${mask.color}20 100%)`,
-                      borderColor: mask.color
-                    }}
+                    style={{ borderColor: mask.color }}
                   >
-                    <span className="poster-emoji">{mask.emoji}</span>
+                    <img
+                      src={getMaskImageSrc(mask.imagePath)}
+                      alt={mask.name}
+                      className="poster-mask-img"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                        const fallback = e.target.nextElementSibling
+                        if (fallback) fallback.style.display = 'inline'
+                      }}
+                    />
+                    <span className="poster-emoji poster-emoji-fallback" style={{ display: 'none' }}>{mask.emoji}</span>
                   </div>
 
                   <AnimatePresence>

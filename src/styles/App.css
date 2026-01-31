@@ -6,6 +6,12 @@
               var(--bg-dark);
 }
 
+/* Wrapper cho hiệu ứng load khi chuyển Trải nghiệm / Xem Tuồng / Giới thiệu */
+.app-section-wrap {
+  width: 100%;
+  min-height: 100%;
+}
+
 .section {
   min-height: 100vh;
   width: 100%;

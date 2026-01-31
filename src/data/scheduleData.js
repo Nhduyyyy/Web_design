@@ -1,72 +1,85 @@
-// Minimal event dataset for the "Lịch diễn" MVP
-// Fields: id, title, showId (references character/performance), description,
-// startDatetime/endDatetime (ISO), timezone, venue, status, tags, ticketUrl
+// Lịch diễn — khớp với danh sách vở diễn trong trang Vở diễn (TuongPerformance)
+// Vở diễn: 1 Sơn Hậu, 2 Đào Tam Xuân, 3 Trần Bình Trọng, 4 San Hậu, 5 Lưu Kim Đính
+// Fields: id, title, showId (trùng id vở diễn), description, startDatetime, endDatetime, venue, status, tags, ticketUrl
 
 export const events = [
   {
     id: 'ev-001',
-    title: 'Tuồng: Quan Công - Chiến Trường',
+    title: 'Sơn Hậu (Tam nữ đồ vương)',
     showId: 1,
-    description: 'Màn tái hiện Quan Công trong cảnh chiến trường. Có võ thuật và múa, đặc tả sự uy nghi của vị tướng trung nghĩa.',
+    description: 'Cuộc chiến giành ngai vàng — hoàng hậu, công chúa, cung nữ bảo vệ hoàng tử, phục hồi triều đình.',
     startDatetime: '2026-03-12T19:00:00+07:00',
-    endDatetime: '2026-03-12T21:00:00+07:00',
+    endDatetime: '2026-03-12T20:30:00+07:00',
     timezone: 'Asia/Ho_Chi_Minh',
     venue: { id: 'v-hn-nk', name: 'Nhà hát Lớn Hà Nội', city: 'Hà Nội', address: '1 Tràng Tiền, Hoàn Kiếm' },
     status: 'scheduled',
-    ticketUrl: null,
-    tags: ['tam-quoc', 'quandong']
+    ticketUrl: 'https://www.nhahatdal.vn/dat-ve',
+    tags: ['cổ điển', 'tam nữ đồ vương']
   },
   {
     id: 'ev-002',
-    title: 'Tuồng: Thị Kính - Gia Đình',
+    title: 'Đào Tam Xuân loạn trào',
     showId: 2,
-    description: 'Câu chuyện Thị Kính với nhiều cảnh cảm động và âm nhạc truyền thống, phản ánh số phận người phụ nữ.',
+    description: 'Nữ tướng bị hãm hại, mất chồng con — đem quân đòi công lý, loạn trào rồi quay về trung nghĩa.',
     startDatetime: '2026-03-13T18:00:00+07:00',
-    endDatetime: '2026-03-13T20:00:00+07:00',
+    endDatetime: '2026-03-13T19:15:00+07:00',
     timezone: 'Asia/Ho_Chi_Minh',
     venue: { id: 'v-hcm-nt', name: 'Nhà hát Thành Phố', city: 'Hồ Chí Minh', address: '7 Công Trường Lam Sơn' },
     status: 'scheduled',
-    ticketUrl: null,
-    tags: ['nu', 'gia-dinh']
+    ticketUrl: 'https://www.nhahatdal.vn/dat-ve',
+    tags: ['truyền thống', 'nữ tướng']
   },
   {
     id: 'ev-003',
-    title: 'Tuồng: Tam Quốc - Doanh Trại (Festival)',
+    title: 'Trần Bình Trọng',
     showId: 3,
-    description: 'Biểu diễn chủ đề Tam Quốc trong khuôn khổ festival văn hóa.',
-    startDatetime: '2026-04-02T17:30:00+07:00',
-    endDatetime: '2026-04-02T19:30:00+07:00',
+    description: 'Tướng nhà Trần bị bắt, quân Nguyên dụ làm vua bù nhìn — "Ta thà làm quỷ nước Nam..." và hi sinh anh dũng.',
+    startDatetime: '2026-03-15T19:00:00+07:00',
+    endDatetime: '2026-03-15T20:00:00+07:00',
     timezone: 'Asia/Ho_Chi_Minh',
-    venue: { id: 'v-dn-fest', name: 'Công viên Bà Nà', city: 'Đà Nẵng', address: 'Bà Nà Hills' },
+    venue: { id: 'v-hn-nk', name: 'Nhà hát Lớn Hà Nội', city: 'Hà Nội', address: '1 Tràng Tiền, Hoàn Kiếm' },
     status: 'scheduled',
-    ticketUrl: 'https://example.com/tickets/ev-003',
-    tags: ['festival', 'tam-quoc']
+    ticketUrl: 'https://www.nhahatdal.vn/dat-ve',
+    tags: ['lịch sử', 'Trần Bình Trọng']
   },
   {
     id: 'ev-004',
-    title: 'Tuồng: Quan Công — Buổi biểu diễn đặc biệt (Hủy)',
-    showId: 1,
-    description: 'Buổi bổ sung nhưng đã bị hủy.',
-    startDatetime: '2026-03-20T19:00:00+07:00',
-    endDatetime: '2026-03-20T21:00:00+07:00',
+    title: 'San Hậu (Hồ Nguyệt Cô hóa cáo)',
+    showId: 4,
+    description: 'Hồ ly tinh tu luyện thành người, yêu tướng quân, bị lừa mất ngọc — mất phép, hóa lại thành cáo.',
+    startDatetime: '2026-03-18T19:00:00+07:00',
+    endDatetime: '2026-03-18T20:20:00+07:00',
     timezone: 'Asia/Ho_Chi_Minh',
-    venue: { id: 'v-hn-ct', name: 'Rạp Cải Lương Truyền Thống', city: 'Hà Nội', address: 'Số 8, Phố X' },
-    status: 'canceled',
-    ticketUrl: null,
-    tags: ['special']
+    venue: { id: 'v-dn-bana', name: 'Công viên Bà Nà', city: 'Đà Nẵng', address: 'Bà Nà Hills' },
+    status: 'scheduled',
+    ticketUrl: 'https://www.nhahatdal.vn/dat-ve',
+    tags: ['truyền thống', 'hồ nguyệt cô']
   },
   {
     id: 'ev-005',
+    title: 'Lưu Kim Đính giải giá Thọ Châu',
+    showId: 5,
+    description: 'Nữ tướng giả trai ra trận, cứu vua bị vây ở Thọ Châu — phá vòng vây, thân phận tiết lộ, được phong thưởng.',
+    startDatetime: '2026-03-20T19:00:00+07:00',
+    endDatetime: '2026-03-20T20:25:00+07:00',
+    timezone: 'Asia/Ho_Chi_Minh',
+    venue: { id: 'v-hcm-nt', name: 'Nhà hát Thành Phố', city: 'Hồ Chí Minh', address: '7 Công Trường Lam Sơn' },
+    status: 'scheduled',
+    ticketUrl: 'https://www.nhahatdal.vn/dat-ve',
+    tags: ['cổ điển', 'nữ tướng']
+  },
+  {
+    id: 'ev-006',
     title: 'Tuồng: Thử vai cộng đồng — Workshop',
     showId: null,
     description: 'Workshop tương tác: thử vai, học kỹ thuật diễn Tuồng cơ bản dành cho những người yêu thích nghệ thuật truyền thống.',
-    startDatetime: '2026-03-18T10:00:00+07:00',
-    endDatetime: '2026-03-18T13:00:00+07:00',
+    startDatetime: '2026-03-22T10:00:00+07:00',
+    endDatetime: '2026-03-22T13:00:00+07:00',
     timezone: 'Asia/Ho_Chi_Minh',
     venue: { id: 'v-hcm-studio', name: 'Studio Văn Hóa', city: 'Hồ Chí Minh', address: '45 Đường Văn Hóa' },
     status: 'scheduled',
-    ticketUrl: 'https://example.com/tickets/ev-005',
-    tags: ['workshop', 'tryrole']
+    ticketUrl: 'https://example.com/tickets/ev-006',
+    tags: ['workshop', 'thử vai']
   }
 ]
 
@@ -76,11 +89,9 @@ export function getCities(eventsList = events) {
   return Array.from(s).sort()
 }
 
-// Canonical accessor that validates events at load time. Returns { events, invalid }
 import { validateEvents } from '../utils/scheduleValidator'
 
 export function getValidatedEvents() {
   const { valid, invalid } = validateEvents(events)
   return { events: valid, invalid }
 }
-

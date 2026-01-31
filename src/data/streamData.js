@@ -1,4 +1,16 @@
-// Live stream and replay data
+// Live stream and replay data — thumbnail từ public/weights + public/characters (tránh trùng)
+
+const THUMBNAIL_IMAGES = [
+  '/weights/1d8b9717-9762-4cf0-8319-2d2d94adcb9e.jpg',
+  '/weights/image.jpg',
+  '/characters/nv đào.png',
+  '/characters/nv kép.png',
+  '/characters/nv lão.png',
+  '/characters/nv mụ.png',
+  '/characters/nv nịnh.png',
+  '/characters/nv tướng.png',
+  '/characters/nv yêu đạo.png'
+]
 
 export const liveStreams = [
   {
@@ -7,7 +19,7 @@ export const liveStreams = [
     description: 'Xem trực tiếp buổi diễn Quan Công với cảnh chiến trường đầy kịch tính',
     eventId: 'ev-001',
     streamUrl: 'https://example.com/stream/live-001',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Live+Stream',
+    thumbnail: THUMBNAIL_IMAGES[0],
     status: 'live', // live, upcoming, ended
     startTime: '2026-03-12T19:00:00+07:00',
     endTime: '2026-03-12T21:00:00+07:00',
@@ -21,7 +33,7 @@ export const liveStreams = [
     description: 'Buổi diễn trực tiếp Thị Kính với nhiều cảnh cảm động',
     eventId: 'ev-002',
     streamUrl: 'https://example.com/stream/live-002',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Live+Stream+2',
+    thumbnail: THUMBNAIL_IMAGES[1],
     status: 'upcoming',
     startTime: '2026-03-13T18:00:00+07:00',
     endTime: '2026-03-13T20:00:00+07:00',
@@ -35,11 +47,11 @@ export const liveStreams = [
 export const replays = [
   {
     id: 'replay-001',
-    title: 'Tuồng: Sơn Hậu (Tam nữ đồ vương) - Replay',
+    title: 'Tuồng: Sơn Hậu (Tam nữ đồ vương)',
     description: 'Cuộc chiến giành ngai vàng với ba người phụ nữ trung nghĩa',
     eventId: 'ev-001',
     streamUrl: 'https://example.com/replay/replay-001',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Replay+1',
+    thumbnail: THUMBNAIL_IMAGES[2],
     originalDate: '2026-02-15T19:00:00+07:00',
     duration: 5400, // seconds (90 minutes)
     accessType: 'free', // free, paid, ad-supported
@@ -49,11 +61,11 @@ export const replays = [
   },
   {
     id: 'replay-002',
-    title: 'Tuồng: Đào Tam Xuân loạn trào - Replay',
-    description: 'Nữ tướng bị hãm hại, đem quân đòi công lý',
+    title: 'Tuồng: Đào Tam Xuân Loạn Trào',
+    description: 'Nữ tướng bị hãm hại, đem quân đòi công lý giữa chốn kinh kỳ.',
     eventId: 'ev-002',
     streamUrl: 'https://example.com/replay/replay-002',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Replay+2',
+    thumbnail: THUMBNAIL_IMAGES[3],
     originalDate: '2026-02-20T18:00:00+07:00',
     duration: 4500, // seconds (75 minutes)
     accessType: 'paid',
@@ -63,11 +75,11 @@ export const replays = [
   },
   {
     id: 'replay-003',
-    title: 'Tuồng: Trần Bình Trọng - Replay',
-    description: 'Tướng nhà Trần hi sinh anh dũng với câu nói nổi tiếng',
+    title: 'Tuồng: Trần Bình Trọng',
+    description: 'Tướng nhà Trần hy sinh anh dũng với câu nói nổi tiếng ngàn đời.',
     eventId: 'ev-003',
     streamUrl: 'https://example.com/replay/replay-003',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Replay+3',
+    thumbnail: THUMBNAIL_IMAGES[4],
     originalDate: '2026-02-25T19:00:00+07:00',
     duration: 3600, // seconds (60 minutes)
     accessType: 'ad-supported', // Xem với quảng cáo
@@ -82,7 +94,7 @@ export const replays = [
     description: 'Hồ ly tinh tu luyện thành người, bi kịch tình yêu',
     eventId: 'ev-004',
     streamUrl: 'https://example.com/replay/replay-004',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Replay+4',
+    thumbnail: THUMBNAIL_IMAGES[5],
     originalDate: '2026-03-01T19:00:00+07:00',
     duration: 4800, // seconds (80 minutes)
     accessType: 'paid',
@@ -96,7 +108,7 @@ export const replays = [
     description: 'Nữ tướng giả trai ra trận, cứu vua bị vây',
     eventId: 'ev-005',
     streamUrl: 'https://example.com/replay/replay-005',
-    thumbnail: 'https://via.placeholder.com/640x360?text=Replay+5',
+    thumbnail: THUMBNAIL_IMAGES[6],
     originalDate: '2026-03-05T19:00:00+07:00',
     duration: 5100, // seconds (85 minutes)
     accessType: 'free',

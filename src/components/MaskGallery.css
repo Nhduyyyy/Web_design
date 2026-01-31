@@ -1,9 +1,9 @@
-/* Page 2: 3D Carousel Mask Gallery - Theme đen với điểm nhấn đỏ, vàng kim */
+/* Page 2: 3D Carousel Mask Gallery - Nền đỏ tươi hơn để mặt nạ tối nổi bật */
 .mask-gallery {
   width: 100%;
   height: 100vh;
   padding: 4rem 0;
-  background: linear-gradient(135deg, #000000 0%, #0a0000 25%, #1a0000 50%, #0a0000 75%, #000000 100%);
+  background: linear-gradient(135deg, #150505 0%, #250808 25%, #3d1515 50%, #250808 75%, #150505 100%);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -31,7 +31,7 @@
   right: 20%;
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(220, 20, 20, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(220, 60, 60, 0.18) 0%, transparent 70%);
   filter: blur(90px);
   pointer-events: none;
   z-index: 0;
@@ -134,19 +134,34 @@
   filter: brightness(1.2);
 }
 
-/* Poster image */
+/* Poster image — padding để mặt nạ không chạm viền, căn giữa đều */
 .poster-image {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 12px;
   border: 3px solid;
   border-radius: 8px;
   position: relative;
   overflow: hidden;
-  background-size: cover;
-  background-position: center;
+  background: rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+}
+
+.poster-image .poster-mask-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center 42%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.poster-image .poster-emoji-fallback {
+  font-size: 4rem;
 }
 
 .poster-emoji {
