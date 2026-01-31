@@ -7,6 +7,7 @@ import Features from './components/Features'
 import FamousArtists from './components/FamousArtists'
 import Footer from './components/Footer'
 import ScrollProgress from './components/ScrollProgress'
+import ChatDemo from './components/ChatDemo'
 import './styles/AppLanding.css'
 
 function AppLanding() {
@@ -78,7 +79,7 @@ function AppLanding() {
         <Footer />
       </section>
 
-      
+      <ChatDemo />
     </div>
   )
 }

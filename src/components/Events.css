@@ -426,7 +426,7 @@
   background: #1C1C1C;
   border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: 1rem;
-  max-width: 900px;
+  max-width: 640px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
@@ -437,27 +437,30 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 0;
-  color: #fff;
-  font-size: 1.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f0e6d8;
+  font-size: 1.25rem;
+  font-weight: 600;
   cursor: pointer;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   z-index: 10;
-  transition: background 0.2s;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .modal-close:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(212, 175, 55, 0.4);
+  transform: scale(1.05);
 }
 
 .event-detail-header {
-  padding: 2rem;
+  padding: 1.5rem 1.5rem 2rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -494,7 +497,7 @@
 }
 
 .event-detail-content {
-  padding: 2rem;
+  padding: 1.5rem 1.5rem 2rem;
 }
 
 .detail-section {
@@ -548,4 +551,334 @@
 .includes-list li:last-child,
 .requirements-list li:last-child {
   border-bottom: 0;
+}
+
+/* Tags: gạch vàng phía trên, nhãn trắng nổi bật */
+.event-detail-modal .detail-section:has(.tags-list) {
+  margin-bottom: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 2px solid rgba(212, 175, 55, 0.5);
+}
+
+.event-detail-modal .detail-section:has(.tags-list) h3 {
+  margin-bottom: 1rem;
+}
+
+.event-detail-modal .tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-detail-modal .tag {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f5f0e8;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 9999px;
+  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.event-detail-modal .tag:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(212, 175, 55, 0.45);
+  color: #fff;
+}
+
+/* Khu vực nút: căn phải, khoảng cách thoáng */
+.event-detail-modal .event-detail-actions {
+  margin-top: 0.5rem;
+  padding: 1.5rem 1.5rem 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Nút Đóng: tối, pill, rõ ràng */
+.event-detail-modal .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f0e6d8;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+
+.event-detail-modal .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Nút Đăng ký ngay: vàng nổi bật, pill */
+.event-detail-modal .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #D4AF37 0%, #b8941f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(212, 175, 55, 0.35);
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.event-detail-modal .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e6c04a 0%, #c9a227 100%);
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.45);
+  transform: translateY(-2px);
+}
+
+.event-detail-modal .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ========== Form Đăng Ký Sự Kiện — giao diện xịn, rõ ràng ========== */
+.event-detail-modal .registration-form {
+  padding: 2rem 1.5rem 2.25rem;
+  max-width: 100%;
+  margin: 0 auto;
+  background: linear-gradient(180deg, rgba(28, 28, 28, 0.6) 0%, rgba(22, 22, 22, 0.8) 100%);
+  border-radius: 0 0 1rem 1rem;
+}
+
+.event-detail-modal .registration-form h2 {
+  margin: 0 0 0.25rem 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.event-detail-modal .registration-form .form-subtitle {
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(245, 240, 232, 0.85);
+  padding-bottom: 1.25rem;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.5);
+  letter-spacing: 0.01em;
+}
+
+.event-detail-modal .registration-form .form-section {
+  margin-bottom: 2rem;
+}
+
+.event-detail-modal .registration-form .form-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding-left: 0.75rem;
+  border-left: 3px solid #D4AF37;
+}
+
+.event-detail-modal .registration-form .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.event-detail-modal .registration-form .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(248, 250, 252, 0.9);
+}
+
+.event-detail-modal .registration-form .form-group input,
+.event-detail-modal .registration-form .form-group textarea {
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #1a1a1a;
+  background: #faf8f5;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.625rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.event-detail-modal .registration-form .form-group input::placeholder,
+.event-detail-modal .registration-form .form-group textarea::placeholder {
+  color: #9ca3af;
+}
+
+.event-detail-modal .registration-form .form-group input:focus,
+.event-detail-modal .registration-form .form-group textarea:focus {
+  outline: none;
+  border-color: #D4AF37;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.event-detail-modal .registration-form .form-group input.error,
+.event-detail-modal .registration-form .form-group textarea.error {
+  border-color: #b91c1c;
+  background: #fef2f2;
+  box-shadow: inset 0 1px 2px rgba(185, 28, 28, 0.08);
+}
+
+.event-detail-modal .registration-form .form-group textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.event-detail-modal .registration-form .form-group small {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: rgba(248, 250, 252, 0.6);
+}
+
+.event-detail-modal .registration-form .form-group .error-message {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #fca5a5;
+}
+
+/* Khối tóm tắt thanh toán — nổi bật */
+.event-detail-modal .registration-form .payment-summary {
+  margin: 1.75rem 0 1.5rem;
+  padding: 1.35rem 1.5rem;
+  background: linear-gradient(145deg, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.06) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.event-detail-modal .registration-form .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  font-size: 0.95rem;
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.event-detail-modal .registration-form .summary-row.total {
+  margin-top: 0.6rem;
+  padding-top: 0.85rem;
+  border-top: 2px solid rgba(212, 175, 55, 0.35);
+  font-weight: 700;
+  font-size: 1.08rem;
+  color: #fff;
+}
+
+.event-detail-modal .registration-form .summary-row .total-price {
+  color: #D4AF37;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.event-detail-modal .registration-form .payment-error {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1.1rem;
+  background: rgba(185, 28, 28, 0.2);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  border-radius: 0.625rem;
+  color: #fecaca;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Nút form — rõ ràng, dễ bấm */
+.event-detail-modal .registration-form .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 1.75rem;
+  padding-top: 1.75rem;
+  border-top: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+.event-detail-modal .registration-form .form-actions .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f0e6d8;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+
+.event-detail-modal .registration-form .form-actions .btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.event-detail-modal .registration-form .form-actions .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  background: linear-gradient(145deg, #D4AF37 0%, #b8941f 50%, #9a7b18 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 3px 14px rgba(212, 175, 55, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.event-detail-modal .registration-form .form-actions .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(145deg, #e6c04a 0%, #c9a227 50%, #b8941f 100%);
+  box-shadow: 0 5px 22px rgba(212, 175, 55, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.event-detail-modal .registration-form .form-actions .spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(26, 26, 26, 0.3);
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: event-form-spin 0.7s linear infinite;
+}
+
+@keyframes event-form-spin {
+  to { transform: rotate(360deg); }
 }

@@ -2,7 +2,7 @@
 
 const THUMBNAIL_IMAGES = [
   '/weights/1d8b9717-9762-4cf0-8319-2d2d94adcb9e.jpg',
-  '/weights/image.jpg',
+  '/weights/160940-tuong-loai-hinh-nghe-thuat-san-khau-co-truyen-dac-sac-anh-khanh-hoa-ttxvn.jpg',
   '/characters/nv đào.png',
   '/characters/nv kép.png',
   '/characters/nv lão.png',

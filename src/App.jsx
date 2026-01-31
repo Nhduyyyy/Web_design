@@ -7,6 +7,7 @@ import ScrollProgress from './components/ScrollProgress'
 import ItemDetailModal from './components/ItemDetailModal'
 import LearningPage from './components/LearningPage'
 import AboutPage from './components/AboutPage'
+import ChatDemo from './components/ChatDemo'
 import './styles/App.css'
 
 const sectionTransition = {
@@ -72,6 +73,8 @@ function App() {
       {activeSection === 'learning' && (
         <LearningPage />
       )}
+
+      <ChatDemo />
     </div>
   )
 }

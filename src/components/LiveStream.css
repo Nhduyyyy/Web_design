@@ -561,6 +561,7 @@
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+  overflow-y: auto;
 }
 
 .payment-modal {
@@ -569,8 +570,13 @@
   border-radius: 1rem;
   max-width: 500px;
   width: 100%;
+  max-height: calc(100vh - 2rem);
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: auto;
 }
 
 .modal-close {
@@ -602,16 +608,24 @@
   color: #f5f5f5;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 .payment-content {
   padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .replay-preview img {
   width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  object-position: center top;
   border-radius: 8px;
   margin-bottom: 1rem;
+  display: block;
 }
 
 .replay-preview h4 {
