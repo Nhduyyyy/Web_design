@@ -89,6 +89,21 @@
   transform: translateY(-2px);
 }
 
+/* Login Button */
+.header-btn-login {
+  color: #000000;
+  background: linear-gradient(135deg, #FED955 0%, #FF9A44 100%);
+  border-color: #FED955;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(254, 221, 84, 0.4);
+}
+
+.header-btn-login:hover {
+  background: linear-gradient(135deg, #FF9A44 0%, #FED955 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(254, 221, 84, 0.6);
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .header-container {

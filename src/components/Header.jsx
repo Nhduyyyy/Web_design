@@ -1,9 +1,12 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import LogoutButton from './Auth/LogoutButton'
 import './Header.css'
 
 function Header({ activeSection, setActiveSection }) {
   const navigate = useNavigate()
+  const { user, profile, loading } = useAuth()
 
   return (
     <motion.header 
@@ -48,6 +51,16 @@ function Header({ activeSection, setActiveSection }) {
           >
             Giới thiệu
           </button>
+          
+          {!loading && user && <LogoutButton />}
+          {!loading && !user && (
+            <button 
+              className="header-btn header-btn-login"
+              onClick={() => navigate('/login')}
+            >
+              Đăng nhập
+            </button>
+          )}
         </div>
       </div>
     </motion.header>

@@ -50,7 +50,7 @@
   box-shadow: 0 4px 15px rgba(254, 221, 84, 0.4);
 }
 
-/* Nút Trải Nghiệm đặc biệt - tách riêng ở bên phải */
+/* Nút Trải Nghiệm / Đăng Nhập - tách riêng ở bên phải */
 .nav-btn-experience {
   position: fixed;
   top: 0.75rem;
