@@ -1,16 +1,16 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import './HeaderLanding.css'
 
 function HeaderLanding({ activeSection, setActiveSection }) {
   const navigate = useNavigate()
+  const { isAuthenticated, loading } = useAuth()
   const [isVisible, setIsVisible] = useState(false)
-  const [mouseY, setMouseY] = useState(0)
 
   useEffect(() => {
     const handleMouseMove = (e) => {
-      setMouseY(e.clientY)
       // Hiện header khi chuột ở gần top (100px từ trên xuống)
       if (e.clientY < 100) {
         setIsVisible(true)
@@ -84,12 +84,14 @@ function HeaderLanding({ activeSection, setActiveSection }) {
         </button>
       </nav>
       
-      <button 
-        className="nav-btn-experience"
-        onClick={() => navigate('/app')}
-      >
-        Trải Nghiệm
-      </button>
+      {!loading && (
+        <button 
+          className="nav-btn-experience"
+          onClick={() => navigate(isAuthenticated ? '/app' : '/login')}
+        >
+          {isAuthenticated ? 'Trải Nghiệm' : 'Đăng Nhập'}
+        </button>
+      )}
     </motion.header>
   )
 }

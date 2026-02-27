@@ -1,10 +1,14 @@
 import { useRef, useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { gsap } from 'gsap'
 import './Hero.css'
 import ArtisticText from './ArtisticText'
 import logoMoMan from '../img/logo_mo_man.png'
 
 function Hero() {
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
   const videoRef = useRef(null);
   const [showImage, setShowImage] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
@@ -137,7 +141,12 @@ function Hero() {
               "Khám phá vẻ đẹp truyền thống của nghệ thuật Tuồng Việt Nam – Nơi tinh hoa hội tụ qua từng giai điệu, mặt nạ và điệu bộ điêu luyện."
             </p>
             <div className="hero-buttons">
-              <button className="hero-btn hero-btn-primary">KHÁM PHÁ NGAY</button>
+              <button 
+                className="hero-btn hero-btn-primary"
+                onClick={() => navigate(isAuthenticated ? '/app' : '/login')}
+              >
+                {isAuthenticated ? 'KHÁM PHÁ NGAY' : 'ĐĂNG NHẬP'}
+              </button>
               <button className="hero-btn hero-btn-secondary">XEM TRAILER</button>
             </div>
           </div>
