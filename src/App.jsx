@@ -7,6 +7,7 @@ import ScrollProgress from './components/ScrollProgress'
 import ItemDetailModal from './components/ItemDetailModal'
 import LearningPage from './components/LearningPage'
 import AboutPage from './components/AboutPage'
+import ProfilePage from './components/Profile/ProfilePage'
 import ChatDemo from './components/ChatDemo'
 import './styles/App.css'
 
@@ -58,6 +59,17 @@ function App() {
             {...sectionTransition}
           >
             <AboutPage />
+          </motion.div>
+        )}
+        {activeSection === 'profile' && (
+          <motion.div
+            key="profile"
+            className="app-section-wrap"
+            {...sectionTransition}
+          >
+            <ProfilePage 
+              setActiveSection={setActiveSection}
+            />
           </motion.div>
         )}
       </AnimatePresence>

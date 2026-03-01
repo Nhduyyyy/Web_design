@@ -153,26 +153,104 @@ export const updatePassword = async (newPassword) => {
  * Upload avatar
  */
 export const uploadAvatar = async (userId, file) => {
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${userId}.${fileExt}`
-  const filePath = `${userId}/${fileName}`
+  try {
+    // Validate file
+    if (!file || !file.type.startsWith('image/')) {
+      throw new Error('File phải là hình ảnh')
+    }
 
-  // Upload to storage
-  const { error: uploadError } = await supabase.storage
-    .from('avatars')
-    .upload(filePath, file, { upsert: true })
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${userId}-${Date.now()}.${fileExt}`
+    const filePath = fileName // Store directly in bucket root for simplicity
 
-  if (uploadError) throw uploadError
+    console.log('Uploading avatar:', { userId, fileName, filePath, fileSize: file.size })
 
-  // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from('avatars')
-    .getPublicUrl(filePath)
+    // Upload to storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { 
+        upsert: true,
+        cacheControl: '3600',
+        contentType: file.type
+      })
 
-  // Update profile
-  await updateProfile(userId, { avatar_url: publicUrl })
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      
+      // Check if bucket doesn't exist
+      if (uploadError.message?.includes('Bucket not found') || uploadError.message?.includes('not found')) {
+        throw new Error('Bucket "avatars" chưa được tạo. Vui lòng tạo bucket trong Supabase Storage.')
+      }
+      
+      // Check if permission denied
+      if (uploadError.message?.includes('permission') || uploadError.message?.includes('policy')) {
+        throw new Error('Không có quyền upload. Vui lòng kiểm tra Storage policies trong Supabase.')
+      }
+      
+      throw new Error(`Lỗi upload: ${uploadError.message}`)
+    }
 
-  return publicUrl
+    console.log('Upload successful:', uploadData)
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath)
+
+    console.log('Public URL:', publicUrl)
+
+    // Update profile with the URL
+    await updateProfile(userId, { avatar_url: publicUrl })
+
+    return publicUrl
+  } catch (error) {
+    console.error('Avatar upload error:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete avatar
+ */
+export const deleteAvatar = async (userId, avatarUrl) => {
+  try {
+    if (!avatarUrl) {
+      throw new Error('Không có avatar để xóa')
+    }
+
+    // Extract file path from URL
+    // URL format: https://[project].supabase.co/storage/v1/object/public/avatars/[filename]
+    const urlParts = avatarUrl.split('/avatars/')
+    if (urlParts.length < 2) {
+      throw new Error('URL avatar không hợp lệ')
+    }
+
+    const fileName = urlParts[1].split('?')[0] // Remove query params if any
+    console.log('Deleting avatar:', { userId, fileName })
+
+    // Delete from storage
+    const { error: deleteError } = await supabase.storage
+      .from('avatars')
+      .remove([fileName])
+
+    if (deleteError) {
+      console.error('Delete error:', deleteError)
+      // Don't throw if file doesn't exist, just continue to update profile
+      if (!deleteError.message?.includes('not found')) {
+        throw new Error(`Lỗi xóa file: ${deleteError.message}`)
+      }
+    }
+
+    console.log('Avatar deleted from storage')
+
+    // Update profile to remove avatar_url
+    await updateProfile(userId, { avatar_url: null })
+
+    return true
+  } catch (error) {
+    console.error('Avatar delete error:', error)
+    throw error
+  }
 }
 
 /**
