@@ -129,6 +129,7 @@ export const AuthProvider = ({ children }) => {
       
       if (data) {
         console.log('✅ Profile loaded:', data)
+        console.log('👤 Profile role:', data.role)
         setProfile(data)
         return
       }
@@ -138,8 +139,23 @@ export const AuthProvider = ({ children }) => {
         console.error('❌ Error loading profile:', error)
       }
       
-      // Profile not found, create minimal one
-      console.log('⚠️ Profile not found, using minimal profile')
+      // Profile not found in DB, try to fetch again without race condition
+      console.log('⚠️ Profile not found with race condition, trying direct query...')
+      const { data: directData, error: directError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      
+      if (directData) {
+        console.log('✅ Profile loaded (direct query):', directData)
+        console.log('👤 Profile role:', directData.role)
+        setProfile(directData)
+        return
+      }
+      
+      // Still not found, create minimal one
+      console.log('⚠️ Profile still not found, using minimal profile')
       const minimalProfile = {
         id: user.id,
         email: user.email,
@@ -149,6 +165,7 @@ export const AuthProvider = ({ children }) => {
         avatar_url: user.user_metadata?.avatar_url || ''
       }
       
+      console.log('📝 Minimal profile role:', minimalProfile.role)
       setProfile(minimalProfile)
       
       // Try to create profile in background (don't wait)

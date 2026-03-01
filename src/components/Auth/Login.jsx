@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { signIn } from '../../services/authService'
+import { supabase } from '../../lib/supabase'
 import './Auth.css'
 
 function Login() {
@@ -34,10 +35,47 @@ function Login() {
       })
       
       console.log('✅ Login successful:', result)
+      console.log('📧 User email:', result.user.email)
+      console.log('🆔 User ID:', result.user.id)
       
-      // Force immediate redirect using window.location
-      // This bypasses React Router and AuthContext delays
-      window.location.href = '/app'
+      // Try to get role from profile first, then fallback to user_metadata
+      let userRole = 'user'
+      
+      try {
+        console.log('🔍 Fetching profile from database...')
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role, email, full_name')
+          .eq('id', result.user.id)
+          .single()
+        
+        console.log('📊 Profile data:', profile)
+        console.log('❌ Profile error:', profileError)
+        
+        if (profile?.role) {
+          userRole = profile.role
+          console.log('✅ Role from profile:', userRole)
+        } else {
+          userRole = result.user?.user_metadata?.role || 'user'
+          console.log('⚠️ No profile role, using metadata:', userRole)
+        }
+      } catch (profileErr) {
+        console.warn('⚠️ Could not fetch profile, using metadata:', profileErr)
+        userRole = result.user?.user_metadata?.role || 'user'
+        console.log('📝 Fallback role:', userRole)
+      }
+      
+      console.log('🎯 Final role decision:', userRole)
+      
+      if (userRole === 'admin') {
+        console.log('👑 Admin user detected, redirecting to admin dashboard')
+        console.log('🔄 Redirecting to: /admin')
+        window.location.href = '/admin'
+      } else {
+        console.log('👤 Regular user, redirecting to app')
+        console.log('🔄 Redirecting to: /app')
+        window.location.href = '/app'
+      }
     } catch (err) {
       console.error('❌ Login error:', err)
       setLoading(false)

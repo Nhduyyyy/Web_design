@@ -23,9 +23,32 @@ function SimpleLogin() {
 
       setStatus(`Success! User: ${data.user.email}`)
       
-      // Redirect after 1 second
+      // Try to get role from profile first, then fallback to user_metadata
+      let userRole = 'user'
+      
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single()
+        
+        if (profile?.role) {
+          userRole = profile.role
+        } else {
+          userRole = data.user?.user_metadata?.role || 'user'
+        }
+      } catch (profileErr) {
+        console.warn('Could not fetch profile:', profileErr)
+        userRole = data.user?.user_metadata?.role || 'user'
+      }
+      
       setTimeout(() => {
-        window.location.href = '/app'
+        if (userRole === 'admin') {
+          window.location.href = '/admin'
+        } else {
+          window.location.href = '/app'
+        }
       }, 1000)
     } catch (err) {
       setStatus(`Error: ${err.message}`)

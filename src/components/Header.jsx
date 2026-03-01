@@ -1,12 +1,26 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import LogoutButton from './Auth/LogoutButton'
+import { signOut } from '../services/authService'
 import './Header.css'
 
 function Header({ activeSection, setActiveSection }) {
   const navigate = useNavigate()
-  const { user, profile, loading } = useAuth()
+  const { user, profile, loading, isAdmin } = useAuth()
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      navigate('/')
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
+
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'User'
+  const displayRole = profile?.role === 'admin' ? 'Admin' : profile?.role === 'theater' ? 'Theater' : 'User'
 
   return (
     <motion.header 
@@ -52,8 +66,70 @@ function Header({ activeSection, setActiveSection }) {
             Giới thiệu
           </button>
           
-          {!loading && user && <LogoutButton />}
-          {!loading && !user && (
+          {!loading && user ? (
+            <div className="header-user-menu">
+              <button 
+                className="header-user-btn"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+              >
+                <div className="user-info">
+                  <span className="user-name">{displayName}</span>
+                  <span className="user-role">{displayRole}</span>
+                </div>
+                <div className="user-avatar">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt={displayName} />
+                  ) : (
+                    <span className="avatar-placeholder">
+                      {displayName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              </button>
+
+              {showUserMenu && (
+                <div className="user-dropdown">
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      // TODO: Navigate to profile page
+                      console.log('Navigate to profile')
+                    }}
+                  >
+                    <span className="material-symbols-outlined">person</span>
+                    <span>Hồ sơ</span>
+                  </button>
+                  
+                  {isAdmin && (
+                    <button 
+                      className="dropdown-item"
+                      onClick={() => {
+                        setShowUserMenu(false)
+                        navigate('/admin')
+                      }}
+                    >
+                      <span className="material-symbols-outlined">admin_panel_settings</span>
+                      <span>Admin Dashboard</span>
+                    </button>
+                  )}
+                  
+                  <div className="dropdown-divider"></div>
+                  
+                  <button 
+                    className="dropdown-item logout-item"
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      handleLogout()
+                    }}
+                  >
+                    <span className="material-symbols-outlined">logout</span>
+                    <span>Đăng xuất</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : !loading && (
             <button 
               className="header-btn header-btn-login"
               onClick={() => navigate('/login')}
