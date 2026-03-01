@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
+import TheaterRoute from './components/Theater/TheaterRoute'
 import ErrorBoundary from './components/ErrorBoundary'
 import App from './App'
 import AppLanding from './AppLanding'
@@ -11,10 +12,16 @@ import Login from './components/Auth/Login'
 import SimpleLogin from './components/Auth/SimpleLogin'
 import Register from './components/Auth/Register'
 import AdminDashboard from './components/Admin/AdminDashboard'
+import TheaterDashboard from './components/Theater/TheaterDashboard'
+import VenueDetailSimple from './components/Theater/VenueDetailSimple'
+import OrganizationRegistration from './components/Organization/OrganizationRegistration'
+import RegistrationSuccess from './components/Organization/RegistrationSuccess'
+import OrganizationManagement from './components/Admin/OrganizationManagement'
 import './styles/index.css'
 
 // Import admin utilities for development
 import './utils/setAdminRole'
+import './utils/setTheaterRole'
 import './utils/quickCheckRole'
 
 console.log('🚀 main.jsx is loading...')
@@ -43,6 +50,46 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 <AdminRoute>
                   <AdminDashboard />
                 </AdminRoute>
+              } 
+            />
+            <Route 
+              path="/admin/organizations" 
+              element={
+                <AdminRoute>
+                  <OrganizationManagement />
+                </AdminRoute>
+              } 
+            />
+            <Route 
+              path="/theater" 
+              element={
+                <TheaterRoute>
+                  <TheaterDashboard />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
+              path="/theater/halls/:hallId" 
+              element={
+                <TheaterRoute>
+                  <VenueDetailSimple />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
+              path="/organization/register" 
+              element={
+                <ProtectedRoute>
+                  <OrganizationRegistration />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/organization/registration-success" 
+              element={
+                <ProtectedRoute>
+                  <RegistrationSuccess />
+                </ProtectedRoute>
               } 
             />
           </Routes>

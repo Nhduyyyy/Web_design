@@ -71,6 +71,10 @@ function Login() {
         console.log('👑 Admin user detected, redirecting to admin dashboard')
         console.log('🔄 Redirecting to: /admin')
         window.location.href = '/admin'
+      } else if (userRole === 'theater') {
+        console.log('🎭 Theater user detected, redirecting to theater manager')
+        console.log('🔄 Redirecting to: /theater')
+        window.location.href = '/theater'
       } else {
         console.log('👤 Regular user, redirecting to app')
         console.log('🔄 Redirecting to: /app')

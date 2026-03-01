@@ -7,7 +7,7 @@ import './Header.css'
 
 function Header({ activeSection, setActiveSection }) {
   const navigate = useNavigate()
-  const { user, profile, loading, isAdmin } = useAuth()
+  const { user, profile, loading, isAdmin, isTheater } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleLogout = async () => {
@@ -111,6 +111,19 @@ function Header({ activeSection, setActiveSection }) {
                     >
                       <span className="material-symbols-outlined">admin_panel_settings</span>
                       <span>Admin Dashboard</span>
+                    </button>
+                  )}
+                  
+                  {isTheater && (
+                    <button 
+                      className="dropdown-item"
+                      onClick={() => {
+                        setShowUserMenu(false)
+                        navigate('/theater')
+                      }}
+                    >
+                      <span className="material-symbols-outlined">theater_comedy</span>
+                      <span>Theater Manager</span>
                     </button>
                   )}
                   

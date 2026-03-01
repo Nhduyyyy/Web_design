@@ -5,12 +5,19 @@ import { supabase } from '../lib/supabase'
  */
 export const getAdminStats = async () => {
   try {
+    console.log('📊 Fetching admin stats...')
+    
     // Get total users count
     const { count: totalUsers, error: usersError } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
 
-    if (usersError) throw usersError
+    console.log('👥 Total users:', totalUsers, 'Error:', usersError)
+    
+    if (usersError) {
+      console.error('Users query error:', usersError)
+      throw usersError
+    }
 
     // Get total theaters count
     const { count: totalTheaters, error: theatersError } = await supabase
@@ -18,7 +25,12 @@ export const getAdminStats = async () => {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'approved')
 
-    if (theatersError) throw theatersError
+    console.log('🏛️ Total theaters:', totalTheaters, 'Error:', theatersError)
+    
+    if (theatersError) {
+      console.error('Theaters query error:', theatersError)
+      throw theatersError
+    }
 
     // Get active events count (scheduled + ongoing)
     const { count: activeEvents, error: eventsError } = await supabase
@@ -26,7 +38,12 @@ export const getAdminStats = async () => {
       .select('*', { count: 'exact', head: true })
       .in('status', ['scheduled', 'ongoing'])
 
-    if (eventsError) throw eventsError
+    console.log('📅 Active events:', activeEvents, 'Error:', eventsError)
+    
+    if (eventsError) {
+      console.error('Events query error:', eventsError)
+      // Don't throw, events table might not exist yet
+    }
 
     // Get total revenue from completed payments
     const { data: paymentsData, error: paymentsError } = await supabase
@@ -34,7 +51,12 @@ export const getAdminStats = async () => {
       .select('amount')
       .eq('status', 'completed')
 
-    if (paymentsError) throw paymentsError
+    console.log('💰 Payments data:', paymentsData?.length, 'records, Error:', paymentsError)
+    
+    if (paymentsError) {
+      console.error('Payments query error:', paymentsError)
+      // Don't throw, payments table might not exist yet
+    }
 
     const totalRevenue = paymentsData?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0
 
@@ -47,19 +69,22 @@ export const getAdminStats = async () => {
       .select('*', { count: 'exact', head: true })
       .lt('created_at', lastMonth.toISOString())
 
-    const userGrowth = lastMonthUsers ? ((totalUsers - lastMonthUsers) / lastMonthUsers * 100).toFixed(1) : 0
+    const userGrowth = lastMonthUsers && totalUsers ? ((totalUsers - lastMonthUsers) / lastMonthUsers * 100).toFixed(1) : 0
 
-    return {
+    const stats = {
       totalUsers: totalUsers || 0,
       totalTheaters: totalTheaters || 0,
       activeEvents: activeEvents || 0,
       totalRevenue: totalRevenue || 0,
-      userGrowth: `+${userGrowth}%`,
+      userGrowth: userGrowth > 0 ? `+${userGrowth}%` : `${userGrowth}%`,
       eventGrowth: '+5.2%', // TODO: Calculate real growth
       revenueGrowth: '+8.1%' // TODO: Calculate real growth
     }
+
+    console.log('✅ Final stats:', stats)
+    return stats
   } catch (error) {
-    console.error('Error fetching admin stats:', error)
+    console.error('❌ Error fetching admin stats:', error)
     throw error
   }
 }

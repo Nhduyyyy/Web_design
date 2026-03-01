@@ -3,6 +3,7 @@ function AdminSidebar({ activeView, setActiveView }) {
     { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
     { id: 'users', icon: 'group', label: 'User Management' },
     { id: 'theaters', icon: 'account_balance', label: 'Theater Management' },
+    { id: 'organizations', icon: 'business', label: 'Organization Registration' },
     { id: 'schedule', icon: 'calendar_month', label: 'Show Schedule' },
     { id: 'livestream', icon: 'live_tv', label: 'Livestream' },
     { id: 'tickets', icon: 'confirmation_number', label: 'Tickets' },

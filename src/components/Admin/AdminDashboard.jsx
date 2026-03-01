@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import AdminSidebar from './AdminSidebar'
 import AdminHeader from './AdminHeader'
 import DashboardOverview from './DashboardOverview'
+import OrganizationManagement from './OrganizationManagement'
 import './AdminDashboard.css'
 
 function AdminDashboard() {
@@ -20,6 +21,7 @@ function AdminDashboard() {
           {activeView === 'dashboard' && <DashboardOverview />}
           {activeView === 'users' && <div className="coming-soon">User Management - Coming Soon</div>}
           {activeView === 'theaters' && <div className="coming-soon">Theater Management - Coming Soon</div>}
+          {activeView === 'organizations' && <OrganizationManagement />}
           {activeView === 'schedule' && <div className="coming-soon">Show Schedule - Coming Soon</div>}
           {activeView === 'livestream' && <div className="coming-soon">Livestream - Coming Soon</div>}
           {activeView === 'tickets' && <div className="coming-soon">Tickets - Coming Soon</div>}

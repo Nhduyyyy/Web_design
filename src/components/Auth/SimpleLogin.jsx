@@ -46,6 +46,8 @@ function SimpleLogin() {
       setTimeout(() => {
         if (userRole === 'admin') {
           window.location.href = '/admin'
+        } else if (userRole === 'theater') {
+          window.location.href = '/theater'
         } else {
           window.location.href = '/app'
         }

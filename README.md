@@ -31,6 +31,7 @@ TestYTuongEXE/
 - 📅 **Lịch diễn (MVP)**: Danh sách vở, ngày‑giờ, địa điểm — lọc theo thành phố và khoảng thời gian
 - 🤖 **AI Giải Thích**: Tương tác với AI để hiểu sâu hơn về ý nghĩa, lịch sử và vai trò
 - 📷 **Trải Nghiệm AR**: Thử nghiệm mặt nạ Tuồng với camera của bạn
+- 🎪 **Theater Manager**: Quản lý rạp hát và địa điểm
 
 ## Cài đặt (một lệnh)
 
@@ -73,6 +74,7 @@ npm run build
 - Framer Motion (animations)
 - Three.js / React Three Fiber (3D)
 - CSS3 với backdrop-filter
+- Supabase (authentication & database)
 
 ## Validation & business rules (Lịch diễn)
 - Event phải có: `id`, `title`, `startDatetime` (ISO), `timezone`, `venue.{id,name,city}`. Các entry không hợp lệ sẽ bị bỏ qua và logged.  
@@ -85,3 +87,9 @@ npm run build
 
 - Đây là demo; AI được mô phỏng với dữ liệu tĩnh
 - Tính năng AR dùng camera trình duyệt; cần cấp quyền camera
+
+## Documentation
+
+- `docs/THEATER_MANAGER_GUIDE.md` - Hướng dẫn Theater Manager
+- `docs/DATABASE_DESIGN.md` - Thiết kế database
+- `docs/HUONG_DAN_DU_LIEU_VA_TRIEN_KHAI.md` - Hướng dẫn dữ liệu và triển khai
