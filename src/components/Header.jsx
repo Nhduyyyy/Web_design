@@ -93,8 +93,7 @@ function Header({ activeSection, setActiveSection }) {
                     className="dropdown-item"
                     onClick={() => {
                       setShowUserMenu(false)
-                      // TODO: Navigate to profile page
-                      console.log('Navigate to profile')
+                      setActiveSection('profile')
                     }}
                   >
                     <span className="material-symbols-outlined">person</span>

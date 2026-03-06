@@ -620,64 +620,221 @@
 }
 
 .qr-display {
-  background: #f9fafb;
+  background: rgba(255, 255, 255, 0.05);
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: 16px;
   text-align: center;
   margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 .qr-display h4 {
-  margin: 0 0 1rem 0;
+  margin: 0 0 1.5rem 0;
+  color: #fff;
+  font-size: 1.3rem;
 }
 
-.qr-code-placeholder {
-  display: flex;
-  justify-content: center;
-  margin: 1rem 0;
+.qr-loading {
+  padding: 2rem;
+  text-align: center;
 }
 
-.qr-code {
-  width: 200px;
-  height: 200px;
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 8px;
+.qr-loading .spinner {
+  margin: 0 auto 1rem;
+}
+
+.qr-code-container {
+  position: relative;
+  display: inline-block;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 16px;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.qr-code-image {
+  width: 280px;
+  height: 280px;
+  display: block;
+}
+
+.qr-checking-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow: hidden;
+  border-radius: 16px;
+  gap: 1rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
 }
 
-.qr-pattern {
-  position: absolute;
-  inset: 0;
-  background-image: 
-    repeating-linear-gradient(0deg, #000 0px, #000 2px, transparent 2px, transparent 8px),
-    repeating-linear-gradient(90deg, #000 0px, #000 2px, transparent 2px, transparent 8px);
-  opacity: 0.3;
+.qr-checking-overlay.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
-.qr-text {
-  font-size: 0.9rem;
-  color: #666;
-  z-index: 1;
+.qr-checking-overlay .spinner {
+  width: 40px;
+  height: 40px;
 }
 
-.qr-amount {
+.qr-bank-info {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.qr-bank-info h5 {
+  margin-bottom: 1rem;
+  color: #FFD700;
   font-size: 1.1rem;
-  font-weight: bold;
-  color: #333;
-  margin-top: 0.5rem;
-  z-index: 1;
+  text-align: center;
 }
 
-.qr-instruction {
-  margin-top: 1rem;
-  color: #666;
+.bank-info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  align-items: center;
+}
+
+.bank-info-item:last-child {
+  border-bottom: none;
+}
+
+.bank-info-item .label {
+  color: #ccc;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.bank-info-item .value {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.bank-info-item .value.amount {
+  color: #FFD700;
+  font-size: 1.2rem;
+}
+
+.transfer-content {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.2s;
+  font-family: monospace;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.transfer-content:hover {
+  color: #FFD700;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.copy-icon {
   font-size: 0.9rem;
+}
+
+.qr-instructions {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.qr-instruction-title {
+  margin-bottom: 1rem;
+  color: #FFD700;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.qr-instruction-list {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #ccc;
+  line-height: 1.8;
+  font-size: 0.9rem;
+}
+
+.qr-instruction-list li {
+  margin-bottom: 0.5rem;
+}
+
+.qr-instruction-list strong {
+  color: #FFD700;
+}
+
+.qr-status {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.qr-status.success {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border: 2px solid #4CAF50;
+}
+
+.qr-status.pending {
+  background: rgba(255, 193, 7, 0.2);
+  color: #FFC107;
+  border: 2px solid #FFC107;
+}
+
+.status-icon {
+  font-size: 1.2rem;
+}
+
+.qr-error {
+  padding: 1rem;
+  background: rgba(255, 0, 0, 0.1);
+  border-radius: 8px;
+  color: #ff6b6b;
+  margin-top: 1rem;
+}
+
+.qr-error button {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.qr-error button:hover {
+  background: #ff5252;
 }
 
 .payment-summary {

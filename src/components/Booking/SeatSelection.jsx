@@ -1,17 +1,148 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
+import { supabase } from '../../lib/supabase'
 import { getSeatStatus, formatPrice, calculateTotal } from '../../utils/booking'
 import { validateSeatSelection } from '../../utils/validation'
 import './booking.css'
 
-export default function SeatSelection({ seatingChart, selectedSeats, onSeatsChange, onContinue, onBack, event }) {
+export default function SeatSelection({ 
+  seatingChart, 
+  selectedSeats, 
+  onSeatsChange, 
+  onContinue, 
+  onBack, 
+  event,
+  scheduleId = null,
+  userId = null
+}) {
   const [hoveredSeat, setHoveredSeat] = useState(null)
-
   const [seatError, setSeatError] = useState(null)
+  const [seats, setSeats] = useState(seatingChart)
+  const [conflictWarning, setConflictWarning] = useState(null)
+  const subscriptionRef = useRef(null)
+  
+  // Update seats when seatingChart prop changes
+  useEffect(() => {
+    setSeats(seatingChart)
+  }, [seatingChart])
+  
+  // Real-time subscription for seat updates
+  useEffect(() => {
+    if (!scheduleId || !event?.schedule_id) {
+      // No scheduleId, skip real-time updates (using mock data)
+      return
+    }
+    
+    const scheduleIdToUse = scheduleId || event.schedule_id
+    
+    console.log('Setting up real-time subscription for schedule:', scheduleIdToUse)
+    
+    // Subscribe to seat updates for this schedule
+    const channel = supabase
+      .channel(`seat-updates-${scheduleIdToUse}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'seats',
+          filter: `schedule_id=eq.${scheduleIdToUse}`
+        },
+        (payload) => {
+          console.log('Seat update received:', payload)
+          
+          // Update seat status in real-time
+          setSeats(prevSeats => {
+            const updatedSeats = [...prevSeats]
+            const seatIndex = updatedSeats.findIndex(
+              s => s.id === payload.new.id || s.seat_id === payload.new.seat_id || 
+                   (payload.new.seat_id && s.seat_id === payload.new.seat_id)
+            )
+            
+            if (seatIndex !== -1) {
+              // Update existing seat
+              updatedSeats[seatIndex] = {
+                ...updatedSeats[seatIndex],
+                status: payload.new.status,
+                reserved_by: payload.new.reserved_by,
+                reserved_until: payload.new.reserved_until
+              }
+              
+              // Check if seat was selected by user but now occupied/reserved by someone else
+              const isSelected = selectedSeats.some(s => 
+                s.id === payload.new.id || 
+                s.seat_id === payload.new.seat_id ||
+                (payload.new.seat_id && s.seat_id === payload.new.seat_id)
+              )
+              
+              if (isSelected) {
+                if (payload.new.status === 'occupied') {
+                  // Seat occupied by someone else - remove from selected
+                  const newSelectedSeats = selectedSeats.filter(s => 
+                    s.id !== payload.new.id && 
+                    s.seat_id !== payload.new.seat_id &&
+                    !(payload.new.seat_id && s.seat_id === payload.new.seat_id)
+                  )
+                  onSeatsChange(newSelectedSeats)
+                  
+                  const seatLabel = payload.new.seat_id || payload.new.id || 'ghế này'
+                  setConflictWarning(`⚠️ Ghế ${seatLabel} đã được đặt bởi người khác. Đã tự động xóa khỏi danh sách chọn.`)
+                  setTimeout(() => setConflictWarning(null), 5000)
+                } else if (payload.new.status === 'reserved' && payload.new.reserved_by !== userId) {
+                  // Seat reserved by someone else
+                  const seatLabel = payload.new.seat_id || payload.new.id || 'ghế này'
+                  setConflictWarning(`⚠️ Ghế ${seatLabel} đang được giữ bởi người khác. Vui lòng chọn ghế khác.`)
+                  setTimeout(() => setConflictWarning(null), 5000)
+                }
+              }
+            } else if (payload.eventType === 'INSERT') {
+              // New seat added
+              updatedSeats.push({
+                id: payload.new.id,
+                seat_id: payload.new.seat_id,
+                row: payload.new.row_label,
+                number: payload.new.seat_number,
+                status: payload.new.status,
+                price: payload.new.price,
+                type: payload.new.seat_type
+              })
+            }
+            
+            return updatedSeats
+          })
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time subscription active')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Subscription error')
+        }
+      })
+    
+    subscriptionRef.current = channel
+    
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscriptionRef.current) {
+        console.log('Cleaning up subscription')
+        supabase.removeChannel(subscriptionRef.current)
+        subscriptionRef.current = null
+      }
+    }
+  }, [scheduleId, event?.schedule_id, selectedSeats, onSeatsChange, userId])
 
   const handleSeatClick = (seat) => {
+    // Check if seat is occupied or reserved by someone else
     if (seat.status === 'occupied') {
       setSeatError('Ghế này đã được đặt')
+      setTimeout(() => setSeatError(null), 3000)
+      return
+    }
+    
+    if (seat.status === 'reserved' && seat.reserved_by && seat.reserved_by !== userId) {
+      setSeatError('Ghế này đang được giữ bởi người khác')
       setTimeout(() => setSeatError(null), 3000)
       return
     }
@@ -56,14 +187,14 @@ export default function SeatSelection({ seatingChart, selectedSeats, onSeatsChan
   const total = calculateTotal(selectedSeats)
   const rows = useMemo(() => {
     const rowMap = new Map()
-    seatingChart.forEach(seat => {
+    seats.forEach(seat => {
       if (!rowMap.has(seat.row)) {
         rowMap.set(seat.row, [])
       }
       rowMap.get(seat.row).push(seat)
     })
     return Array.from(rowMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))
-  }, [seatingChart])
+  }, [seats])
 
   const seatTypeInfo = {
     vip: { label: 'VIP', color: '#FFD700', price: '500,000₫' },
@@ -81,6 +212,27 @@ export default function SeatSelection({ seatingChart, selectedSeats, onSeatsChan
     >
       <h2>Chọn Ghế (Bước Quan Trọng Nhất)</h2>
       <p className="step-description">Chọn ghế bạn muốn ngồi. Click vào ghế để chọn/bỏ chọn.</p>
+      
+      {/* Real-time Conflict Warning */}
+      {conflictWarning && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="conflict-warning"
+          style={{
+            background: '#fff3cd',
+            border: '2px solid #ffc107',
+            borderRadius: '8px',
+            padding: '1rem',
+            marginBottom: '1rem',
+            fontWeight: 600,
+            color: '#856404'
+          }}
+        >
+          {conflictWarning}
+        </motion.div>
+      )}
       
       {seatError && (
         <motion.div
