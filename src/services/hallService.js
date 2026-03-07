@@ -26,6 +26,17 @@ export const getFloorsByTheater = async (theaterId) => {
   return data
 }
 
+export const getFloorsByVenue = async (venueId) => {
+  const { data, error } = await supabase
+    .from('floors')
+    .select('*')
+    .eq('venue_id', venueId)
+    .order('floor_number')
+
+  if (error) throw error
+  return data
+}
+
 export const updateFloor = async (floorId, updates) => {
   const { data, error } = await supabase
     .from('floors')
@@ -81,6 +92,20 @@ export const getHallsByTheater = async (theaterId) => {
       floor:floors(*)
     `)
     .eq('theater_id', theaterId)
+    .order('name')
+
+  if (error) throw error
+  return data
+}
+
+export const getHallsByVenue = async (venueId) => {
+  const { data, error } = await supabase
+    .from('halls')
+    .select(`
+      *,
+      floor:floors(*)
+    `)
+    .eq('venue_id', venueId)
     .order('name')
 
   if (error) throw error
