@@ -81,8 +81,10 @@ CREATE TABLE public.floors (
   has_bar boolean DEFAULT false,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  venue_id uuid,
   CONSTRAINT floors_pkey PRIMARY KEY (id),
-  CONSTRAINT floors_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id)
+  CONSTRAINT floors_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id),
+  CONSTRAINT floors_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES public.venues(id)
 );
 CREATE TABLE public.halls (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -106,9 +108,11 @@ CREATE TABLE public.halls (
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   has_backstage boolean DEFAULT false,
   has_dressing_room boolean DEFAULT false,
+  venue_id uuid,
   CONSTRAINT halls_pkey PRIMARY KEY (id),
   CONSTRAINT halls_floor_id_fkey FOREIGN KEY (floor_id) REFERENCES public.floors(id),
-  CONSTRAINT halls_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id)
+  CONSTRAINT halls_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id),
+  CONSTRAINT halls_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES public.venues(id)
 );
 CREATE TABLE public.livestream_comments (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

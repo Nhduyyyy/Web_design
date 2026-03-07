@@ -187,6 +187,10 @@ const VenueDetailSimple = () => {
     setIsHallModalOpen(true)
   }
 
+  const handleEditSeatLayout = (hallId) => {
+    navigate(`/theater/halls/${hallId}/seat-editor`)
+  }
+
   const handleSaveHall = async (hallData, hallId) => {
     try {
       if (hallId) {
@@ -420,7 +424,11 @@ const VenueDetailSimple = () => {
                         </div>
 
                         <div className="flex justify-between pt-3 border-t border-slate-700/50">
-                          <button className="text-xs text-primary hover:underline flex items-center">
+                          <button 
+                            onClick={() => handleEditSeatLayout(hall.id)}
+                            className="text-xs text-primary hover:underline flex items-center"
+                            title="Cấu hình sơ đồ ghế"
+                          >
                             <span className="material-symbols-outlined text-[1rem] mr-1">grid_on</span>
                             Cấu hình sơ đồ ghế
                           </button>

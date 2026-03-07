@@ -1,0 +1,41 @@
+/* Seat Layout Editor Styles */
+
+.seat-layout-editor {
+  @apply w-full h-screen flex flex-col bg-background;
+}
+
+.seat-editor-header {
+  @apply border-b border-border bg-card px-6 py-4;
+}
+
+.seat-editor-main {
+  @apply flex-1 flex overflow-hidden;
+}
+
+.seat-editor-canvas-container {
+  @apply flex-1 relative overflow-hidden bg-muted/20;
+}
+
+.seat-editor-sidebar {
+  @apply w-80 border-l border-border bg-card overflow-y-auto;
+}
+
+.seat-toolbar {
+  @apply flex items-center gap-2 p-4 border-b border-border bg-card;
+}
+
+.seat-canvas {
+  @apply w-full h-full relative;
+}
+
+.seat-grid-container {
+  @apply absolute inset-0;
+}
+
+.zoom-controls {
+  @apply absolute bottom-4 right-4 flex flex-col gap-2 bg-card border border-border rounded-lg p-2 shadow-lg;
+}
+
+.history-controls {
+  @apply flex items-center gap-2;
+}
