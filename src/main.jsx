@@ -24,8 +24,10 @@ import './styles/index.css'
 import './utils/setAdminRole'
 import './utils/setTheaterRole'
 import './utils/quickCheckRole'
+import './utils/debugSeatLayout'
 
 console.log('🚀 main.jsx is loading...')
+console.log('💡 Debug commands available: window.debugSeatLayout.debugSeatLayoutTables()')
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

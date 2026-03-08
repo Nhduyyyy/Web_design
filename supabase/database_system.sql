@@ -396,6 +396,68 @@ CREATE TABLE public.schedules (
   CONSTRAINT schedules_show_id_fkey FOREIGN KEY (show_id) REFERENCES public.shows(id),
   CONSTRAINT schedules_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES public.venues(id)
 );
+CREATE TABLE public.seat_layout_configs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  hall_id uuid NOT NULL UNIQUE,
+  rows integer NOT NULL DEFAULT 10 CHECK (rows > 0 AND rows <= 50),
+  cols integer NOT NULL DEFAULT 15 CHECK (cols > 0 AND cols <= 50),
+  cell_size integer NOT NULL DEFAULT 40 CHECK (cell_size >= 20 AND cell_size <= 100),
+  show_grid boolean DEFAULT true,
+  label_type text DEFAULT 'letters'::text CHECK (label_type = ANY (ARRAY['letters'::text, 'numbers'::text, 'custom'::text])),
+  canvas_width numeric,
+  canvas_height numeric,
+  settings jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT seat_layout_configs_pkey PRIMARY KEY (id),
+  CONSTRAINT seat_layout_configs_hall_id_fkey FOREIGN KEY (hall_id) REFERENCES public.halls(id)
+);
+CREATE TABLE public.seat_layout_templates (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL UNIQUE,
+  description text,
+  thumbnail_url text,
+  category text DEFAULT 'general'::text,
+  rows integer NOT NULL,
+  cols integer NOT NULL,
+  layout_data jsonb NOT NULL,
+  config_data jsonb,
+  usage_count integer DEFAULT 0,
+  is_public boolean DEFAULT true,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT seat_layout_templates_pkey PRIMARY KEY (id),
+  CONSTRAINT seat_layout_templates_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.seat_layout_versions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  hall_id uuid NOT NULL,
+  version_number integer NOT NULL,
+  layout_data jsonb NOT NULL,
+  config_data jsonb,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  description text,
+  is_published boolean DEFAULT false,
+  CONSTRAINT seat_layout_versions_pkey PRIMARY KEY (id),
+  CONSTRAINT seat_layout_versions_hall_id_fkey FOREIGN KEY (hall_id) REFERENCES public.halls(id),
+  CONSTRAINT seat_layout_versions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.seat_zones (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  hall_id uuid NOT NULL,
+  name text NOT NULL,
+  description text,
+  color text DEFAULT '#3b82f6'::text,
+  price_multiplier numeric DEFAULT 1.0 CHECK (price_multiplier >= 0::numeric),
+  display_order integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT seat_zones_pkey PRIMARY KEY (id),
+  CONSTRAINT seat_zones_hall_id_fkey FOREIGN KEY (hall_id) REFERENCES public.halls(id)
+);
 CREATE TABLE public.seats (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   hall_id uuid NOT NULL,
@@ -405,8 +467,16 @@ CREATE TABLE public.seats (
   is_wheelchair_accessible boolean DEFAULT false,
   is_active boolean DEFAULT true,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
+  seat_label text,
+  rotation integer DEFAULT 0 CHECK (rotation = ANY (ARRAY[0, 90, 180, 270])),
+  status text DEFAULT 'available'::text CHECK (status = ANY (ARRAY['available'::text, 'booked'::text, 'blocked'::text, 'maintenance'::text])),
+  zone_id uuid,
+  position_x numeric,
+  position_y numeric,
+  metadata jsonb DEFAULT '{}'::jsonb,
   CONSTRAINT seats_pkey PRIMARY KEY (id),
-  CONSTRAINT seats_hall_id_fkey FOREIGN KEY (hall_id) REFERENCES public.halls(id)
+  CONSTRAINT seats_hall_id_fkey FOREIGN KEY (hall_id) REFERENCES public.halls(id),
+  CONSTRAINT seats_zone_id_fkey FOREIGN KEY (zone_id) REFERENCES public.seat_zones(id)
 );
 CREATE TABLE public.shows (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

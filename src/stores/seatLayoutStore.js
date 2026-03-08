@@ -12,6 +12,15 @@ const initialState = {
   showGrid: true,
   labelType: 'letters', // 'letters', 'numbers', 'custom'
   
+  // Config object (for persistence)
+  config: {
+    rows: 10,
+    cols: 15,
+    cellSize: 40,
+    showGrid: true,
+    labelType: 'letters'
+  },
+  
   // Seats data
   seats: [],
   
@@ -29,8 +38,21 @@ const initialState = {
   past: [],
   future: [],
   
-  // Zones (optional)
-  zones: []
+  // Zones
+  zones: [],
+  
+  // Version info
+  currentVersion: null,
+  versions: [],
+  
+  // Auto-save
+  isDirty: false,
+  lastSaved: null,
+  autoSaveEnabled: true,
+  
+  // Loading states
+  isLoading: false,
+  isSaving: false
 };
 
 export const useSeatLayoutStore = create(
@@ -237,14 +259,138 @@ export const useSeatLayoutStore = create(
     canUndo: () => get().past.length > 0,
     canRedo: () => get().future.length > 0,
 
-    // Zone actions (optional)
+    // Config actions
+    setConfig: (config) => set((state) => {
+      state.config = config;
+      state.rows = config.rows;
+      state.cols = config.cols;
+      state.cellSize = config.cellSize;
+      state.showGrid = config.showGrid;
+      state.labelType = config.labelType;
+    }),
+    
+    updateConfig: (updates) => set((state) => {
+      Object.assign(state.config, updates);
+      // Sync with top-level state
+      if (updates.rows !== undefined) state.rows = updates.rows;
+      if (updates.cols !== undefined) state.cols = updates.cols;
+      if (updates.cellSize !== undefined) state.cellSize = updates.cellSize;
+      if (updates.showGrid !== undefined) state.showGrid = updates.showGrid;
+      if (updates.labelType !== undefined) state.labelType = updates.labelType;
+      state.isDirty = true;
+    }),
+
+    // Zone actions
     addZone: (zone) => set((state) => {
       state.zones.push(zone);
+      state.isDirty = true;
+    }),
+    
+    updateZone: (zoneId, updates) => set((state) => {
+      const zone = state.zones.find(z => z.id === zoneId);
+      if (zone) {
+        Object.assign(zone, updates);
+        state.isDirty = true;
+      }
     }),
 
     removeZone: (zoneId) => set((state) => {
       state.zones = state.zones.filter(z => z.id !== zoneId);
+      // Remove zone from seats
+      state.seats.forEach(seat => {
+        if (seat.zoneId === zoneId) {
+          seat.zoneId = null;
+        }
+      });
+      state.isDirty = true;
     }),
+    
+    assignSeatsToZone: (seatIds, zoneId) => set((state) => {
+      seatIds.forEach(seatId => {
+        const seat = state.seats.find(s => s.id === seatId);
+        if (seat) {
+          seat.zoneId = zoneId;
+        }
+      });
+      state.isDirty = true;
+    }),
+    
+    // Version actions
+    setCurrentVersion: (version) => set({ currentVersion: version }),
+    setVersions: (versions) => set({ versions }),
+    
+    // Dirty state tracking
+    markDirty: () => set({ isDirty: true }),
+    markClean: () => set({ 
+      isDirty: false, 
+      lastSaved: new Date().toISOString() 
+    }),
+    
+    // Loading states
+    setLoading: (isLoading) => set({ isLoading }),
+    setSaving: (isSaving) => set({ isSaving }),
+    
+    // Auto-save
+    toggleAutoSave: () => set((state) => {
+      state.autoSaveEnabled = !state.autoSaveEnabled;
+    }),
+    
+    // Validation
+    validateLayout: () => {
+      const state = get();
+      const errors = [];
+      
+      // Check if seats are within bounds
+      state.seats.forEach(seat => {
+        if (seat.row < 0 || seat.row >= state.config.rows) {
+          errors.push(`Seat ${seat.label} row out of bounds`);
+        }
+        if (seat.col < 0 || seat.col >= state.config.cols) {
+          errors.push(`Seat ${seat.label} column out of bounds`);
+        }
+      });
+      
+      // Check for duplicate positions
+      const positions = new Set();
+      state.seats.forEach(seat => {
+        const key = `${seat.row}-${seat.col}`;
+        if (positions.has(key)) {
+          errors.push(`Duplicate seat at position ${key}`);
+        }
+        positions.add(key);
+      });
+      
+      // Check zone assignments
+      state.seats.forEach(seat => {
+        if (seat.zoneId && !state.zones.find(z => z.id === seat.zoneId)) {
+          errors.push(`Seat ${seat.label} assigned to non-existent zone`);
+        }
+      });
+      
+      return {
+        isValid: errors.length === 0,
+        errors
+      };
+    },
+    
+    // Get layout data for saving
+    getLayoutData: () => {
+      const state = get();
+      return {
+        config: state.config,
+        seats: state.seats.map(seat => ({
+          row: seat.row,
+          col: seat.col,
+          label: seat.label,
+          type: seat.type,
+          rotation: seat.rotation || 0,
+          zoneId: seat.zoneId || null,
+          status: seat.status || 'available'
+        })),
+        zones: state.zones,
+        statistics: state.getStatistics()
+      };
+    },
 
     // Statistics
     getStatistics: () => {

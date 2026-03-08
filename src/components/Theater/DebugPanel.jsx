@@ -32,21 +32,25 @@ const DebugPanel = ({ venueId }) => {
         .single()
       info.venue = venue
 
-      // Check organization
+      // Check theater
       if (venue?.theater_id) {
-        const { data: org } = await supabase
-          .from('organizations')
+        const { data: theater } = await supabase
+          .from('theaters')
           .select('*')
           .eq('id', venue.theater_id)
           .single()
-        info.organization = org
-      }
+        info.theater = theater
 
-      // Check RLS status
-      const { data: rlsStatus } = await supabase
-        .rpc('check_rls_status')
-        .catch(() => null)
-      info.rlsStatus = rlsStatus
+        // Check organization if theater has one
+        if (theater?.organization_id) {
+          const { data: org } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', theater.organization_id)
+            .single()
+          info.organization = org
+        }
+      }
 
       setDebugInfo(info)
     } catch (error) {
@@ -132,16 +136,16 @@ const DebugPanel = ({ venueId }) => {
           )}
         </div>
 
-        {/* Organization */}
+        {/* Theater */}
         <div>
-          <div className="text-slate-400 font-semibold mb-1">Organization:</div>
-          {debugInfo.organization ? (
+          <div className="text-slate-400 font-semibold mb-1">Theater:</div>
+          {debugInfo.theater ? (
             <div className="bg-green-900/30 border border-green-700 rounded p-2">
-              <div>✅ Organization exists</div>
-              <div>Name: {debugInfo.organization.legal_name}</div>
-              <div>Owner: {debugInfo.organization.owner_id}</div>
+              <div>✅ Theater exists</div>
+              <div>Name: {debugInfo.theater.name}</div>
+              <div>Owner: {debugInfo.theater.owner_id}</div>
               <div className="mt-1">
-                {debugInfo.user?.id === debugInfo.organization.owner_id ? (
+                {debugInfo.user?.id === debugInfo.theater.owner_id ? (
                   <span className="text-green-400">✅ You are the owner</span>
                 ) : (
                   <span className="text-red-400">❌ You are NOT the owner</span>
@@ -150,7 +154,23 @@ const DebugPanel = ({ venueId }) => {
             </div>
           ) : (
             <div className="bg-red-900/30 border border-red-700 rounded p-2">
-              ❌ Organization not found
+              ❌ Theater not found
+            </div>
+          )}
+        </div>
+
+        {/* Organization */}
+        <div>
+          <div className="text-slate-400 font-semibold mb-1">Organization:</div>
+          {debugInfo.organization ? (
+            <div className="bg-green-900/30 border border-green-700 rounded p-2">
+              <div>✅ Organization exists</div>
+              <div>Name: {debugInfo.organization.legal_name}</div>
+              <div>Owner: {debugInfo.organization.owner_id}</div>
+            </div>
+          ) : (
+            <div className="bg-yellow-900/30 border border-yellow-700 rounded p-2">
+              ⚠️ No organization linked
             </div>
           )}
         </div>
