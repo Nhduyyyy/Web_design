@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { updateSeat, generateSeats } from '../../../services/hallService'
 import './HallSeats.css'
 
 const HallSeats = ({ hall, seats, onUpdate }) => {
+  const navigate = useNavigate()
   const [selectedSeat, setSelectedSeat] = useState(null)
   const [viewMode, setViewMode] = useState('visual') // visual, list
   const [filterType, setFilterType] = useState('all')
@@ -92,6 +94,14 @@ const HallSeats = ({ hall, seats, onUpdate }) => {
         </div>
 
         <div className="seats-actions">
+          <button 
+            className="btn-edit-layout"
+            onClick={() => navigate(`/theater/halls/${hall.id}/seat-editor`)}
+          >
+            <span className="material-symbols-outlined">edit_square</span>
+            Chỉnh sửa sơ đồ
+          </button>
+
           <div className="view-toggle">
             <button
               className={`toggle-btn ${viewMode === 'visual' ? 'active' : ''}`}
