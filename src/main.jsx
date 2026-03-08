@@ -17,6 +17,11 @@ import VenueDetailSimple from './components/Theater/VenueDetailSimple'
 import OrganizationRegistration from './components/Organization/OrganizationRegistration'
 import RegistrationSuccess from './components/Organization/RegistrationSuccess'
 import OrganizationManagement from './components/Admin/OrganizationManagement'
+import LivestreamList from './components/Livestream/LivestreamList'
+import LivestreamWatch from './components/Livestream/LivestreamWatch'
+import LivestreamBroadcast from './components/Theater/LivestreamBroadcast'
+import TheaterLivestreams from './components/Theater/TheaterLivestreams'
+import TheaterLivestreamCreate from './components/Theater/TheaterLivestreamCreate'
 import './styles/index.css'
 
 // Import admin utilities for development
@@ -69,6 +74,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               } 
             />
             <Route 
+              path="/theater/livestreams" 
+              element={
+                <TheaterRoute>
+                  <TheaterLivestreams />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
               path="/theater/halls/:hallId" 
               element={
                 <TheaterRoute>
@@ -90,6 +103,38 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 <ProtectedRoute>
                   <RegistrationSuccess />
                 </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/livestreams" 
+              element={
+                <ProtectedRoute>
+                  <LivestreamList />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/livestreams/:id" 
+              element={
+                <ProtectedRoute>
+                  <LivestreamWatch />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/theater/livestreams/:id/broadcast" 
+              element={
+                <TheaterRoute>
+                  <LivestreamBroadcast />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
+              path="/theater/livestreams/create" 
+              element={
+                <TheaterRoute>
+                  <TheaterLivestreamCreate />
+                </TheaterRoute>
               } 
             />
           </Routes>

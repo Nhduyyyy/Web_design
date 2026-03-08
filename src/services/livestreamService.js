@@ -134,8 +134,51 @@ export const updateViewerCount = async (livestreamId, currentViewers) => {
 
   return updateLivestream(livestreamId, {
     current_viewers: currentViewers,
-    peak_viewers: peakViewers,
-    total_views: (livestream.total_views || 0) + 1
+    peak_viewers: peakViewers
+  })
+}
+
+/**
+ * Increment viewer count when a viewer joins
+ */
+export const incrementLivestreamViewers = async (livestreamId) => {
+  const { data: stream, error } = await supabase
+    .from('livestreams')
+    .select('current_viewers, peak_viewers, total_views')
+    .eq('id', livestreamId)
+    .single()
+
+  if (error) throw error
+
+  const current = stream?.current_viewers || 0
+  const total = stream?.total_views || 0
+  const peak = stream?.peak_viewers || 0
+  const newCurrent = current + 1
+
+  return updateLivestream(livestreamId, {
+    current_viewers: newCurrent,
+    total_views: total + 1,
+    peak_viewers: Math.max(newCurrent, peak)
+  })
+}
+
+/**
+ * Decrement viewer count when a viewer leaves
+ */
+export const decrementLivestreamViewers = async (livestreamId) => {
+  const { data: stream, error } = await supabase
+    .from('livestreams')
+    .select('current_viewers')
+    .eq('id', livestreamId)
+    .single()
+
+  if (error) throw error
+
+  const current = stream?.current_viewers || 0
+  const newCurrent = Math.max(current - 1, 0)
+
+  return updateLivestream(livestreamId, {
+    current_viewers: newCurrent
   })
 }
 

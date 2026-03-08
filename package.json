@@ -27,7 +27,8 @@
     "react-grid-layout": "^2.2.2",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.20.0",
-    "three": "^0.158.0"
+    "three": "^0.158.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",

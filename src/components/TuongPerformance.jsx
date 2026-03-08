@@ -470,6 +470,8 @@ function TuongPerformance({ setActiveSection }) {
       )}
       {activeTab === 'livestream' && (
         <div className="tp-other-tab">
+          {/* LiveStream hiện tại là demo giả lập.
+              Trang /livestreams mới dùng Supabase + WebRTC cho theater & viewer. */}
           <LiveStream />
         </div>
       )}

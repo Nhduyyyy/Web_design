@@ -1,3 +1,6 @@
+/* Fallback: Import Google Font nếu local không load được */
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Allura&family=Alex+Brush&family=Dancing+Script:wght@400;700&display=swap');
+
 /* Load font local để tránh FOUT (Flash of Unstyled Text) */
 @font-face {
   font-family: 'Great Vibes';
@@ -12,8 +15,7 @@
   /* Đường dẫn file font local */
 }
 
-/* Fallback: Import Google Font nếu local không load được */
-@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Allura&family=Alex+Brush&family=Dancing+Script:wght@400;700&display=swap');
+
 
 /* Base style cho chữ nghệ thuật */
 .art-text {
