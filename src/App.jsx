@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Header from './components/Header'
 import CameraExperience from './components/CameraExperience'
@@ -25,8 +26,25 @@ function getItemType(item) {
 }
 
 function App() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [selectedItem, setSelectedItem] = useState(null)
-  const [activeSection, setActiveSection] = useState('experience')
+  const [activeSection, setActiveSection] = useState(
+    () => searchParams.get('section') || 'experience'
+  )
+
+  useEffect(() => {
+    const next = searchParams.get('section') || 'experience'
+    setActiveSection((prev) => (prev === next ? prev : next))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  useEffect(() => {
+    const current = searchParams.get('section') || 'experience'
+    if (current !== activeSection) {
+      setSearchParams({ section: activeSection }, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection])
 
   return (
     <div className="app">

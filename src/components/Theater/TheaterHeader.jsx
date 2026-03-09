@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { NavLink } from "react-router-dom";
 import { useAuth } from '../../contexts/AuthContext'
 
 const TheaterHeader = ({ theater }) => {
@@ -21,42 +22,72 @@ const TheaterHeader = ({ theater }) => {
         </Link>
         
         <nav className="hidden md:flex items-center gap-6">
-          <Link 
-            to="/theater" 
-            className="text-primary text-sm font-medium border-b-2 border-primary pb-1"
+          <NavLink
+            to="/theater"
+            end
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Tổng quan
-          </Link>
-          <Link 
-            to="/theater/profile" 
-            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+          </NavLink>
+
+          <NavLink
+            to="/theater/profile"
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Thông tin Nhà hát
-          </Link>
-          <Link 
-            to="/theater/schedules" 
-            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+          </NavLink>
+
+          <NavLink
+            to="/theater/schedules"
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Lịch diễn
-          </Link>
-          <Link 
-            to="/theater/events" 
-            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+          </NavLink>
+
+          <NavLink
+            to="/theater/events"
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Sự kiện
-          </Link>
-          <Link 
-            to="/theater/livestreams" 
-            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+          </NavLink>
+
+          <NavLink
+            to="/theater/livestreams"
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Phát trực tiếp
-          </Link>
-          <Link 
-            to="/theater/bookings" 
-            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+          </NavLink>
+
+          <NavLink
+            to="/theater/bookings"
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Đặt vé
-          </Link>
+          </NavLink>
         </nav>
       </div>
 

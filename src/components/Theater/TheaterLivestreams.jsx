@@ -90,10 +90,10 @@ export default function TheaterLivestreams() {
   };
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-background-dark">
+    <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark">
       <TheaterHeader theater={theater} />
 
-      <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      <main className="flex-1 max-w-6xl mx-auto px-4 py-6 space-y-6">
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-slate-50">

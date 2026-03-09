@@ -201,6 +201,72 @@ export const subscribeLivestreamUpdates = (livestreamId, callback) => {
     .subscribe()
 }
 
+// ============================================
+// LIVESTREAM COMMENTS
+// ============================================
+
+/**
+ * Get comments for a livestream (with profile for viewer name)
+ */
+export const getLivestreamComments = async (livestreamId) => {
+  const { data, error } = await supabase
+    .from('livestream_comments')
+    .select(`
+      id, livestream_id, user_id, message, created_at,
+      profile:profiles(full_name, email)
+    `)
+    .eq('livestream_id', livestreamId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+/**
+ * Add comment to livestream
+ */
+export const addLivestreamComment = async (livestreamId, message, userId = null) => {
+  const { data, error } = await supabase
+    .from('livestream_comments')
+    .insert({
+      livestream_id: livestreamId,
+      user_id: userId,
+      message: message.trim()
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * Subscribe to new comments (real-time)
+ * Requires: ALTER PUBLICATION supabase_realtime ADD TABLE livestream_comments;
+ */
+export const subscribeLivestreamComments = (livestreamId, onInsert) => {
+  const channel = supabase
+    .channel(`comments:${livestreamId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'livestream_comments',
+        filter: `livestream_id=eq.${livestreamId}`
+      },
+      (payload) => {
+        onInsert(payload.new)
+      }
+    )
+  channel.subscribe()
+  return channel
+}
+
+// ============================================
+// LIVESTREAM CRUD
+// ============================================
+
 /**
  * Delete livestream
  */

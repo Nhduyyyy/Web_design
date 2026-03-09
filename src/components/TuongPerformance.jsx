@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { Link } from "react-router-dom";
 import { motion } from 'framer-motion'
 import InteractiveScene from './InteractiveScene'
 import Schedule from './Schedule'
@@ -114,7 +115,7 @@ const performances = [
 const TABS = [
   { id: 'watch', label: 'Vở diễn' },
   { id: 'schedule', label: 'Lịch diễn' },
-  { id: 'livestream', label: 'Live Stream' },
+  { id: 'livestream', label: 'Live Stream', path: '/livestreams' },
   { id: 'events', label: 'Sự Kiện' }
 ]
 
@@ -242,7 +243,12 @@ function TuongPerformance({ setActiveSection }) {
     <div className="tuong-performance luxury-streaming">
       <header className="tp-header">
         <nav className="tp-header-nav" aria-label="Chọn mục">
-          {TABS.map((tab) => (
+          {TABS.map((tab) => 
+            tab.path ? (
+              <Link key={tab.id} to={tab.path} className="tp-nav-link">
+                <span className="tp-tab-label">{tab.label}</span>
+              </Link>
+            ) : (
             <button
               key={tab.id}
               type="button"

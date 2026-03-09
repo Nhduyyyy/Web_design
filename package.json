@@ -44,11 +44,11 @@
     "react-hot-toast": "^2.6.0",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.20.0",
-    "three": "^0.158.0",
-    "uuid": "^13.0.0",
     "react-use": "^17.6.0",
     "tailwind-merge": "^3.5.0",
+    "three": "^0.158.0",
     "usehooks-ts": "^3.1.1",
+    "uuid": "^13.0.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useBroadcast } from '../../hooks/useBroadcast';
 import { getLivestreamById, startLivestream, endLivestream, subscribeLivestreamUpdates } from '../../services/livestreamService';
+import TheaterHeader from './TheaterHeader';
 import ChatPanel from '../Livestream/ChatPanel';
 import BroadcastControls from '../Livestream/BroadcastControls';
 import ViewerCount from '../Livestream/ViewerCount';
@@ -140,12 +141,14 @@ export default function LivestreamBroadcast() {
   }
 
   return (
-    <div className="live-stream-page">
-      <div className="container">
-        <div className="grid lg:grid-cols-[2fr,1fr] gap-6 items-start">
-          <div className="space-y-4">
-            <div className="bg-black/80 border border-white/10 rounded-2xl overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+    <div className="flex flex-col live-stream-page">
+      <TheaterHeader theater={stream?.theater} />
+
+      <div className="flex-1 container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6 items-start">
+          <main className="min-w-0 space-y-4 lg:order-1 order-1">
+            <div className="flex flex-col bg-black/80 border border-white/10 rounded-2xl overflow-hidden h-[600px]">
+              <div className="flex-1 flex items-center justify-between px-4 py-3 border-b border-white/10">
                 <div>
                   <h1 className="text-base md:text-lg font-semibold text-white">
                     Phát sóng: {stream.title}
@@ -170,7 +173,7 @@ export default function LivestreamBroadcast() {
                 </div>
               </div>
 
-              <div className="p-4 flex flex-col gap-3">
+              <div className="mt-auto p-4 flex flex-col gap-3">
                 <BroadcastControls
                   isBroadcasting={isBroadcasting}
                   mode={mode}
@@ -203,14 +206,26 @@ export default function LivestreamBroadcast() {
                 </div>
               </div>
             </div>
-          </div>
+          </main>
 
-          <ChatPanel
-            streamId={streamId}
-            chatEnabled={stream.chat_enabled ?? true}
-          />
+          <aside className="lg:order-2 order-2 min-w-0 lg:sticky lg:top-24">
+            <div className="bg-black/70 border border-white/10 rounded-2xl overflow-hidden">
+              <ChatPanel
+                streamId={streamId}
+                chatEnabled={stream.chat_enabled ?? true}
+                theaterOwnerId={stream.theater?.owner_id ?? null}
+                theaterName={stream.theater?.name ?? ''}
+              />
+            </div>
+          </aside>
         </div>
       </div>
+
+      <footer className="mt-auto border-t border-border-gold p-6 text-center bg-surface-dark">
+        <p className="text-slate-500 text-sm">
+          © 2024 Tuồng Platform Vietnam. Livestream Theater Console.
+        </p>
+      </footer>
     </div>
   );
 }
