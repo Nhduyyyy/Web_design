@@ -54,15 +54,16 @@ const TheaterHeader = ({ theater }) => {
             }
           >
             Lịch diễn
+            </NavLink>
+            <NavLink
+            to="/theater/shows" 
+            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+          >
+            Vở diễn
           </NavLink>
-
           <NavLink
-            to="/theater/events"
-            className={({ isActive }) =>
-              isActive
-                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
-                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
-            }
+            to="/theater/events" 
+            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
           >
             Sự kiện
           </NavLink>
