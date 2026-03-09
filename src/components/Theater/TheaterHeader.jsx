@@ -54,8 +54,8 @@ const TheaterHeader = ({ theater }) => {
             }
           >
             Lịch diễn
-            </NavLink>
-            <NavLink
+          </NavLink>
+          <NavLink
             to="/theater/shows" 
             className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
           >
