@@ -40,6 +40,12 @@ const TheaterHeader = ({ theater }) => {
             Lịch diễn
           </Link>
           <Link 
+            to="/theater/shows" 
+            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+          >
+            Vở diễn
+          </Link>
+          <Link 
             to="/theater/events" 
             className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
           >

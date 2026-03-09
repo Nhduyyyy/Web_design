@@ -13,6 +13,7 @@ import SimpleLogin from './components/Auth/SimpleLogin'
 import Register from './components/Auth/Register'
 import AdminDashboard from './components/Admin/AdminDashboard'
 import TheaterDashboard from './components/Theater/TheaterDashboard'
+import TheaterShows from './components/Theater/TheaterShows'
 import VenueDetailSimple from './components/Theater/VenueDetailSimple'
 import SeatLayoutEditor from './components/Theater/SeatLayoutEditor'
 import OrganizationRegistration from './components/Organization/OrganizationRegistration'
@@ -68,6 +69,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               element={
                 <TheaterRoute>
                   <TheaterDashboard />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
+              path="/theater/shows" 
+              element={
+                <TheaterRoute>
+                  <TheaterShows />
                 </TheaterRoute>
               } 
             />
