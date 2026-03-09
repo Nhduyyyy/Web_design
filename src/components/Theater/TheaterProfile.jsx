@@ -83,7 +83,7 @@ const TheaterProfile = ({ theater, onUpdate }) => {
 
       <div className="px-6 pb-6 relative">
         {/* Logo Upload */}
-        <div className="absolute -top-12 left-6 h-24 w-24 rounded-xl border-4 border-surface-dark bg-background-dark overflow-hidden group">
+        <div className="absolute top-[-105px] left-6 h-24 w-24 rounded-xl border-4 border-surface-dark bg-background-dark overflow-hidden group">
           {theater.logo_url ? (
             <img 
               alt="Theater Logo" 
