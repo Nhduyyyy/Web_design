@@ -149,7 +149,7 @@ function Hero() {
               </button>
               <button 
                 className="hero-btn hero-btn-secondary"
-                onClick={() => navigate('/game/kiem-lua')}
+                onClick={() => navigate('/kiem-lua-phaser')}
               >
                 KIẾM LÚA
               </button>

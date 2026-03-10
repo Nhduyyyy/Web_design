@@ -25,12 +25,8 @@ import LivestreamWatch from './components/Livestream/LivestreamWatch'
 import LivestreamBroadcast from './components/Theater/LivestreamBroadcast'
 import TheaterLivestreams from './components/Theater/TheaterLivestreams'
 import TheaterLivestreamCreate from './components/Theater/TheaterLivestreamCreate'
-import WhackAMoleGame from './components/WhackAMoleGame'
-import WhackAMaskIntro from './components/WhackAMaskIntro'
-import WhackAMaskPhaser from './components/WhackAMaskPhaser'
+import WhackAMaskGame from './components/WhackAMaskGame'
 import GameSelector from './components/GameSelector'
-import PhaserTest from './components/PhaserTest'
-import PhaserDebug from './components/PhaserDebug'
 import './styles/index.css'
 
 // Import admin utilities for development
@@ -145,20 +141,16 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               element={<GameSelector />} 
             />
             <Route 
-              path="/game/test" 
-              element={<PhaserTest />} 
-            />
-            <Route 
-              path="/game/debug" 
-              element={<PhaserDebug />} 
-            />
-            <Route 
               path="/game/kiem-lua" 
-              element={<WhackAMaskIntro />} 
+              element={<WhackAMaskGame />} 
             />
             <Route 
               path="/game/kiem-lua-phaser" 
-              element={<WhackAMaskPhaser />} 
+              element={<WhackAMaskGame />} 
+            />
+            <Route 
+              path="/kiem-lua-phaser" 
+              element={<WhackAMaskGame />} 
             />
             <Route 
               path="/livestreams" 
