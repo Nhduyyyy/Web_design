@@ -20,6 +20,10 @@ import RegistrationSuccess from './components/Organization/RegistrationSuccess'
 import OrganizationManagement from './components/Admin/OrganizationManagement'
 import WhackAMoleGame from './components/WhackAMoleGame'
 import WhackAMaskIntro from './components/WhackAMaskIntro'
+import WhackAMaskPhaser from './components/WhackAMaskPhaser'
+import GameSelector from './components/GameSelector'
+import PhaserTest from './components/PhaserTest'
+import PhaserDebug from './components/PhaserDebug'
 import './styles/index.css'
 
 // Import admin utilities for development
@@ -106,8 +110,24 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               } 
             />
             <Route 
+              path="/game" 
+              element={<GameSelector />} 
+            />
+            <Route 
+              path="/game/test" 
+              element={<PhaserTest />} 
+            />
+            <Route 
+              path="/game/debug" 
+              element={<PhaserDebug />} 
+            />
+            <Route 
               path="/game/kiem-lua" 
               element={<WhackAMaskIntro />} 
+            />
+            <Route 
+              path="/game/kiem-lua-phaser" 
+              element={<WhackAMaskPhaser />} 
             />
           </Routes>
         </AuthProvider>
