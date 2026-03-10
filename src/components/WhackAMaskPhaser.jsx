@@ -14,10 +14,15 @@ class WhackAMaskScene extends Phaser.Scene {
 
   preload() {
     console.log('📦 Loading assets...')
-    this.load.image('hole', '/game-assets/mole-hole-all.png')
-    this.load.image('mask', '/game-assets/mole.png')
-    this.load.image('smash', '/game-assets/smash.png')
-    this.load.image('hammer', '/game-assets/hammer.png')
+    
+    // Set base path for assets
+    this.load.setPath('/game-assets/')
+    
+    this.load.image('background', 'background.png')
+    this.load.image('hole', 'mole-hole-all.png')
+    this.load.image('mask', 'mole.png')
+    this.load.image('smash', 'smash.png')
+    this.load.image('hammer', 'hammer.png')
     
     this.load.on('complete', () => {
       console.log('✅ Assets loaded successfully')
@@ -31,11 +36,17 @@ class WhackAMaskScene extends Phaser.Scene {
   create() {
     console.log('🎨 Creating game scene...')
     
-    // Setup game board - 3x3 grid
+    // Add background image - scale to fill entire canvas
+    const bg = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'background')
+    bg.setDisplaySize(1200, 1000)  // Larger background
+    bg.setDepth(-1)
+    console.log('✅ Background added')
+    
+    // Setup game board - 3x3 grid (giữ nguyên kích thước)
     const gridSize = 3
-    const spacing = 250  // Tăng lên 250 để tạo khoảng cách rộng hơn nhiều
+    const spacing = 250  // Giữ nguyên spacing
     const startX = this.cameras.main.centerX - spacing
-    const startY = this.cameras.main.centerY - spacing + 20
+    const startY = this.cameras.main.centerY - spacing + 120  // Tăng từ +20 lên +120 để đẩy grid xuống thấp
 
     // Create 9 holes
     for (let row = 0; row < gridSize; row++) {
@@ -206,9 +217,9 @@ class MoleHole {
       .setInteractive({ cursor: 'pointer' })
 
     // Tạo mask để CHỈ hiển thị phần TRÊN của mole (phần có thể nhìn thấy)
-    const visibleHeight = y + 65  // Giảm từ 65 xuống 55 để che nhiều hơn
+    const visibleHeight = y + 65
     const moleMaskShape = scene.make.graphics()
-      .fillRect(0, 0, 900, visibleHeight)  // Tăng từ 650 lên 900
+      .fillRect(0, 0, 1200, visibleHeight)  // Match canvas width
       .setVisible(false)
     
     const moleGeometryMask = moleMaskShape.createGeometryMask()
@@ -375,8 +386,8 @@ const WhackAMaskPhaser = () => {
     const config = {
       type: Phaser.AUTO,
       parent: gameRef.current,
-      width: 900,  // Tăng từ 650 lên 900
-      height: 900, // Tăng từ 650 lên 900
+      width: 1200,  // Canvas rộng hơn
+      height: 1000, // Canvas cao hơn
       backgroundColor: '#3a2828',
       scene: WhackAMaskScene,
       scale: {
