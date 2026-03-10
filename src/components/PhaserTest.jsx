@@ -7,6 +7,7 @@ class TestScene extends Phaser.Scene {
     this.load.image('hole', '/game-assets/mole-hole-all.png')
     this.load.image('mask', '/game-assets/mole.png')
     this.load.image('smash', '/game-assets/smash.png')
+    this.load.image('hammer', '/game-assets/hammer.png')
   }
 
   create() {
@@ -71,9 +72,67 @@ class TestScene extends Phaser.Scene {
     
     console.log('✅ Smash effect created')
     
+    // Layer 5: Hammer (búa) - theo dõi con trỏ chuột
+    const hammer = this.add.sprite(0, 0, 'hammer')
+      .setScale(0.4)
+      .setOrigin(0.3, 0.65) // Pivot point ở gần đầu cán búa
+      .setDepth(4)
+      .setAlpha(1.0) // Độ mờ 100% - rõ ràng hoàn toàn
+      .setAngle(-15) // Góc nghiêng tự nhiên
+    
+    console.log('✅ Hammer created')
+    
+    // Biến để theo dõi trạng thái búa
+    let isHammering = false
+    
     // Biến để theo dõi trạng thái
     let isPopping = false
     let isClickable = false // Chỉ cho phép click khi chuột chui lên qua y=390
+    
+    // Update hammer position theo con trỏ chuột
+    this.input.on('pointermove', (pointer) => {
+      if (!isHammering) {
+        hammer.setPosition(pointer.x, pointer.y)
+      }
+    })
+    
+    // Function để thực hiện animation búa đập
+    const hammerSmash = (x, y) => {
+      if (isHammering) return
+      
+      isHammering = true
+      console.log('🔨 Búa đập xuống!')
+      
+      // Lưu vị trí đập
+      const smashX = x
+      const smashY = y
+      
+      // Animation búa: nâng lên -> đập xuống -> nảy lên
+      // búa đang cầm
+const smashDepth = 30
+
+this.tweens.add({
+  targets: hammer,
+  angle: -100,   // đập theo chiều ngược lại
+  y: smashY + smashDepth,
+  duration: 100,
+  ease: 'Power3',
+  onComplete: () => {
+
+    this.tweens.add({
+      targets: hammer,
+      angle: 0,
+      y: smashY - 20,
+      duration: 120,
+      ease: 'Power2',
+      onComplete: () => {
+        isHammering = false
+      }
+    })
+
+  }
+})
+    }
     
     // Function để mask tự động chui lên
     const popUp = () => {
@@ -155,13 +214,18 @@ class TestScene extends Phaser.Scene {
     })
     
     // Click để đập mask - CHỈ khi mask ở trên y=390
-    mask.on('pointerdown', () => {
+    mask.on('pointerdown', (pointer) => {
       if (!isClickable || mask.y > 390) {
         console.log('❌ Không thể đập! Mask chưa chui lên đủ cao (y > 390)')
+        // Vẫn hiển thị animation búa đập
+        hammerSmash(pointer.x, pointer.y)
         return
       }
       
       console.log('💥 Đập trúng mask! Chuột chết!')
+      
+      // Animation búa đập
+      hammerSmash(pointer.x, pointer.y)
       
       // Dừng animation hiện tại
       this.tweens.killTweensOf(mask)
@@ -185,6 +249,14 @@ class TestScene extends Phaser.Scene {
       })
     })
     
+    // Click vào background cũng hiển thị animation búa
+    this.input.on('pointerdown', (pointer) => {
+      // Chỉ xử lý nếu không click vào mask
+      if (!mask.getBounds().contains(pointer.x, pointer.y)) {
+        hammerSmash(pointer.x, pointer.y)
+      }
+    })
+    
     // Add instruction
     this.add.text(325, 600, 'Click chuột khi nó chui lên qua vạch vàng!', {
       fontSize: '14px',
@@ -192,7 +264,7 @@ class TestScene extends Phaser.Scene {
     }).setOrigin(0.5)
     
     // Add layer info
-    this.add.text(325, 620, 'Chuột sẽ đổi màu vàng khi có thể click (y <= 390)', {
+    this.add.text(325, 620, 'Búa sẽ theo dõi con trỏ và đập xuống khi click', {
       fontSize: '12px',
       color: '#999999'
     }).setOrigin(0.5)
