@@ -147,7 +147,12 @@ function Hero() {
               >
                 {isAuthenticated ? 'KHÁM PHÁ NGAY' : 'ĐĂNG NHẬP'}
               </button>
-              <button className="hero-btn hero-btn-secondary">XEM TRAILER</button>
+              <button 
+                className="hero-btn hero-btn-secondary"
+                onClick={() => navigate('/game/kiem-lua')}
+              >
+                KIẾM LÚA
+              </button>
             </div>
           </div>
         </div>

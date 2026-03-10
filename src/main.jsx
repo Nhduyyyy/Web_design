@@ -25,6 +25,8 @@ import LivestreamWatch from './components/Livestream/LivestreamWatch'
 import LivestreamBroadcast from './components/Theater/LivestreamBroadcast'
 import TheaterLivestreams from './components/Theater/TheaterLivestreams'
 import TheaterLivestreamCreate from './components/Theater/TheaterLivestreamCreate'
+import WhackAMoleGame from './components/WhackAMoleGame'
+import WhackAMaskIntro from './components/WhackAMaskIntro'
 import './styles/index.css'
 
 // Import admin utilities for development
