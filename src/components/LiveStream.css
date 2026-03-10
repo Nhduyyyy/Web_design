@@ -2,7 +2,7 @@
 
 .live-stream-page {
   min-height: 100vh;
-  padding: 2rem 0 4rem;
+  padding: 0;
   background:
     linear-gradient(135deg, #0a0a0a 0%, #0a0a0a 40%, transparent 60%),
     linear-gradient(180deg, #0a0a0a 0%, #3d0f0f 50%, #4a1515 100%);
@@ -10,10 +10,15 @@
   font-family: 'Be Vietnam Pro', 'Inter', system-ui, sans-serif;
 }
 
+.live-stream-page.has-fixed-header {
+  /* Header (`src/components/Header.jsx`) is fixed at top */
+  padding-top: clamp(88px, 8vw, 120px);
+}
+
 .live-stream-page .container {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 1rem;
 }
 
 /* ========== Section headers ========== */

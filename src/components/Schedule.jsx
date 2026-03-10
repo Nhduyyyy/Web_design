@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import ScheduleCalendar from './ScheduleCalendar'
 import BookingModal from './Booking/BookingModal'
-import { getCities, getValidatedEvents } from '../data/scheduleData'
+import { getSchedules } from '../services/scheduleService'
 import { parseISO, formatTimeHHMMSS, formatDateShort, formatDateSidebar } from '../utils/dateUtils'
-import { isEventVisible, deriveEventStatus } from '../utils/scheduleValidator'
+import { deriveEventStatus } from '../utils/scheduleValidator'
 import './Schedule.css'
 
 const PER_PAGE = 3
@@ -23,6 +23,9 @@ export default function Schedule() {
   const [bookingEvent, setBookingEvent] = useState(null)
   const [isBookingOpen, setIsBookingOpen] = useState(false)
   const [page, setPage] = useState(1)
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
     const sp = new URLSearchParams()
@@ -36,8 +39,80 @@ export default function Schedule() {
     window.history.replaceState({}, '', url)
   }, [filters])
 
-  const { events: VALID_EVENTS, invalid: INVALID_EVENTS } = useMemo(() => getValidatedEvents(), [])
-  const cities = useMemo(() => getCities(VALID_EVENTS), [VALID_EVENTS])
+  useEffect(() => {
+    let mounted = true
+
+    const run = async () => {
+      try {
+        setLoading(true)
+        setLoadError('')
+
+        const startDate = filters.from
+          ? new Date(`${filters.from}T00:00:00`).toISOString()
+          : undefined
+        const endDate = filters.to
+          ? new Date(`${filters.to}T23:59:59`).toISOString()
+          : undefined
+
+        const schedules = await getSchedules({
+          city: filters.city || undefined,
+          startDate,
+          endDate,
+        })
+
+        const mapped = (schedules || []).map((s) => {
+          const venue = s.venue || {}
+          const show = s.show || {}
+          const normalizedStatus = s.status === 'cancelled' ? 'canceled' : s.status
+
+          return {
+            id: String(s.id),
+            schedule_id: s.id,
+            title: s.title || show.title || 'Lịch diễn',
+            description: s.description || show.description || '',
+            detail: s.description || show.synopsis || '',
+            startDatetime: s.start_datetime,
+            endDatetime: s.end_datetime,
+            timezone: s.timezone || 'Asia/Ho_Chi_Minh',
+            status: normalizedStatus,
+            ticketUrl: s.ticket_url || null,
+            venue: {
+              id: String(venue.id || s.venue_id || ''),
+              name: venue.name || '—',
+              city: venue.city || '',
+              address: venue.address || '',
+            },
+            tags: show.tags || [],
+          }
+        })
+
+        mapped.sort((a, b) => new Date(a.startDatetime) - new Date(b.startDatetime))
+        if (!mounted) return
+        setEvents(mapped)
+      } catch (err) {
+        console.error('Failed to load schedules', err)
+        if (!mounted) return
+        setLoadError(err?.message || 'Không thể tải lịch diễn')
+        setEvents([])
+      } finally {
+        if (!mounted) return
+        setLoading(false)
+      }
+    }
+
+    run()
+    return () => {
+      mounted = false
+    }
+  }, [filters.city, filters.from, filters.to])
+
+  const cities = useMemo(() => {
+    const s = new Set()
+    events.forEach((e) => {
+      if (e.venue?.city) s.add(e.venue.city)
+    })
+    return Array.from(s).sort()
+  }, [events])
 
   const filtered = useMemo(() => {
     let fromDate = null
@@ -48,10 +123,26 @@ export default function Schedule() {
       fromDate = null
       toDate = null
     }
-    return VALID_EVENTS.filter(ev =>
-      isEventVisible(ev, { city: filters.city, fromDate, toDate, q: filters.q })
-    ).sort((a, b) => new Date(a.startDatetime) - new Date(b.startDatetime))
-  }, [filters, VALID_EVENTS])
+    const q = (filters.q || '').trim().toLowerCase()
+    return (events || [])
+      .filter((ev) => {
+        if (filters.city && ev.venue?.city?.toLowerCase() !== String(filters.city).toLowerCase()) {
+          return false
+        }
+        if (fromDate || toDate) {
+          const s = ev.startDatetime ? Date.parse(ev.startDatetime) : NaN
+          if (Number.isNaN(s)) return false
+          if (fromDate && s < fromDate.getTime()) return false
+          if (toDate && s > toDate.getTime()) return false
+        }
+        if (q) {
+          const hay = `${ev.title || ''} ${ev.description || ''} ${ev.venue?.name || ''} ${ev.venue?.city || ''}`.toLowerCase()
+          if (!hay.includes(q)) return false
+        }
+        return true
+      })
+      .sort((a, b) => new Date(a.startDatetime) - new Date(b.startDatetime))
+  }, [filters, events])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
   const paginatedEvents = useMemo(() => {
@@ -96,9 +187,9 @@ export default function Schedule() {
         </p>
       </header>
 
-      {INVALID_EVENTS?.length > 0 && (
+      {!!loadError && (
         <div className="schedule-validation" role="status" aria-live="polite">
-          <strong>Cảnh báo dữ liệu:</strong> {INVALID_EVENTS.length} sự kiện bị bỏ qua do lỗi định dạng.
+          <strong>Lỗi tải dữ liệu:</strong> {loadError}
         </div>
       )}
 
@@ -208,7 +299,7 @@ export default function Schedule() {
                             <span className="schedule-card-tag canceled">Hủy</span>
                           )}
                         </div>
-                        <p className="schedule-card-desc">{ev.description}</p>
+                        <p className="schedule-card-desc">{ev.detail || ev.description}</p>
                         <div className="schedule-card-actions">
                           {ev.status !== 'canceled' && (
                             <button
@@ -262,7 +353,14 @@ export default function Schedule() {
               </h2>
             </div>
             <div className="schedule-widget-body">
-              {filtered.slice(0, 3).map((ev, idx) => (
+              {filtered
+                .filter((ev) => {
+                  const t = ev.startDatetime ? Date.parse(ev.startDatetime) : NaN
+                  if (Number.isNaN(t)) return false
+                  return t >= Date.now()
+                })
+                .slice(0, 3)
+                .map((ev, idx) => (
                 <div
                   key={ev.id}
                   className={`schedule-upcoming-item ${idx === 0 ? 'first' : ''}`}

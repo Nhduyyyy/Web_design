@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { NavLink } from "react-router-dom";
 import { useAuth } from '../../contexts/AuthContext'
 
 const TheaterHeader = ({ theater }) => {
@@ -21,42 +22,70 @@ const TheaterHeader = ({ theater }) => {
         </Link>
         
         <nav className="hidden md:flex items-center gap-6">
-          <Link 
-            to="/theater" 
-            className="text-primary text-sm font-medium border-b-2 border-primary pb-1"
+          <NavLink
+            to="/theater"
+            end
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Tổng quan
-          </Link>
-          <Link 
-            to="/theater/profile" 
-            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+          </NavLink>
+
+          <NavLink
+            to="/theater/profile"
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Thông tin Nhà hát
-          </Link>
-          <Link 
-            to="/theater/schedules" 
-            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+          </NavLink>
+
+          <NavLink
+            to="/theater/schedules"
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Lịch diễn
-          </Link>
-          <Link 
+          </NavLink>
+          <NavLink
+            to="/theater/shows" 
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
+          >
+            Vở diễn
+          </NavLink>
+          <NavLink
             to="/theater/events" 
-            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Sự kiện
-          </Link>
-          <Link 
-            to="/theater/livestreams" 
-            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+          </NavLink>
+
+          <NavLink
+            to="/theater/livestreams"
+            className={({ isActive }) =>
+              isActive
+                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
+                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
+            }
           >
             Phát trực tiếp
-          </Link>
-          <Link 
-            to="/theater/bookings" 
-            className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
-          >
-            Đặt vé
-          </Link>
+          </NavLink>
         </nav>
       </div>
 
@@ -96,7 +125,7 @@ const TheaterHeader = ({ theater }) => {
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-surface-dark border border-border-gold rounded-lg shadow-xl py-2 z-50">
+            <div className="absolute right-0 mt-2 w-64 bg-surface-dark border border-border-gold rounded-lg shadow-xl py-2 z-50">
               <div className="px-4 py-2 border-b border-border-gold">
                 <p className="text-sm font-medium text-slate-200">{user?.email}</p>
                 <p className="text-xs text-slate-400">Quản lý Nhà hát</p>

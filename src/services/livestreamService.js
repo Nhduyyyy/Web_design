@@ -134,8 +134,51 @@ export const updateViewerCount = async (livestreamId, currentViewers) => {
 
   return updateLivestream(livestreamId, {
     current_viewers: currentViewers,
-    peak_viewers: peakViewers,
-    total_views: (livestream.total_views || 0) + 1
+    peak_viewers: peakViewers
+  })
+}
+
+/**
+ * Increment viewer count when a viewer joins
+ */
+export const incrementLivestreamViewers = async (livestreamId) => {
+  const { data: stream, error } = await supabase
+    .from('livestreams')
+    .select('current_viewers, peak_viewers, total_views')
+    .eq('id', livestreamId)
+    .single()
+
+  if (error) throw error
+
+  const current = stream?.current_viewers || 0
+  const total = stream?.total_views || 0
+  const peak = stream?.peak_viewers || 0
+  const newCurrent = current + 1
+
+  return updateLivestream(livestreamId, {
+    current_viewers: newCurrent,
+    total_views: total + 1,
+    peak_viewers: Math.max(newCurrent, peak)
+  })
+}
+
+/**
+ * Decrement viewer count when a viewer leaves
+ */
+export const decrementLivestreamViewers = async (livestreamId) => {
+  const { data: stream, error } = await supabase
+    .from('livestreams')
+    .select('current_viewers')
+    .eq('id', livestreamId)
+    .single()
+
+  if (error) throw error
+
+  const current = stream?.current_viewers || 0
+  const newCurrent = Math.max(current - 1, 0)
+
+  return updateLivestream(livestreamId, {
+    current_viewers: newCurrent
   })
 }
 
@@ -157,6 +200,72 @@ export const subscribeLivestreamUpdates = (livestreamId, callback) => {
     )
     .subscribe()
 }
+
+// ============================================
+// LIVESTREAM COMMENTS
+// ============================================
+
+/**
+ * Get comments for a livestream (with profile for viewer name)
+ */
+export const getLivestreamComments = async (livestreamId) => {
+  const { data, error } = await supabase
+    .from('livestream_comments')
+    .select(`
+      id, livestream_id, user_id, message, created_at,
+      profile:profiles(full_name, email)
+    `)
+    .eq('livestream_id', livestreamId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+/**
+ * Add comment to livestream
+ */
+export const addLivestreamComment = async (livestreamId, message, userId = null) => {
+  const { data, error } = await supabase
+    .from('livestream_comments')
+    .insert({
+      livestream_id: livestreamId,
+      user_id: userId,
+      message: message.trim()
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * Subscribe to new comments (real-time)
+ * Requires: ALTER PUBLICATION supabase_realtime ADD TABLE livestream_comments;
+ */
+export const subscribeLivestreamComments = (livestreamId, onInsert) => {
+  const channel = supabase
+    .channel(`comments:${livestreamId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'livestream_comments',
+        filter: `livestream_id=eq.${livestreamId}`
+      },
+      (payload) => {
+        onInsert(payload.new)
+      }
+    )
+  channel.subscribe()
+  return channel
+}
+
+// ============================================
+// LIVESTREAM CRUD
+// ============================================
 
 /**
  * Delete livestream

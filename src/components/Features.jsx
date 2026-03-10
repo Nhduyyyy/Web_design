@@ -1,40 +1,41 @@
 import { motion } from 'framer-motion'
+import { FaTheaterMasks, FaUserAlt, FaBook, FaVideo, FaPaintBrush, FaMusic } from "react-icons/fa";
 import './Features.css'
 
 function Features() {
   const features = [
     {
-      icon: '🎭',
+      icon: FaTheaterMasks,
       title: 'Khám Phá Vai Diễn',
       description: 'Tìm hiểu ý nghĩa của từng màu sắc và nét vẽ trên mặt nạ Tuồng, từ khuôn mặt đỏ trung thành đến khuôn mặt trắng gian trá.',
       color: 'gold'
     },
     {
-      icon: '👤',
+      icon: FaUserAlt,
       title: 'Bộ Sưu Tập Nhân Vật',
       description: 'Khám phá các nhân vật kinh điển trong nghệ thuật Tuồng với trang phục đặc trưng và câu chuyện lịch sử đằng sau mỗi vai diễn.',
       color: 'primary'
     },
     {
-      icon: '📚',
+      icon: FaBook,
       title: 'Kho Lưu Trữ Giáo Dục',
       description: 'Truy cập vào kho tài liệu phong phú về lịch sử, kỹ thuật biểu diễn và giá trị văn hóa của nghệ thuật Tuồng Việt Nam.',
       color: 'gold'
     },
     {
-      icon: '🎬',
+      icon: FaVideo,
       title: 'Video & Trailer',
       description: 'Xem các video biểu diễn trực tiếp, hậu trường và trailer của những vở diễn Tuồng nổi tiếng qua các thời kỳ.',
       color: 'primary'
     },
     {
-      icon: '🎨',
+      icon: FaPaintBrush,
       title: 'Trải Nghiệm Tương Tác',
       description: 'Thử nghiệm các mặt nạ Tuồng ảo, tìm hiểu cách trang điểm và khám phá nghệ thuật biểu diễn một cách sinh động.',
       color: 'gold'
     },
     {
-      icon: '🎵',
+      icon: FaMusic,
       title: 'Âm Nhạc Truyền Thống',
       description: 'Lắng nghe những giai điệu truyền thống với tiếng trống chiến và nhạc cụ dân tộc đặc trưng của nghệ thuật Tuồng.',
       color: 'primary'
@@ -83,24 +84,29 @@ function Features() {
 
         {/* Features Grid */}
         <div className="features-grid">
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className={`feature-card feature-card-${feature.color}`}
-            >
-              <div className="feature-icon">
-                <span>{feature.icon}</span>
-              </div>
-              <div className="feature-content">
-                <h3 className="feature-title">{feature.title}</h3>
-                <p className="feature-text">{feature.description}</p>
-              </div>
-            </motion.div>
-          ))}
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className={`feature-card feature-card-${feature.color}`}
+              >
+                <div className="feature-icon">
+                  <Icon className="text-3xl text-primary" />
+                </div>
+
+                <div className="feature-content">
+                  <h3 className="feature-title">{feature.title}</h3>
+                  <p className="feature-text">{feature.description}</p>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>

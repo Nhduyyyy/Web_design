@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { signOut } from '../services/authService'
@@ -7,6 +7,7 @@ import './Header.css'
 
 function Header({ activeSection, setActiveSection }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, profile, loading, isAdmin, isTheater } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
 
@@ -22,6 +23,17 @@ function Header({ activeSection, setActiveSection }) {
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'User'
   const displayRole = profile?.role === 'admin' ? 'Admin' : profile?.role === 'theater' ? 'Theater' : 'User'
 
+  const goToSection = (section) => {
+    if (typeof setActiveSection === 'function') {
+      setActiveSection(section)
+    }
+
+    const target = `/app?section=${encodeURIComponent(section)}`
+    if (`${location.pathname}${location.search}` !== target) {
+      navigate(target)
+    }
+  }
+
   return (
     <motion.header 
       className="header"
@@ -34,13 +46,13 @@ function Header({ activeSection, setActiveSection }) {
         <div className="header-left">
           <button 
             className={`header-btn ${activeSection === 'experience' ? 'active' : ''}`}
-            onClick={() => setActiveSection('experience')}
+            onClick={() => goToSection('experience')}
           >
             Trải Nghiệm
           </button>
           <button 
             className={`header-btn ${activeSection === 'watch' ? 'active' : ''}`}
-            onClick={() => setActiveSection('watch')}
+            onClick={() => goToSection('watch')}
           >
             Xem Tuồng
           </button>
@@ -55,13 +67,13 @@ function Header({ activeSection, setActiveSection }) {
         <div className="header-right">
           <button 
             className={`header-btn ${activeSection === 'learning' ? 'active' : ''}`}
-            onClick={() => setActiveSection('learning')}
+            onClick={() => goToSection('learning')}
           >
             Học tập
           </button>
           <button 
             className={`header-btn ${activeSection === 'tryRole' ? 'active' : ''}`}
-            onClick={() => setActiveSection('tryRole')}
+            onClick={() => goToSection('tryRole')}
           >
             Giới thiệu
           </button>
@@ -93,7 +105,7 @@ function Header({ activeSection, setActiveSection }) {
                     className="dropdown-item"
                     onClick={() => {
                       setShowUserMenu(false)
-                      setActiveSection('profile')
+                      goToSection('profile')
                     }}
                   >
                     <span className="material-symbols-outlined">person</span>

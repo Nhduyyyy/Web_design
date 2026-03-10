@@ -255,7 +255,7 @@ const TheaterDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-background-dark">
+    <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark">
       <TheaterHeader theater={theater} />
       
       <main className="flex-1 flex flex-col md:flex-row gap-6 p-6 max-w-[1600px] mx-auto w-full">

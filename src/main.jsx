@@ -13,11 +13,18 @@ import SimpleLogin from './components/Auth/SimpleLogin'
 import Register from './components/Auth/Register'
 import AdminDashboard from './components/Admin/AdminDashboard'
 import TheaterDashboard from './components/Theater/TheaterDashboard'
+import TheaterSchedules from './components/Theater/TheaterSchedules'
+import TheaterShows from './components/Theater/TheaterShows'
 import VenueDetailSimple from './components/Theater/VenueDetailSimple'
 import SeatLayoutEditor from './components/Theater/SeatLayoutEditor'
 import OrganizationRegistration from './components/Organization/OrganizationRegistration'
 import RegistrationSuccess from './components/Organization/RegistrationSuccess'
 import OrganizationManagement from './components/Admin/OrganizationManagement'
+import LivestreamList from './components/Livestream/LivestreamList'
+import LivestreamWatch from './components/Livestream/LivestreamWatch'
+import LivestreamBroadcast from './components/Theater/LivestreamBroadcast'
+import TheaterLivestreams from './components/Theater/TheaterLivestreams'
+import TheaterLivestreamCreate from './components/Theater/TheaterLivestreamCreate'
 import WhackAMoleGame from './components/WhackAMoleGame'
 import WhackAMaskIntro from './components/WhackAMaskIntro'
 import WhackAMaskPhaser from './components/WhackAMaskPhaser'
@@ -78,6 +85,30 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               } 
             />
             <Route 
+              path="/theater/livestreams" 
+              element={
+                <TheaterRoute>
+                  <TheaterLivestreams />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
+              path="/theater/schedules" 
+              element={
+                <TheaterRoute>
+                  <TheaterSchedules />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
+              path="/theater/shows" 
+              element={
+                <TheaterRoute>
+                  <TheaterShows />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
               path="/theater/halls/:hallId" 
               element={
                 <TheaterRoute>
@@ -128,6 +159,38 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route 
               path="/game/kiem-lua-phaser" 
               element={<WhackAMaskPhaser />} 
+            />
+            <Route 
+              path="/livestreams" 
+              element={
+                <ProtectedRoute>
+                  <LivestreamList />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/livestreams/:id" 
+              element={
+                <ProtectedRoute>
+                  <LivestreamWatch />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/theater/livestreams/:id/broadcast" 
+              element={
+                <TheaterRoute>
+                  <LivestreamBroadcast />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
+              path="/theater/livestreams/create" 
+              element={
+                <TheaterRoute>
+                  <TheaterLivestreamCreate />
+                </TheaterRoute>
+              } 
             />
           </Routes>
         </AuthProvider>
