@@ -30,8 +30,8 @@ export const getSchedules = async (filters = {}) => {
       show:shows(*),
       venue:venues(*)
     `)
-    // Chỉ hiển thị các lịch đã publish cho phía public
-    .eq('status', 'published')
+    // Chỉ hiển thị các lịch công khai cho phía public
+    .in('status', ['scheduled', 'ongoing', 'completed'])
     .order('start_datetime', { ascending: true })
 
   // Apply filters

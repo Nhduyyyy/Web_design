@@ -1,4 +1,8 @@
+
 import { motion } from 'framer-motion'
+import { TbWorld } from "react-icons/tb"
+import { GiSmartphone } from "react-icons/gi"
+import { MdOutlineMailOutline } from "react-icons/md"
 import './Footer.css'
 
 function Footer() {
@@ -35,13 +39,19 @@ function Footer() {
             </p>
             <div className="social-links">
               <a href="#" className="social-link" aria-label="Website">
-                <span className="social-icon">🌐</span>
+                <span className="social-icon">
+                  <TbWorld />
+                </span>
               </a>
               <a href="#" className="social-link" aria-label="Social">
-                <span className="social-icon">📱</span>
+                <span className="social-icon">
+                  <GiSmartphone />
+                </span>
               </a>
               <a href="#" className="social-link" aria-label="Email">
-                <span className="social-icon">✉️</span>
+                <span className="social-icon">
+                  <MdOutlineMailOutline />
+                </span>
               </a>
             </div>
           </motion.div>

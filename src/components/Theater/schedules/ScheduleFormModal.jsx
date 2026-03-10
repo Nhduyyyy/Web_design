@@ -14,7 +14,7 @@ export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClo
     description: schedule?.description || '',
     start_datetime: schedule?.start_datetime?.slice(0, 16) || '',
     end_datetime: schedule?.end_datetime?.slice(0, 16) || '',
-    timezone: schedule?.timezone || 'Asia/Ho_Chi_Minh',
+    timezone: schedule?.timezone || 'Asia/Ho_Chi_Minh(UTC+7)',
     status: schedule?.status || 'draft',
     ticket_url: schedule?.ticket_url || '',
     enable_booking: schedule?.enable_booking ?? false,
@@ -108,7 +108,7 @@ export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClo
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-200">
-                Vở diễn (show_id) *
+                Vở diễn *
               </label>
               <select
                 className="w-full rounded-md border border-border-gold bg-background-dark px-3 py-2 text-sm text-slate-100"
@@ -129,7 +129,7 @@ export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClo
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-200">
-                Địa điểm (venue_id) *
+                Địa điểm *
               </label>
               <select
                 className="w-full rounded-md border border-border-gold bg-background-dark px-3 py-2 text-sm text-slate-100"
@@ -235,7 +235,7 @@ export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClo
             </label>
           </div>
 
-          <div>
+          {/* <div>
             <label className="mb-1 block text-sm font-medium text-slate-200">
               URL mua vé ngoài
             </label>
@@ -248,7 +248,7 @@ export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClo
             {errors.ticket_url && (
               <p className="mt-1 text-xs text-red-400">{errors.ticket_url}</p>
             )}
-          </div>
+          </div> */}
 
           <PricingEditor
             pricing={form.pricing}

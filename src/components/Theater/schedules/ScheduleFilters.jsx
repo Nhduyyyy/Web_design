@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 
-const STATUS_OPTIONS = ['', 'draft', 'published', 'cancelled', 'completed']
+const STATUS_OPTIONS = ['', 'draft', 'scheduled', 'ongoing', 'completed', 'cancelled']
 
 export default function ScheduleFilters({ theaterId, onChange }) {
   const [venues, setVenues] = useState([])

@@ -1,7 +1,7 @@
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 
-export const STATUS_OPTIONS = ['draft', 'published', 'cancelled', 'completed']
+export const STATUS_OPTIONS = ['draft', 'scheduled', 'ongoing', 'completed', 'cancelled']
 
 export function formatDateTime(dt) {
   if (!dt) return ''
