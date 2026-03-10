@@ -14,10 +14,10 @@ class WhackAMaskScene extends Phaser.Scene {
 
   preload() {
     console.log('📦 Loading assets...')
-    // Load assets - simplified version
     this.load.image('hole', '/game-assets/mole-hole-all.png')
     this.load.image('mask', '/game-assets/mole.png')
     this.load.image('smash', '/game-assets/smash.png')
+    this.load.image('hammer', '/game-assets/hammer.png')
     
     this.load.on('complete', () => {
       console.log('✅ Assets loaded successfully')
@@ -30,21 +30,18 @@ class WhackAMaskScene extends Phaser.Scene {
 
   create() {
     console.log('🎨 Creating game scene...')
+    
     // Setup game board - 3x3 grid
     const gridSize = 3
-    const spacing = 180
+    const spacing = 250  // Tăng lên 250 để tạo khoảng cách rộng hơn nhiều
     const startX = this.cameras.main.centerX - spacing
     const startY = this.cameras.main.centerY - spacing + 20
-
-    console.log('📍 Camera center:', this.cameras.main.centerX, this.cameras.main.centerY)
-    console.log('📍 Start position:', startX, startY)
 
     // Create 9 holes
     for (let row = 0; row < gridSize; row++) {
       for (let col = 0; col < gridSize; col++) {
         const x = startX + col * spacing
         const y = startY + row * spacing
-        console.log(`🕳️ Creating hole ${this.holes.length} at (${x}, ${y})`)
         const hole = new MoleHole(this, x, y, this.holes.length)
         this.holes.push(hole)
       }
@@ -52,11 +49,77 @@ class WhackAMaskScene extends Phaser.Scene {
 
     console.log(`✅ Created ${this.holes.length} holes`)
 
+    // Layer: Hammer (búa) - theo dõi con trỏ chuột
+    this.hammer = this.add.sprite(0, 0, 'hammer')
+      .setScale(0.4)
+      .setOrigin(0.3, 0.65)
+      .setDepth(10)
+      .setAlpha(1.0)
+      .setAngle(-15)
+    
+    console.log('✅ Hammer created')
+    
+    this.isHammering = false
+
+    // Update hammer position theo con trỏ chuột
+    this.input.on('pointermove', (pointer) => {
+      if (!this.isHammering) {
+        this.hammer.setPosition(pointer.x, pointer.y)
+      }
+    })
+
+    // Click vào background cũng hiển thị animation búa
+    this.input.on('pointerdown', (pointer) => {
+      // Kiểm tra xem có click vào mask nào không
+      let clickedOnMask = false
+      for (const hole of this.holes) {
+        if (hole.mask && hole.mask.getBounds().contains(pointer.x, pointer.y)) {
+          clickedOnMask = true
+          break
+        }
+      }
+      
+      // Nếu không click vào mask nào, hiển thị animation búa
+      if (!clickedOnMask) {
+        this.hammerSmash(pointer.x, pointer.y)
+      }
+    })
+
     // Listen for score updates
     this.events.on('scoreUpdate', (newScore) => {
       this.score = newScore
       if (this.onScoreUpdate) {
         this.onScoreUpdate(newScore)
+      }
+    })
+  }
+
+  hammerSmash(x, y) {
+    if (this.isHammering) return
+    
+    this.isHammering = true
+    console.log('🔨 Búa đập xuống!')
+    
+    const smashY = y
+    const smashDepth = 30
+
+    this.tweens.add({
+      targets: this.hammer,
+      angle: -100,
+      y: smashY + smashDepth,
+      duration: 100,
+      ease: 'Power3',
+      onComplete: () => {
+        this.tweens.add({
+          targets: this.hammer,
+          angle: -15,
+          y: smashY - 20,
+          duration: 120,
+          ease: 'Power2',
+          onComplete: () => {
+            this.isHammering = false
+          }
+        })
       }
     })
   }
@@ -116,7 +179,7 @@ class WhackAMaskScene extends Phaser.Scene {
   }
 }
 
-// Mole Hole Class
+// Mole Hole Class - Dựa trên logic từ PhaserTest.jsx
 class MoleHole {
   constructor(scene, x, y, index) {
     this.scene = scene
@@ -126,46 +189,55 @@ class MoleHole {
     this.isActive = false
     this.isHit = false
 
-    // Layer 1: Hole bottom (phần dưới của hố)
+    // Tính toán vị trí ẩn (dưới hố) - DEEPER như PhaserTest
+    const hiddenY = y + 385  // Tương đương với logic PhaserTest (710 - 325 = 385)
+
+    // Layer 1: Hole bottom
     this.holeBottom = scene.add.sprite(x, y, 'hole')
-      .setScale(0.35)
+      .setScale(0.18)
       .setOrigin(0.5, 0.5)
       .setDepth(0)
 
-    // Layer 2: Mask (con chuột - sẽ chui lên từ dưới)
-    this.mask = scene.add.sprite(x, y + 60, 'mask')
-      .setScale(0.8) // Tăng từ 0.4 lên 0.8 (gấp 4 lần so với ban đầu 0.2)
+    // Layer 2: Mask - starts DEEPER below hole
+    this.mask = scene.add.sprite(x, hiddenY, 'mask')
+      .setScale(0.35)
       .setOrigin(0.5, 0.5)
       .setDepth(1)
       .setInteractive({ cursor: 'pointer' })
 
-    // Layer 3: Hole top (viền hố - che phần dưới của mask)
-    // Tạo một bản sao của hố nhưng chỉ hiển thị phần viền DƯỚI
+    // Tạo mask để CHỈ hiển thị phần TRÊN của mole (phần có thể nhìn thấy)
+    const visibleHeight = y + 65  // Giảm từ 65 xuống 55 để che nhiều hơn
+    const moleMaskShape = scene.make.graphics()
+      .fillRect(0, 0, 900, visibleHeight)  // Tăng từ 650 lên 900
+      .setVisible(false)
+    
+    const moleGeometryMask = moleMaskShape.createGeometryMask()
+    this.mask.setMask(moleGeometryMask)
+
+    // Layer 3: Hole top (rim) - che phần dưới của mask
     this.holeTop = scene.add.sprite(x, y, 'hole')
-      .setScale(0.35)
+      .setScale(0.18)
       .setOrigin(0.5, 0.5)
       .setDepth(2)
-      .setAlpha(1)
 
-    // Tạo mask để chỉ hiển thị phần viền DƯỚI của holeTop
-    // Phần này sẽ che mask khi nó ở dưới hố
+    // Tạo mask để CHỈ hiển thị phần DƯỚI của holeTop (viền dưới)
     const holeSize = this.holeBottom.displayWidth
     const topMaskShape = scene.make.graphics()
-      .fillRect(x - holeSize/2, y, holeSize, holeSize) // Chỉ hiển thị phần dưới (từ y trở xuống)
+      .fillRect(x - holeSize/2, y + 20, holeSize, holeSize)  // Thêm +10 để đẩy xuống thấp hơn
       .setVisible(false)
     
     const topGeometryMask = topMaskShape.createGeometryMask()
     this.holeTop.setMask(topGeometryMask)
 
-    // Layer 4: Smash effect (hidden)
-    this.smash = scene.add.sprite(x, y - 10, 'smash')
-      .setScale(0.3)
+    // Layer 4: Smash effect
+    this.smashEffect = scene.add.sprite(x, y, 'smash')
+      .setScale(0.10)  // Giảm từ 0.12 xuống 0.10
       .setOrigin(0.5, 0.5)
       .setDepth(3)
-      .setAlpha(0)
+      .setVisible(false)
 
     // Click handler
-    this.mask.on('pointerdown', () => this.onHit())
+    this.mask.on('pointerdown', (pointer) => this.onHit(pointer))
     
     // Hover effect
     this.mask.on('pointerover', () => {
@@ -186,10 +258,13 @@ class MoleHole {
     this.isHit = false
     this.mask.clearTint()
 
-    // Pop up animation - mask chui từ dưới (y + 60) lên (y - 15)
+    // Target Y giống PhaserTest: y=280 (tương đương với y - 45 trong grid)
+    const targetY = this.y - 25  // Giảm từ -45 lên -25 để mole xuất hiện thấp hơn
+
+    // Pop up animation - giống PhaserTest
     this.scene.tweens.add({
       targets: this.mask,
-      y: this.y - 15,
+      y: targetY,
       duration: 400,
       ease: 'Back.easeOut',
       onComplete: () => {
@@ -208,49 +283,78 @@ class MoleHole {
     
     this.isActive = false
 
-    // Hide animation - mask chui xuống lại
+    // Hidden Y giống constructor
+    const hiddenY = this.y + 385
+
+    // Hide animation
     this.scene.tweens.add({
       targets: this.mask,
-      y: this.y + 60,
+      y: hiddenY,
       duration: 300,
       ease: 'Cubic.easeIn'
     })
   }
 
-  onHit() {
+  onHit(pointer) {
     if (!this.isActive || this.isHit) return
     
     this.isHit = true
     this.scene.addScore()
 
+    // Animation búa đập
+    this.scene.hammerSmash(pointer.x, pointer.y)
+
+    // Dừng animation hiện tại
+    this.scene.tweens.killTweensOf(this.mask)
+
     // Show smash effect
-    this.smash.setAlpha(1)
+    this.showSmashEffect()
+
+    // Mask chết - chui xuống nhanh (giống PhaserTest)
+    const hiddenY = this.y + 385
     this.scene.tweens.add({
-      targets: this.smash,
-      alpha: 0,
-      duration: 400,
-      ease: 'Power2'
-    })
-
-    // Particle burst effect
-    const particles = this.scene.add.particles(this.x, this.y - 10, 'mask', {
-      speed: { min: 100, max: 200 },
-      scale: { start: 0.6, end: 0 }, // Tăng từ 0.3 lên 0.6
-      alpha: { start: 1, end: 0 },
-      lifespan: 400,
-      quantity: 8,
-      blendMode: 'ADD'
-    })
-
-    this.scene.time.delayedCall(400, () => {
-      particles.destroy()
+      targets: this.mask,
+      y: hiddenY,
+      duration: 200,
+      ease: 'Power2',
+      onComplete: () => {
+        console.log('☠️ Mask đã chết và chui xuống')
+        this.isActive = false
+      }
     })
 
     // Camera shake
     this.scene.cameras.main.shake(100, 0.003)
+  }
 
-    // Hide mask
-    this.hide()
+  showSmashEffect() {
+    this.smashEffect.setVisible(true)
+    this.smashEffect.setPosition(this.mask.x, this.mask.y + 15)  // Thêm +15 để đẩy xuống thấp hơn
+    this.smashEffect.setAlpha(1)
+    this.smashEffect.setScale(0.25)  // Giảm từ 0.3 xuống 0.25
+    
+    // Animation cho smash effect - giống PhaserTest
+    this.scene.tweens.add({
+      targets: this.smashEffect,
+      scale: 0.38,  // Giảm từ 0.45 xuống 0.38
+      duration: 100,
+      ease: 'Power2',
+      onComplete: () => {
+        // Dừng lại 1 giây
+        this.scene.time.delayedCall(1000, () => {
+          // Sau đó mờ dần
+          this.scene.tweens.add({
+            targets: this.smashEffect,
+            alpha: 0,
+            duration: 200,
+            ease: 'Power2',
+            onComplete: () => {
+              this.smashEffect.setVisible(false)
+            }
+          })
+        })
+      }
+    })
   }
 }
 
@@ -263,26 +367,21 @@ const WhackAMaskPhaser = () => {
   const [gameOver, setGameOver] = useState(false)
 
   useEffect(() => {
-    if (!gameRef.current || phaserGameRef.current) return
+    // Chỉ khởi tạo game khi isPlaying = true
+    if (!isPlaying || !gameRef.current || phaserGameRef.current) return
 
     console.log('🎮 Initializing Phaser game...')
 
     const config = {
       type: Phaser.AUTO,
       parent: gameRef.current,
-      width: 650,
-      height: 650,
+      width: 900,  // Tăng từ 650 lên 900
+      height: 900, // Tăng từ 650 lên 900
       backgroundColor: '#3a2828',
       scene: WhackAMaskScene,
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
-      },
-      physics: {
-        default: 'arcade',
-        arcade: {
-          debug: false
-        }
       }
     }
 
@@ -304,26 +403,28 @@ const WhackAMaskPhaser = () => {
         setGameOver(true)
         setScore(finalScore)
       }
+
+      // Tự động start game sau khi scene ready
+      setTimeout(() => {
+        if (scene) {
+          scene.startGame()
+        }
+      }, 300)
     })
 
     return () => {
       console.log('🗑️ Destroying Phaser game')
-      game.destroy(true)
+      if (game) {
+        game.destroy(true)
+      }
       phaserGameRef.current = null
     }
-  }, [])
+  }, [isPlaying])
 
   const handlePlayGame = () => {
     setIsPlaying(true)
     setGameOver(false)
     setScore(0)
-    
-    setTimeout(() => {
-      const scene = phaserGameRef.current?.scene.scenes[0]
-      if (scene) {
-        scene.startGame()
-      }
-    }, 300)
   }
 
   const handleViewScores = () => {
@@ -332,7 +433,19 @@ const WhackAMaskPhaser = () => {
 
   const handlePlayAgain = () => {
     setGameOver(false)
-    handlePlayGame()
+    setIsPlaying(false)
+    
+    // Destroy old game
+    if (phaserGameRef.current) {
+      phaserGameRef.current.destroy(true)
+      phaserGameRef.current = null
+    }
+    
+    // Restart
+    setTimeout(() => {
+      setScore(0)
+      setIsPlaying(true)
+    }, 100)
   }
 
   return (
