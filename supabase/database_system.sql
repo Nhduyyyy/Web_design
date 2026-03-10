@@ -121,7 +121,8 @@ CREATE TABLE public.livestream_comments (
   message text NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT livestream_comments_pkey PRIMARY KEY (id),
-  CONSTRAINT livestream_comments_livestream_id_fkey FOREIGN KEY (livestream_id) REFERENCES public.livestreams(id)
+  CONSTRAINT livestream_comments_livestream_id_fkey FOREIGN KEY (livestream_id) REFERENCES public.livestreams(id),
+  CONSTRAINT livestream_comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.livestreams (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

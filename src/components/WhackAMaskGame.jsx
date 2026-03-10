@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import Phaser from 'phaser'
+import Leaderboard from './Leaderboard'
+import { getPlayerStats, saveGameResult, initializePlayerStats } from '../services/gameService'
 import './WhackAMaskIntro.css'
 import './WhackAMaskPhaser.css'
 
@@ -323,9 +325,39 @@ const WhackAMaskGame = () => {
   const { user, profile, isAuthenticated } = useAuth()
   const gameRef = useRef(null)
   const phaserGameRef = useRef(null)
+  const gameStartTimeRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [score, setScore] = useState(0)
+  const [totalCoins, setTotalCoins] = useState(0)
+  const [currentRank, setCurrentRank] = useState('Newbie')
   const [gameOver, setGameOver] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  // Load player stats khi component mount
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadPlayerStats()
+    }
+  }, [isAuthenticated, user])
+
+  const loadPlayerStats = async () => {
+    try {
+      // Khởi tạo stats nếu chưa có
+      await initializePlayerStats(user.id)
+      
+      // Lấy stats hiện tại
+      const { data, error } = await getPlayerStats(user.id)
+      if (error) throw error
+
+      if (data) {
+        setTotalCoins(data.total_coins || 0)
+        setCurrentRank(data.current_rank?.rank_name || 'Newbie')
+      }
+    } catch (error) {
+      console.error('Error loading player stats:', error)
+    }
+  }
 
   // Get user display info
   const getUserDisplayInfo = () => {
@@ -333,13 +365,13 @@ const WhackAMaskGame = () => {
       return {
         name: 'Guest Player',
         rank: 'Newbie',
-        avatar: 'https://via.placeholder.com/48'
+        avatar: '/masks/quan_công-removebg-preview.png'
       }
     }
 
     return {
       name: profile.full_name || profile.email?.split('@')[0] || 'Player',
-      rank: 'Tuồng Master', // Fixed rank for now
+      rank: currentRank,
       avatar: profile.avatar_url || '/masks/bao_công__tuồng_nam_bộ_-removebg-preview.png'
     }
   }
@@ -372,9 +404,14 @@ const WhackAMaskGame = () => {
         setScore(newScore)
       }
 
-      scene.onGameOver = (finalScore) => {
+      scene.onGameOver = async (finalScore) => {
         setGameOver(true)
         setScore(finalScore)
+        
+        // Lưu kết quả game vào database
+        if (isAuthenticated && user) {
+          await handleSaveGameResult(finalScore)
+        }
       }
 
       setTimeout(() => {
@@ -391,18 +428,66 @@ const WhackAMaskGame = () => {
       phaserGameRef.current = null
     }
   }, [isPlaying])
+
+  // Lưu kết quả game vào database
+  const handleSaveGameResult = async (finalScore) => {
+    try {
+      setLoading(true)
+      
+      // Tính thời gian chơi
+      const gameDuration = gameStartTimeRef.current 
+        ? Math.floor((Date.now() - gameStartTimeRef.current) / 1000)
+        : null
+
+      // Lưu kết quả (score = coins earned trong game này)
+      const result = await saveGameResult({
+        userId: user.id,
+        score: finalScore,
+        coinsEarned: finalScore, // Mỗi điểm = 1 coin
+        masksHit: finalScore, // Số mặt nạ đập trúng = score
+        totalRounds: 16,
+        gameDurationSeconds: gameDuration
+      })
+
+      if (result.data) {
+        // Cập nhật UI với dữ liệu mới
+        setTotalCoins(result.data.total_coins)
+        
+        // Reload stats để cập nhật rank
+        await loadPlayerStats()
+        
+        console.log('Game result saved:', result.data)
+      }
+    } catch (error) {
+      console.error('Error saving game result:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
   const handlePlayGame = () => {
+    gameStartTimeRef.current = Date.now()
     setIsPlaying(true)
     setGameOver(false)
     setScore(0)
   }
 
   const handleViewScores = () => {
-    alert('Bảng xếp hạng đang được phát triển!')
+    setShowLeaderboard(true)
+  }
+
+  const handleBackFromLeaderboard = () => {
+    setShowLeaderboard(false)
+  }
+
+  const handlePlayAgainFromLeaderboard = () => {
+    setShowLeaderboard(false)
+    handlePlayGame()
   }
 
   const handleBackToIntro = () => {
     setIsPlaying(false)
+    setShowLeaderboard(false)
     setGameOver(false)
     setScore(0)
     
@@ -440,6 +525,20 @@ const WhackAMaskGame = () => {
             <h2>Whack-a-Mask</h2>
           </div>
           <div className="whack-intro-nav-buttons">
+            {/* Coin Display in Header */}
+            <div className="whack-intro-coin-display-header">
+              <div className="whack-intro-coin-left">
+                <span className="material-symbols-outlined whack-intro-coin-icon">toll</span>
+                <div className="whack-intro-coin-amount-wrapper">
+                  <span className="whack-intro-coin-number">{totalCoins.toLocaleString()}</span>
+                  <span className="whack-intro-coin-label">PTS</span>
+                </div>
+              </div>
+              <button className="whack-intro-coin-add-btn" title="Mua thêm coins">
+                <span className="material-symbols-outlined">add</span>
+              </button>
+            </div>
+            
             {isPlaying && (
               <button className="whack-intro-icon-btn" onClick={handleBackToIntro} title="Về trang chủ">
                 <span className="material-symbols-outlined">home</span>
@@ -463,7 +562,7 @@ const WhackAMaskGame = () => {
                   src={userInfo.avatar}
                   alt={userInfo.name}
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/48'
+                    e.target.src = '/masks/quan_công-removebg-preview.png'
                   }}
                 />
               </div>
@@ -472,12 +571,13 @@ const WhackAMaskGame = () => {
                 <p>Rank: {userInfo.rank}</p>
               </div>
             </div>
+            
             <nav className="whack-intro-nav">
-              <a className={`whack-intro-nav-link ${!isPlaying ? 'active' : ''}`} href="#" onClick={() => setIsPlaying(false)}>
+              <a className={`whack-intro-nav-link ${!isPlaying && !showLeaderboard ? 'active' : ''}`} href="#" onClick={() => {setIsPlaying(false); setShowLeaderboard(false)}}>
                 <span className="material-symbols-outlined">home</span>
                 <span>Trang Chủ</span>
               </a>
-              <a className="whack-intro-nav-link" href="#" onClick={handleViewScores}>
+              <a className={`whack-intro-nav-link ${showLeaderboard ? 'active' : ''}`} href="#" onClick={handleViewScores}>
                 <span className="material-symbols-outlined">leaderboard</span>
                 <span>Bảng Xếp Hạng</span>
               </a>
@@ -517,7 +617,9 @@ const WhackAMaskGame = () => {
               <span className="material-symbols-outlined">light</span>
             </div>
 
-            {!isPlaying ? (
+            {showLeaderboard ? (
+              <Leaderboard />
+            ) : !isPlaying ? (
               <div className="whack-intro-content">
                 <div className="whack-intro-hero-mask">
                   <div className="whack-intro-mask-glow"></div>
@@ -526,7 +628,7 @@ const WhackAMaskGame = () => {
                       src="/masks/quan_công-removebg-preview.png"
                       alt="Mặt nạ Tuồng truyền thống"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/256'
+                        e.target.src = '/masks/quan_công-removebg-preview.png'
                       }}
                     />
                   </div>
@@ -562,7 +664,7 @@ const WhackAMaskGame = () => {
             ) : (
               <div className="phaser-game-wrapper">
                 <div className="phaser-score-display">
-                  Điểm: <span className="phaser-score-value">{score}</span>
+                  Coin: <span className="phaser-score-value">{score}</span>
                 </div>
 
                 <div ref={gameRef} className="phaser-game-container" />
@@ -571,7 +673,7 @@ const WhackAMaskGame = () => {
                   <div className="phaser-game-over">
                     <div className="phaser-game-over-content">
                       <h2>Hết Giờ!</h2>
-                      <p>Điểm Số: {score}</p>
+                      <p>Coin: {score}</p>
                       <button className="phaser-play-again-btn" onClick={handlePlayAgain}>
                         <span className="material-symbols-outlined">replay</span>
                         Chơi Lại
@@ -592,9 +694,9 @@ const WhackAMaskGame = () => {
         <footer className="whack-intro-footer">
           <div className="whack-intro-footer-users">
             <div className="whack-intro-avatars">
-              <img src="https://i.pravatar.cc/32?img=1" alt="User" />
-              <img src="https://i.pravatar.cc/32?img=2" alt="User" />
-              <img src="https://i.pravatar.cc/32?img=3" alt="User" />
+              <img src="/masks/quan_công-removebg-preview.png" alt="User" />
+              <img src="/masks/triệu_văn_hoán-removebg-preview.png" alt="User" />
+              <img src="/masks/lưu_bị-removebg-preview.png" alt="User" />
             </div>
             <p>{isAuthenticated ? `Chào ${userInfo.name}! Cùng ${Math.floor(Math.random() * 500) + 800} người chơi khác` : '1,248 nghệ sĩ đang trên sân khấu'}</p>
           </div>
