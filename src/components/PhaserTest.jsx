@@ -6,6 +6,7 @@ class TestScene extends Phaser.Scene {
     console.log('🎮 TestScene: preload')
     this.load.image('hole', '/game-assets/mole-hole-all.png')
     this.load.image('mask', '/game-assets/mole.png')
+    this.load.image('smash', '/game-assets/smash.png')
   }
 
   create() {
@@ -35,7 +36,15 @@ class TestScene extends Phaser.Scene {
       .setDepth(1)
       .setInteractive({ cursor: 'pointer' })
     
-    console.log('✅ Mask created at lower position (y=710)')
+    // Tạo mask để CHỈ hiển thị phần TRÊN y=390 của mole
+    const moleMaskShape = this.make.graphics()
+      .fillRect(0, 0, 650, 390)
+      .setVisible(false)
+    
+    const moleGeometryMask = moleMaskShape.createGeometryMask()
+    mask.setMask(moleGeometryMask)
+    
+    console.log('✅ Mask created at lower position (y=710) - chỉ hiển thị phần trên y=390')
     
     // Layer 3: Hole top (rim) - che phần dưới của mask
     const holeTop = this.add.sprite(325, 325, 'hole')
@@ -53,14 +62,25 @@ class TestScene extends Phaser.Scene {
     
     console.log('✅ Hole top (rim) created - che phần dưới của mask')
     
+    // Layer 4: Smash effect - ẩn ban đầu
+    const smashEffect = this.add.sprite(325, 325, 'smash')
+      .setScale(0.5)
+      .setOrigin(0.5, 0.5)
+      .setDepth(3)
+      .setVisible(false)
+    
+    console.log('✅ Smash effect created')
+    
     // Biến để theo dõi trạng thái
     let isPopping = false
+    let isClickable = false // Chỉ cho phép click khi chuột chui lên qua y=390
     
     // Function để mask tự động chui lên
     const popUp = () => {
       if (isPopping) return
       
       isPopping = true
+      isClickable = false // Reset clickable
       console.log('🎭 Mask tự động chui lên!')
       
       this.tweens.add({
@@ -70,11 +90,53 @@ class TestScene extends Phaser.Scene {
         ease: 'Back.easeOut',
         yoyo: true,
         hold: 800,
+        onUpdate: (tween) => {
+          // Kiểm tra khi mask chui lên qua y=390
+          if (mask.y <= 390 && !isClickable) {
+            isClickable = true
+            console.log('✅ Mask có thể click được! (y <= 390)')
+          } else if (mask.y > 390 && isClickable) {
+            isClickable = false
+            console.log('❌ Mask không thể click (y > 390)')
+          }
+        },
         onComplete: () => {
           console.log('✅ Mask chui xuống lại')
           isPopping = false
+          isClickable = false
           // Lên lịch lần chui tiếp theo (1-3 giây)
           scheduleNextPop()
+        }
+      })
+    }
+    
+    // Function để hiển thị hiệu ứng smash
+    const showSmashEffect = () => {
+      smashEffect.setVisible(true)
+      smashEffect.setPosition(mask.x, mask.y)
+      smashEffect.setAlpha(1)
+      smashEffect.setScale(0.5)
+      
+      // Animation cho smash effect - phóng to nhanh
+      this.tweens.add({
+        targets: smashEffect,
+        scale: 0.7,
+        duration: 100,
+        ease: 'Power2',
+        onComplete: () => {
+          // Dừng lại 1 giây
+          this.time.delayedCall(1000, () => {
+            // Sau đó mờ dần
+            this.tweens.add({
+              targets: smashEffect,
+              alpha: 0,
+              duration: 200,
+              ease: 'Power2',
+              onComplete: () => {
+                smashEffect.setVisible(false)
+              }
+            })
+          })
         }
       })
     }
@@ -92,20 +154,45 @@ class TestScene extends Phaser.Scene {
       popUp()
     })
     
-    // Click để đập mask
+    // Click để đập mask - CHỈ khi mask ở trên y=390
     mask.on('pointerdown', () => {
-      console.log('💥 Đập trúng mask!')
-      // Có thể thêm hiệu ứng đập ở đây
+      if (!isClickable || mask.y > 390) {
+        console.log('❌ Không thể đập! Mask chưa chui lên đủ cao (y > 390)')
+        return
+      }
+      
+      console.log('💥 Đập trúng mask! Chuột chết!')
+      
+      // Dừng animation hiện tại
+      this.tweens.killTweensOf(mask)
+      
+      // Hiển thị hiệu ứng smash
+      showSmashEffect()
+      
+      // Mask chết - chui xuống nhanh
+      this.tweens.add({
+        targets: mask,
+        y: 710,
+        duration: 200,
+        ease: 'Power2',
+        onComplete: () => {
+          console.log('☠️ Chuột đã chết và chui xuống')
+          isPopping = false
+          isClickable = false
+          // Lên lịch lần chui tiếp theo
+          scheduleNextPop()
+        }
+      })
     })
     
     // Add instruction
-    this.add.text(325, 600, 'Mask sẽ tự động chui lên! Click để đập!', {
+    this.add.text(325, 600, 'Click chuột khi nó chui lên qua vạch vàng!', {
       fontSize: '14px',
-      color: '#FED955'
+      color: '#ffffffff'
     }).setOrigin(0.5)
     
     // Add layer info
-    this.add.text(325, 620, 'Tự động chui lên mỗi 1-3 giây', {
+    this.add.text(325, 620, 'Chuột sẽ đổi màu vàng khi có thể click (y <= 390)', {
       fontSize: '12px',
       color: '#999999'
     }).setOrigin(0.5)
@@ -159,7 +246,7 @@ const PhaserTest = () => {
         style={{
           width: '650px',
           height: '650px',
-          border: '2px solid #FED955',
+          border: '1px solid #ffffffff',
           borderRadius: '1rem',
           overflow: 'hidden'
         }}
