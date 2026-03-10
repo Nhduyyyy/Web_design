@@ -18,6 +18,8 @@ import SeatLayoutEditor from './components/Theater/SeatLayoutEditor'
 import OrganizationRegistration from './components/Organization/OrganizationRegistration'
 import RegistrationSuccess from './components/Organization/RegistrationSuccess'
 import OrganizationManagement from './components/Admin/OrganizationManagement'
+import WhackAMoleGame from './components/WhackAMoleGame'
+import WhackAMaskIntro from './components/WhackAMaskIntro'
 import './styles/index.css'
 
 // Import admin utilities for development
@@ -102,6 +104,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                   <RegistrationSuccess />
                 </ProtectedRoute>
               } 
+            />
+            <Route 
+              path="/game/kiem-lua" 
+              element={<WhackAMaskIntro />} 
             />
           </Routes>
         </AuthProvider>
