@@ -148,7 +148,7 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
         <input
           value={form.title}
           onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-          className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+          className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
           placeholder="VD: Trưng Nữ Vương"
         />
         {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
@@ -160,7 +160,7 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
           value={form.description || ''}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           rows={2}
-          className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none resize-none"
+          className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none resize-none"
           placeholder="Mô tả hiển thị ở card vở diễn..."
         />
       </div>
@@ -171,7 +171,7 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
           value={form.synopsis || ''}
           onChange={(e) => setForm((f) => ({ ...f, synopsis: e.target.value }))}
           rows={4}
-          className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none resize-none"
+          className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none resize-none"
           placeholder="Tóm tắt toàn bộ nội dung vở diễn..."
         />
       </div>
@@ -188,7 +188,7 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
               duration: e.target.value ? Number(e.target.value) : undefined,
             }))
           }
-          className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+          className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
           placeholder="VD: 120"
         />
         {errors.duration && <p className="text-red-500 text-xs mt-1">{errors.duration}</p>}
@@ -206,7 +206,7 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
           <input
             value={form[field] || ''}
             onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
-            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+            className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
             placeholder="https://..."
           />
         </div>
@@ -224,7 +224,7 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
                 addTag()
               }
             }}
-            className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+            className="flex-1 border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
             placeholder="Nhập tag rồi Enter..."
           />
           <button
@@ -266,7 +266,7 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
                 addCharacter()
               }
             }}
-            className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+            className="flex-1 border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
             placeholder="Tên nhân vật rồi Enter..."
           />
           <button
@@ -300,14 +300,14 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
         <button
           type="button"
           onClick={onCancel}
-          className="px-5 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+          className="rounded-md border border-border-gold px-4 py-2 text-sm font-medium text-slate-200 hover:bg-background-dark"
         >
           Hủy
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="px-5 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-background-dark hover:bg-primary/90 disabled:opacity-70"
         >
           {loading ? 'Đang lưu...' : initialData ? 'Cập nhật' : 'Tạo mới'}
         </button>
