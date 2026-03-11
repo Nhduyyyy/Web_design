@@ -25,6 +25,7 @@ import LivestreamWatch from './components/Livestream/LivestreamWatch'
 import LivestreamBroadcast from './components/Theater/LivestreamBroadcast'
 import TheaterLivestreams from './components/Theater/TheaterLivestreams'
 import TheaterLivestreamCreate from './components/Theater/TheaterLivestreamCreate'
+import TheaterEvents from './components/Theater/TheaterEvents'
 import WhackAMoleGame from './components/WhackAMoleGame'
 import WhackAMaskIntro from './components/WhackAMaskIntro'
 import WhackAMaskPhaser from './components/WhackAMaskPhaser'
@@ -105,6 +106,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               element={
                 <TheaterRoute>
                   <TheaterShows />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
+              path="/theater/events" 
+              element={
+                <TheaterRoute>
+                  <TheaterEvents />
                 </TheaterRoute>
               } 
             />
