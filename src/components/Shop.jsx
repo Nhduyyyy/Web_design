@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { getShopItems, getShopCategories, purchaseItem, checkAffordability } from '../services/shopService'
 import { getPlayerStats } from '../services/gameService'
+import { updateQuestProgress } from '../services/questService'
 import './Shop.css'
 
 const Shop = () => {
@@ -99,6 +100,9 @@ const Shop = () => {
         
         // Update user coins
         setUserCoins(data.remaining_coins)
+        
+        // Cập nhật quest progress: Mua 1 vật phẩm
+        await updateQuestProgress(user.id, 'buy_1_item', 1)
         
         // Reload items to update stock
         await loadShopItems(activeTab)

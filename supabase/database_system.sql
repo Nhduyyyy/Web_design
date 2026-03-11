@@ -22,6 +22,29 @@ CREATE TABLE public.bookings (
   CONSTRAINT bookings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
   CONSTRAINT bookings_schedule_id_fkey FOREIGN KEY (schedule_id) REFERENCES public.schedules(id)
 );
+CREATE TABLE public.daily_login_streaks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL UNIQUE,
+  current_streak integer DEFAULT 0,
+  longest_streak integer DEFAULT 0,
+  last_login_date date,
+  streak_rewards_claimed jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT daily_login_streaks_pkey PRIMARY KEY (id),
+  CONSTRAINT daily_login_streaks_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.daily_reward_config (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  day_number integer NOT NULL UNIQUE,
+  reward_type character varying NOT NULL,
+  reward_amount integer NOT NULL,
+  reward_item_id uuid,
+  icon character varying,
+  is_grand_prize boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT daily_reward_config_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.event_registrations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   registration_code text NOT NULL UNIQUE,
@@ -191,6 +214,22 @@ CREATE TABLE public.masks (
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT masks_pkey PRIMARY KEY (id)
 );
+CREATE TABLE public.milestone_templates (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  milestone_key character varying NOT NULL UNIQUE,
+  title character varying NOT NULL,
+  description text,
+  category character varying,
+  target_value integer NOT NULL,
+  reward_type character varying NOT NULL,
+  reward_amount integer NOT NULL,
+  reward_description text,
+  icon_rewards jsonb,
+  is_active boolean DEFAULT true,
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT milestone_templates_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.organization_documents (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   organization_id uuid NOT NULL,
@@ -357,6 +396,40 @@ CREATE TABLE public.player_game_stats (
   CONSTRAINT player_game_stats_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
   CONSTRAINT player_game_stats_current_rank_id_fkey FOREIGN KEY (current_rank_id) REFERENCES public.game_ranks(id)
 );
+CREATE TABLE public.player_milestones (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  milestone_template_id uuid NOT NULL,
+  current_progress integer DEFAULT 0,
+  target_value integer NOT NULL,
+  is_completed boolean DEFAULT false,
+  is_claimed boolean DEFAULT false,
+  completed_at timestamp with time zone,
+  claimed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT player_milestones_pkey PRIMARY KEY (id),
+  CONSTRAINT player_milestones_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT player_milestones_milestone_template_id_fkey FOREIGN KEY (milestone_template_id) REFERENCES public.milestone_templates(id)
+);
+CREATE TABLE public.player_quests (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  quest_template_id uuid NOT NULL,
+  current_progress integer DEFAULT 0,
+  target_value integer NOT NULL,
+  is_completed boolean DEFAULT false,
+  is_claimed boolean DEFAULT false,
+  completed_at timestamp with time zone,
+  claimed_at timestamp with time zone,
+  expires_at timestamp with time zone,
+  quest_date date DEFAULT CURRENT_DATE,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT player_quests_pkey PRIMARY KEY (id),
+  CONSTRAINT player_quests_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT player_quests_quest_template_id_fkey FOREIGN KEY (quest_template_id) REFERENCES public.quest_templates(id)
+);
 CREATE TABLE public.plays (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   theater_id uuid NOT NULL,
@@ -394,6 +467,34 @@ CREATE TABLE public.profiles (
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.quest_rewards_history (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  reward_type character varying NOT NULL,
+  reward_source_id uuid,
+  reward_item_type character varying,
+  reward_amount integer,
+  claimed_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT quest_rewards_history_pkey PRIMARY KEY (id),
+  CONSTRAINT quest_rewards_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.quest_templates (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  quest_key character varying NOT NULL UNIQUE,
+  title character varying NOT NULL,
+  description text,
+  icon character varying,
+  quest_type character varying NOT NULL,
+  target_value integer NOT NULL,
+  reward_type character varying NOT NULL,
+  reward_amount integer NOT NULL,
+  reward_item_id uuid,
+  is_active boolean DEFAULT true,
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT quest_templates_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.replays (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

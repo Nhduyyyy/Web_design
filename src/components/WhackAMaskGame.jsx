@@ -3,7 +3,9 @@ import { useAuth } from '../contexts/AuthContext'
 import Phaser from 'phaser'
 import Leaderboard from './Leaderboard'
 import Shop from './Shop'
+import Quests from './Quests'
 import { getPlayerStats, saveGameResult, initializePlayerStats } from '../services/gameService'
+import { updateQuestProgress } from '../services/questService'
 import './WhackAMaskIntro.css'
 import './WhackAMaskPhaser.css'
 
@@ -330,6 +332,7 @@ const WhackAMaskGame = () => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [showShop, setShowShop] = useState(false)
+  const [showQuests, setShowQuests] = useState(false)
   const [score, setScore] = useState(0)
   const [totalCoins, setTotalCoins] = useState(0)
   const [currentRank, setCurrentRank] = useState('Newbie')
@@ -458,6 +461,15 @@ const WhackAMaskGame = () => {
         // Reload stats để cập nhật rank
         await loadPlayerStats()
         
+        // Cập nhật quest progress
+        // Quest 1: Chơi 5 ván game
+        await updateQuestProgress(user.id, 'play_5_games', 1)
+        
+        // Quest 2: Đạt 10,000 điểm
+        if (finalScore >= 10000) {
+          await updateQuestProgress(user.id, 'score_10000', finalScore)
+        }
+        
         console.log('Game result saved:', result.data)
       }
     } catch (error) {
@@ -477,17 +489,26 @@ const WhackAMaskGame = () => {
   const handleViewScores = () => {
     setShowLeaderboard(true)
     setShowShop(false)
+    setShowQuests(false)
   }
 
   const handleViewShop = () => {
     setShowShop(true)
     setShowLeaderboard(false)
+    setShowQuests(false)
+  }
+
+  const handleViewQuests = () => {
+    setShowQuests(true)
+    setShowLeaderboard(false)
+    setShowShop(false)
   }
 
   const handleBackToIntro = () => {
     setIsPlaying(false)
     setShowLeaderboard(false)
     setShowShop(false)
+    setShowQuests(false)
     setGameOver(false)
     setScore(0)
     
@@ -573,7 +594,7 @@ const WhackAMaskGame = () => {
             </div>
             
             <nav className="whack-intro-nav">
-              <a className={`whack-intro-nav-link ${!isPlaying && !showLeaderboard && !showShop ? 'active' : ''}`} href="#" onClick={() => {setIsPlaying(false); setShowLeaderboard(false); setShowShop(false)}}>
+              <a className={`whack-intro-nav-link ${!isPlaying && !showLeaderboard && !showShop && !showQuests ? 'active' : ''}`} href="#" onClick={() => {setIsPlaying(false); setShowLeaderboard(false); setShowShop(false); setShowQuests(false)}}>
                 <span className="material-symbols-outlined">home</span>
                 <span>Trang Chủ</span>
               </a>
@@ -585,7 +606,7 @@ const WhackAMaskGame = () => {
                 <span className="material-symbols-outlined">shopping_cart</span>
                 <span>Cửa Hàng</span>
               </a>
-              <a className="whack-intro-nav-link" href="#" onClick={() => alert('Nhiệm vụ đang được phát triển!')}>
+              <a className={`whack-intro-nav-link ${showQuests ? 'active' : ''}`} href="#" onClick={handleViewQuests}>
                 <span className="material-symbols-outlined">task_alt</span>
                 <span>Nhiệm Vụ</span>
               </a>
@@ -621,6 +642,8 @@ const WhackAMaskGame = () => {
               <Leaderboard />
             ) : showShop ? (
               <Shop />
+            ) : showQuests ? (
+              <Quests />
             ) : !isPlaying ? (
               <div className="whack-intro-content">
                 <div className="whack-intro-hero-mask">
