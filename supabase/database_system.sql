@@ -86,6 +86,33 @@ CREATE TABLE public.floors (
   CONSTRAINT floors_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id),
   CONSTRAINT floors_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES public.venues(id)
 );
+CREATE TABLE public.game_history (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  score integer NOT NULL DEFAULT 0,
+  coins_earned integer NOT NULL DEFAULT 0,
+  masks_hit integer NOT NULL DEFAULT 0,
+  total_rounds integer DEFAULT 16,
+  accuracy_percentage numeric,
+  game_duration_seconds integer,
+  rank_at_time character varying,
+  played_at timestamp with time zone DEFAULT now(),
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT game_history_pkey PRIMARY KEY (id),
+  CONSTRAINT game_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.game_ranks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  rank_name character varying NOT NULL UNIQUE,
+  rank_level integer NOT NULL UNIQUE,
+  min_coins integer NOT NULL,
+  max_coins integer,
+  rank_color character varying,
+  rank_icon character varying,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT game_ranks_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.halls (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   floor_id uuid NOT NULL,
@@ -314,6 +341,22 @@ CREATE TABLE public.performances (
   CONSTRAINT performances_play_id_fkey FOREIGN KEY (play_id) REFERENCES public.plays(id),
   CONSTRAINT performances_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id)
 );
+CREATE TABLE public.player_game_stats (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL UNIQUE,
+  total_coins integer DEFAULT 0,
+  total_games_played integer DEFAULT 0,
+  total_masks_hit integer DEFAULT 0,
+  highest_score integer DEFAULT 0,
+  current_rank_id uuid,
+  average_score numeric DEFAULT 0,
+  last_played_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT player_game_stats_pkey PRIMARY KEY (id),
+  CONSTRAINT player_game_stats_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT player_game_stats_current_rank_id_fkey FOREIGN KEY (current_rank_id) REFERENCES public.game_ranks(id)
+);
 CREATE TABLE public.plays (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   theater_id uuid NOT NULL,
@@ -479,6 +522,54 @@ CREATE TABLE public.seats (
   CONSTRAINT seats_hall_id_fkey FOREIGN KEY (hall_id) REFERENCES public.halls(id),
   CONSTRAINT seats_zone_id_fkey FOREIGN KEY (zone_id) REFERENCES public.seat_zones(id)
 );
+CREATE TABLE public.shop_categories (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL UNIQUE,
+  slug character varying NOT NULL UNIQUE,
+  description text,
+  icon character varying,
+  display_order integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT shop_categories_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.shop_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  category_id uuid,
+  name character varying NOT NULL,
+  slug character varying NOT NULL UNIQUE,
+  description text,
+  price integer NOT NULL CHECK (price >= 0),
+  image_url text,
+  badge character varying,
+  badge_color character varying,
+  item_type character varying NOT NULL,
+  is_limited boolean DEFAULT false,
+  stock_quantity integer,
+  max_purchase_per_user integer,
+  is_active boolean DEFAULT true,
+  display_order integer DEFAULT 0,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT shop_items_pkey PRIMARY KEY (id),
+  CONSTRAINT shop_items_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.shop_categories(id)
+);
+CREATE TABLE public.shop_transactions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  item_id uuid NOT NULL,
+  quantity integer DEFAULT 1 CHECK (quantity > 0),
+  price_paid integer NOT NULL CHECK (price_paid >= 0),
+  transaction_type character varying DEFAULT 'purchase'::character varying,
+  status character varying DEFAULT 'completed'::character varying,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT shop_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT shop_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT shop_transactions_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.shop_items(id)
+);
 CREATE TABLE public.shows (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   title text NOT NULL,
@@ -535,6 +626,21 @@ CREATE TABLE public.tickets (
   CONSTRAINT tickets_performance_id_fkey FOREIGN KEY (performance_id) REFERENCES public.performances(id),
   CONSTRAINT tickets_seat_id_fkey FOREIGN KEY (seat_id) REFERENCES public.seats(id),
   CONSTRAINT tickets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.user_inventory (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  item_id uuid NOT NULL,
+  quantity integer DEFAULT 1 CHECK (quantity >= 0),
+  is_equipped boolean DEFAULT false,
+  acquired_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_inventory_pkey PRIMARY KEY (id),
+  CONSTRAINT user_inventory_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT user_inventory_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.shop_items(id)
 );
 CREATE TABLE public.user_photos (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

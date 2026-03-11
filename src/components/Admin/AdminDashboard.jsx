@@ -4,6 +4,7 @@ import AdminSidebar from './AdminSidebar'
 import AdminHeader from './AdminHeader'
 import DashboardOverview from './DashboardOverview'
 import OrganizationManagement from './OrganizationManagement'
+import GameManagement from './GameManagement'
 import './AdminDashboard.css'
 
 function AdminDashboard() {
@@ -26,6 +27,7 @@ function AdminDashboard() {
           {activeView === 'livestream' && <div className="coming-soon">Livestream - Coming Soon</div>}
           {activeView === 'tickets' && <div className="coming-soon">Tickets - Coming Soon</div>}
           {activeView === 'events' && <div className="coming-soon">Events - Coming Soon</div>}
+          {activeView === 'game' && <GameManagement />}
           {activeView === 'reports' && <div className="coming-soon">Reports - Coming Soon</div>}
           {activeView === 'settings' && <div className="coming-soon">Settings - Coming Soon</div>}
         </div>
