@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import Phaser from 'phaser'
 import Leaderboard from './Leaderboard'
+import Shop from './Shop'
 import { getPlayerStats, saveGameResult, initializePlayerStats } from '../services/gameService'
 import './WhackAMaskIntro.css'
 import './WhackAMaskPhaser.css'
@@ -328,6 +329,7 @@ const WhackAMaskGame = () => {
   const gameStartTimeRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [showShop, setShowShop] = useState(false)
   const [score, setScore] = useState(0)
   const [totalCoins, setTotalCoins] = useState(0)
   const [currentRank, setCurrentRank] = useState('Newbie')
@@ -474,20 +476,18 @@ const WhackAMaskGame = () => {
 
   const handleViewScores = () => {
     setShowLeaderboard(true)
+    setShowShop(false)
   }
 
-  const handleBackFromLeaderboard = () => {
+  const handleViewShop = () => {
+    setShowShop(true)
     setShowLeaderboard(false)
-  }
-
-  const handlePlayAgainFromLeaderboard = () => {
-    setShowLeaderboard(false)
-    handlePlayGame()
   }
 
   const handleBackToIntro = () => {
     setIsPlaying(false)
     setShowLeaderboard(false)
+    setShowShop(false)
     setGameOver(false)
     setScore(0)
     
@@ -531,7 +531,7 @@ const WhackAMaskGame = () => {
                 <span className="material-symbols-outlined whack-intro-coin-icon">toll</span>
                 <div className="whack-intro-coin-amount-wrapper">
                   <span className="whack-intro-coin-number">{totalCoins.toLocaleString()}</span>
-                  <span className="whack-intro-coin-label">PTS</span>
+                  <span className="whack-intro-coin-label">Coin</span>
                 </div>
               </div>
               <button className="whack-intro-coin-add-btn" title="Mua thêm coins">
@@ -573,7 +573,7 @@ const WhackAMaskGame = () => {
             </div>
             
             <nav className="whack-intro-nav">
-              <a className={`whack-intro-nav-link ${!isPlaying && !showLeaderboard ? 'active' : ''}`} href="#" onClick={() => {setIsPlaying(false); setShowLeaderboard(false)}}>
+              <a className={`whack-intro-nav-link ${!isPlaying && !showLeaderboard && !showShop ? 'active' : ''}`} href="#" onClick={() => {setIsPlaying(false); setShowLeaderboard(false); setShowShop(false)}}>
                 <span className="material-symbols-outlined">home</span>
                 <span>Trang Chủ</span>
               </a>
@@ -581,7 +581,7 @@ const WhackAMaskGame = () => {
                 <span className="material-symbols-outlined">leaderboard</span>
                 <span>Bảng Xếp Hạng</span>
               </a>
-              <a className="whack-intro-nav-link" href="#" onClick={() => alert('Cửa hàng đang được phát triển!')}>
+              <a className={`whack-intro-nav-link ${showShop ? 'active' : ''}`} href="#" onClick={handleViewShop}>
                 <span className="material-symbols-outlined">shopping_cart</span>
                 <span>Cửa Hàng</span>
               </a>
@@ -619,6 +619,8 @@ const WhackAMaskGame = () => {
 
             {showLeaderboard ? (
               <Leaderboard />
+            ) : showShop ? (
+              <Shop />
             ) : !isPlaying ? (
               <div className="whack-intro-content">
                 <div className="whack-intro-hero-mask">
