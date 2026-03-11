@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 import Phaser from 'phaser'
+import Leaderboard from './Leaderboard'
+import Shop from './Shop'
+import Quests from './Quests'
+import { getPlayerStats, saveGameResult, initializePlayerStats } from '../services/gameService'
+import { updateQuestProgress } from '../services/questService'
+import './WhackAMaskIntro.css'
 import './WhackAMaskPhaser.css'
 
 // Phaser Game Scene
@@ -14,10 +21,7 @@ class WhackAMaskScene extends Phaser.Scene {
 
   preload() {
     console.log('📦 Loading assets...')
-    
-    // Set base path for assets
     this.load.setPath('/game-assets/')
-    
     this.load.image('background', 'background.png')
     this.load.image('hole', 'mole-hole-all.png')
     this.load.image('mask', 'mole.png')
@@ -36,19 +40,15 @@ class WhackAMaskScene extends Phaser.Scene {
   create() {
     console.log('🎨 Creating game scene...')
     
-    // Add background image - scale to fill entire canvas
     const bg = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'background')
-    bg.setDisplaySize(1200, 1000)  // Larger background
+    bg.setDisplaySize(1200, 1000)
     bg.setDepth(-1)
-    console.log('✅ Background added')
     
-    // Setup game board - 3x3 grid (giữ nguyên kích thước)
     const gridSize = 3
-    const spacing = 250  // Giữ nguyên spacing
+    const spacing = 250
     const startX = this.cameras.main.centerX - spacing
-    const startY = this.cameras.main.centerY - spacing + 120  // Tăng từ +20 lên +120 để đẩy grid xuống thấp
+    const startY = this.cameras.main.centerY - spacing + 120
 
-    // Create 9 holes
     for (let row = 0; row < gridSize; row++) {
       for (let col = 0; col < gridSize; col++) {
         const x = startX + col * spacing
@@ -58,9 +58,6 @@ class WhackAMaskScene extends Phaser.Scene {
       }
     }
 
-    console.log(`✅ Created ${this.holes.length} holes`)
-
-    // Layer: Hammer (búa) - theo dõi con trỏ chuột
     this.hammer = this.add.sprite(0, 0, 'hammer')
       .setScale(0.4)
       .setOrigin(0.3, 0.65)
@@ -68,20 +65,14 @@ class WhackAMaskScene extends Phaser.Scene {
       .setAlpha(1.0)
       .setAngle(-15)
     
-    console.log('✅ Hammer created')
-    
     this.isHammering = false
-
-    // Update hammer position theo con trỏ chuột
     this.input.on('pointermove', (pointer) => {
       if (!this.isHammering) {
         this.hammer.setPosition(pointer.x, pointer.y)
       }
     })
 
-    // Click vào background cũng hiển thị animation búa
     this.input.on('pointerdown', (pointer) => {
-      // Kiểm tra xem có click vào mask nào không
       let clickedOnMask = false
       for (const hole of this.holes) {
         if (hole.mask && hole.mask.getBounds().contains(pointer.x, pointer.y)) {
@@ -90,13 +81,11 @@ class WhackAMaskScene extends Phaser.Scene {
         }
       }
       
-      // Nếu không click vào mask nào, hiển thị animation búa
       if (!clickedOnMask) {
         this.hammerSmash(pointer.x, pointer.y)
       }
     })
 
-    // Listen for score updates
     this.events.on('scoreUpdate', (newScore) => {
       this.score = newScore
       if (this.onScoreUpdate) {
@@ -109,8 +98,6 @@ class WhackAMaskScene extends Phaser.Scene {
     if (this.isHammering) return
     
     this.isHammering = true
-    console.log('🔨 Búa đập xuống!')
-    
     const smashY = y
     const smashDepth = 30
 
@@ -144,22 +131,18 @@ class WhackAMaskScene extends Phaser.Scene {
       this.onScoreUpdate(0)
     }
 
-    // Shake screen effect
     this.cameras.main.shake(500, 0.01)
 
-    // Start spawning moles
     this.time.delayedCall(500, () => {
       this.spawnMole()
     })
   }
-
   spawnMole() {
     if (!this.gameActive || this.roundsLeft <= 0) {
       this.endGame()
       return
     }
 
-    // Pick random hole (avoid last one)
     let randomIndex
     do {
       randomIndex = Phaser.Math.Between(0, this.holes.length - 1)
@@ -171,7 +154,6 @@ class WhackAMaskScene extends Phaser.Scene {
     hole.popup()
     this.roundsLeft--
 
-    // Schedule next mole
     this.time.delayedCall(700, () => {
       this.spawnMole()
     })
@@ -190,7 +172,7 @@ class WhackAMaskScene extends Phaser.Scene {
   }
 }
 
-// Mole Hole Class - Dựa trên logic từ PhaserTest.jsx
+// Mole Hole Class
 class MoleHole {
   constructor(scene, x, y, index) {
     this.scene = scene
@@ -200,57 +182,47 @@ class MoleHole {
     this.isActive = false
     this.isHit = false
 
-    // Tính toán vị trí ẩn (dưới hố) - DEEPER như PhaserTest
-    const hiddenY = y + 385  // Tương đương với logic PhaserTest (710 - 325 = 385)
+    const hiddenY = y + 385
 
-    // Layer 1: Hole bottom
     this.holeBottom = scene.add.sprite(x, y, 'hole')
       .setScale(0.18)
       .setOrigin(0.5, 0.5)
       .setDepth(0)
 
-    // Layer 2: Mask - starts DEEPER below hole
     this.mask = scene.add.sprite(x, hiddenY, 'mask')
       .setScale(0.35)
       .setOrigin(0.5, 0.5)
       .setDepth(1)
       .setInteractive({ cursor: 'pointer' })
 
-    // Tạo mask để CHỈ hiển thị phần TRÊN của mole (phần có thể nhìn thấy)
     const visibleHeight = y + 65
     const moleMaskShape = scene.make.graphics()
-      .fillRect(0, 0, 1200, visibleHeight)  // Match canvas width
+      .fillRect(0, 0, 1200, visibleHeight)
       .setVisible(false)
     
     const moleGeometryMask = moleMaskShape.createGeometryMask()
     this.mask.setMask(moleGeometryMask)
 
-    // Layer 3: Hole top (rim) - che phần dưới của mask
     this.holeTop = scene.add.sprite(x, y, 'hole')
       .setScale(0.18)
       .setOrigin(0.5, 0.5)
       .setDepth(2)
 
-    // Tạo mask để CHỈ hiển thị phần DƯỚI của holeTop (viền dưới)
     const holeSize = this.holeBottom.displayWidth
     const topMaskShape = scene.make.graphics()
-      .fillRect(x - holeSize/2, y + 20, holeSize, holeSize)  // Thêm +10 để đẩy xuống thấp hơn
+      .fillRect(x - holeSize/2, y + 20, holeSize, holeSize)
       .setVisible(false)
     
     const topGeometryMask = topMaskShape.createGeometryMask()
     this.holeTop.setMask(topGeometryMask)
-
-    // Layer 4: Smash effect
     this.smashEffect = scene.add.sprite(x, y, 'smash')
-      .setScale(0.10)  // Giảm từ 0.12 xuống 0.10
+      .setScale(0.10)
       .setOrigin(0.5, 0.5)
       .setDepth(3)
       .setVisible(false)
 
-    // Click handler
     this.mask.on('pointerdown', (pointer) => this.onHit(pointer))
     
-    // Hover effect
     this.mask.on('pointerover', () => {
       if (this.isActive && !this.isHit) {
         this.mask.setTint(0xffcccc)
@@ -269,17 +241,14 @@ class MoleHole {
     this.isHit = false
     this.mask.clearTint()
 
-    // Target Y giống PhaserTest: y=280 (tương đương với y - 45 trong grid)
-    const targetY = this.y - 25  // Giảm từ -45 lên -25 để mole xuất hiện thấp hơn
+    const targetY = this.y - 25
 
-    // Pop up animation - giống PhaserTest
     this.scene.tweens.add({
       targets: this.mask,
       y: targetY,
       duration: 400,
       ease: 'Back.easeOut',
       onComplete: () => {
-        // Auto hide after delay
         this.scene.time.delayedCall(800, () => {
           if (!this.isHit) {
             this.hide()
@@ -293,11 +262,8 @@ class MoleHole {
     if (!this.isActive) return
     
     this.isActive = false
-
-    // Hidden Y giống constructor
     const hiddenY = this.y + 385
 
-    // Hide animation
     this.scene.tweens.add({
       targets: this.mask,
       y: hiddenY,
@@ -312,16 +278,10 @@ class MoleHole {
     this.isHit = true
     this.scene.addScore()
 
-    // Animation búa đập
     this.scene.hammerSmash(pointer.x, pointer.y)
-
-    // Dừng animation hiện tại
     this.scene.tweens.killTweensOf(this.mask)
-
-    // Show smash effect
     this.showSmashEffect()
 
-    // Mask chết - chui xuống nhanh (giống PhaserTest)
     const hiddenY = this.y + 385
     this.scene.tweens.add({
       targets: this.mask,
@@ -329,31 +289,25 @@ class MoleHole {
       duration: 200,
       ease: 'Power2',
       onComplete: () => {
-        console.log('☠️ Mask đã chết và chui xuống')
         this.isActive = false
       }
     })
 
-    // Camera shake
     this.scene.cameras.main.shake(100, 0.003)
   }
-
   showSmashEffect() {
     this.smashEffect.setVisible(true)
-    this.smashEffect.setPosition(this.mask.x, this.mask.y + 15)  // Thêm +15 để đẩy xuống thấp hơn
+    this.smashEffect.setPosition(this.mask.x, this.mask.y + 15)
     this.smashEffect.setAlpha(1)
-    this.smashEffect.setScale(0.25)  // Giảm từ 0.3 xuống 0.25
+    this.smashEffect.setScale(0.25)
     
-    // Animation cho smash effect - giống PhaserTest
     this.scene.tweens.add({
       targets: this.smashEffect,
-      scale: 0.38,  // Giảm từ 0.45 xuống 0.38
+      scale: 0.38,
       duration: 100,
       ease: 'Power2',
       onComplete: () => {
-        // Dừng lại 1 giây
         this.scene.time.delayedCall(1000, () => {
-          // Sau đó mờ dần
           this.scene.tweens.add({
             targets: this.smashEffect,
             alpha: 0,
@@ -369,25 +323,74 @@ class MoleHole {
   }
 }
 
-// React Component Wrapper
-const WhackAMaskPhaser = () => {
+// React Component
+const WhackAMaskGame = () => {
+  const { user, profile, isAuthenticated } = useAuth()
   const gameRef = useRef(null)
   const phaserGameRef = useRef(null)
+  const gameStartTimeRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [showShop, setShowShop] = useState(false)
+  const [showQuests, setShowQuests] = useState(false)
   const [score, setScore] = useState(0)
+  const [totalCoins, setTotalCoins] = useState(0)
+  const [currentRank, setCurrentRank] = useState('Newbie')
   const [gameOver, setGameOver] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  // Load player stats khi component mount
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadPlayerStats()
+    }
+  }, [isAuthenticated, user])
+
+  const loadPlayerStats = async () => {
+    try {
+      // Khởi tạo stats nếu chưa có
+      await initializePlayerStats(user.id)
+      
+      // Lấy stats hiện tại
+      const { data, error } = await getPlayerStats(user.id)
+      if (error) throw error
+
+      if (data) {
+        setTotalCoins(data.total_coins || 0)
+        setCurrentRank(data.current_rank?.rank_name || 'Newbie')
+      }
+    } catch (error) {
+      console.error('Error loading player stats:', error)
+    }
+  }
+
+  // Get user display info
+  const getUserDisplayInfo = () => {
+    if (!isAuthenticated || !profile) {
+      return {
+        name: 'Guest Player',
+        rank: 'Newbie',
+        avatar: '/masks/quan_công-removebg-preview.png'
+      }
+    }
+
+    return {
+      name: profile.full_name || profile.email?.split('@')[0] || 'Player',
+      rank: currentRank,
+      avatar: profile.avatar_url || '/masks/bao_công__tuồng_nam_bộ_-removebg-preview.png'
+    }
+  }
+
+  const userInfo = getUserDisplayInfo()
 
   useEffect(() => {
-    // Chỉ khởi tạo game khi isPlaying = true
     if (!isPlaying || !gameRef.current || phaserGameRef.current) return
-
-    console.log('🎮 Initializing Phaser game...')
 
     const config = {
       type: Phaser.AUTO,
       parent: gameRef.current,
-      width: 1200,  // Canvas rộng hơn
-      height: 1000, // Canvas cao hơn
+      width: 1200,
+      height: 1000,
       backgroundColor: '#3a2828',
       scene: WhackAMaskScene,
       scale: {
@@ -399,23 +402,23 @@ const WhackAMaskPhaser = () => {
     const game = new Phaser.Game(config)
     phaserGameRef.current = game
 
-    console.log('✅ Phaser game created')
-
-    // Get scene reference
     game.events.once('ready', () => {
-      console.log('✅ Phaser scene ready')
       const scene = game.scene.scenes[0]
       
       scene.onScoreUpdate = (newScore) => {
         setScore(newScore)
       }
 
-      scene.onGameOver = (finalScore) => {
+      scene.onGameOver = async (finalScore) => {
         setGameOver(true)
         setScore(finalScore)
+        
+        // Lưu kết quả game vào database
+        if (isAuthenticated && user) {
+          await handleSaveGameResult(finalScore)
+        }
       }
 
-      // Tự động start game sau khi scene ready
       setTimeout(() => {
         if (scene) {
           scene.startGame()
@@ -424,7 +427,6 @@ const WhackAMaskPhaser = () => {
     })
 
     return () => {
-      console.log('🗑️ Destroying Phaser game')
       if (game) {
         game.destroy(true)
       }
@@ -432,19 +434,92 @@ const WhackAMaskPhaser = () => {
     }
   }, [isPlaying])
 
+  // Lưu kết quả game vào database
+  const handleSaveGameResult = async (finalScore) => {
+    try {
+      setLoading(true)
+      
+      // Tính thời gian chơi
+      const gameDuration = gameStartTimeRef.current 
+        ? Math.floor((Date.now() - gameStartTimeRef.current) / 1000)
+        : null
+
+      // Lưu kết quả (score = coins earned trong game này)
+      const result = await saveGameResult({
+        userId: user.id,
+        score: finalScore,
+        coinsEarned: finalScore, // Mỗi điểm = 1 coin
+        masksHit: finalScore, // Số mặt nạ đập trúng = score
+        totalRounds: 16,
+        gameDurationSeconds: gameDuration
+      })
+
+      if (result.data) {
+        // Cập nhật UI với dữ liệu mới
+        setTotalCoins(result.data.total_coins)
+        
+        // Reload stats để cập nhật rank
+        await loadPlayerStats()
+        
+        // Cập nhật quest progress
+        // Quest 1: Chơi 5 ván game
+        await updateQuestProgress(user.id, 'play_5_games', 1)
+        
+        // Quest 2: Đạt 10,000 điểm
+        if (finalScore >= 10000) {
+          await updateQuestProgress(user.id, 'score_10000', finalScore)
+        }
+        
+        console.log('Game result saved:', result.data)
+      }
+    } catch (error) {
+      console.error('Error saving game result:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
   const handlePlayGame = () => {
+    gameStartTimeRef.current = Date.now()
     setIsPlaying(true)
     setGameOver(false)
     setScore(0)
   }
 
   const handleViewScores = () => {
-    alert('Bảng xếp hạng đang được phát triển!')
+    setShowLeaderboard(true)
+    setShowShop(false)
+    setShowQuests(false)
+  }
+
+  const handleViewShop = () => {
+    setShowShop(true)
+    setShowLeaderboard(false)
+    setShowQuests(false)
+  }
+
+  const handleViewQuests = () => {
+    setShowQuests(true)
+    setShowLeaderboard(false)
+    setShowShop(false)
+  }
+
+  const handleBackToIntro = () => {
+    setIsPlaying(false)
+    setShowLeaderboard(false)
+    setShowShop(false)
+    setShowQuests(false)
+    setGameOver(false)
+    setScore(0)
+    
+    if (phaserGameRef.current) {
+      phaserGameRef.current.destroy(true)
+      phaserGameRef.current = null
+    }
   }
 
   const handlePlayAgain = () => {
     setGameOver(false)
-    setIsPlaying(false)
     
     // Destroy old game
     if (phaserGameRef.current) {
@@ -452,9 +527,12 @@ const WhackAMaskPhaser = () => {
       phaserGameRef.current = null
     }
     
-    // Restart
+    // Reset score và trigger useEffect để tạo game mới
+    setScore(0)
+    
+    // Tạm thời set isPlaying = false rồi lại true để trigger useEffect
+    setIsPlaying(false)
     setTimeout(() => {
-      setScore(0)
       setIsPlaying(true)
     }, 100)
   }
@@ -462,13 +540,31 @@ const WhackAMaskPhaser = () => {
   return (
     <div className="whack-intro-root">
       <div className="whack-intro-container">
-        {/* Navigation Bar */}
         <header className="whack-intro-header">
           <div className="whack-intro-logo">
             <span className="material-symbols-outlined">theater_comedy</span>
             <h2>Whack-a-Mask</h2>
           </div>
           <div className="whack-intro-nav-buttons">
+            {/* Coin Display in Header */}
+            <div className="whack-intro-coin-display-header">
+              <div className="whack-intro-coin-left">
+                <span className="material-symbols-outlined whack-intro-coin-icon">toll</span>
+                <div className="whack-intro-coin-amount-wrapper">
+                  <span className="whack-intro-coin-number">{totalCoins.toLocaleString()}</span>
+                  <span className="whack-intro-coin-label">Coin</span>
+                </div>
+              </div>
+              <button className="whack-intro-coin-add-btn" title="Mua thêm coins">
+                <span className="material-symbols-outlined">add</span>
+              </button>
+            </div>
+            
+            {isPlaying && (
+              <button className="whack-intro-icon-btn" onClick={handleBackToIntro} title="Về trang chủ">
+                <span className="material-symbols-outlined">home</span>
+              </button>
+            )}
             <button className="whack-intro-icon-btn" title="Cài đặt">
               <span className="material-symbols-outlined">settings</span>
             </button>
@@ -479,41 +575,40 @@ const WhackAMaskPhaser = () => {
         </header>
 
         <main className="whack-intro-main">
-          {/* Sidebar Navigation */}
           <aside className="whack-intro-sidebar">
             <div className="whack-intro-profile">
               <div className="whack-intro-avatar-wrapper">
                 <img
                   className="whack-intro-avatar"
-                  src="/masks/bao_công__tuồng_nam_bộ_-removebg-preview.png"
-                  alt="Tuồng Master"
+                  src={userInfo.avatar}
+                  alt={userInfo.name}
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/48'
+                    e.target.src = '/masks/quan_công-removebg-preview.png'
                   }}
                 />
               </div>
               <div className="whack-intro-profile-info">
-                <h3>Tuồng Master</h3>
-                <p>Rank: Grandmaster</p>
+                <h3>{userInfo.name}</h3>
+                <p>Rank: {userInfo.rank}</p>
               </div>
             </div>
-
+            
             <nav className="whack-intro-nav">
-              <a className="whack-intro-nav-link active" href="#">
+              <a className={`whack-intro-nav-link ${!isPlaying && !showLeaderboard && !showShop && !showQuests ? 'active' : ''}`} href="#" onClick={() => {setIsPlaying(false); setShowLeaderboard(false); setShowShop(false); setShowQuests(false)}}>
                 <span className="material-symbols-outlined">home</span>
                 <span>Trang Chủ</span>
               </a>
-              <a className="whack-intro-nav-link" href="#">
+              <a className={`whack-intro-nav-link ${showLeaderboard ? 'active' : ''}`} href="#" onClick={handleViewScores}>
                 <span className="material-symbols-outlined">leaderboard</span>
                 <span>Bảng Xếp Hạng</span>
               </a>
-              <a className="whack-intro-nav-link" href="#">
-                <span className="material-symbols-outlined">style</span>
-                <span>Bộ Sưu Tập Mặt Nạ</span>
+              <a className={`whack-intro-nav-link ${showShop ? 'active' : ''}`} href="#" onClick={handleViewShop}>
+                <span className="material-symbols-outlined">shopping_cart</span>
+                <span>Cửa Hàng</span>
               </a>
-              <a className="whack-intro-nav-link" href="#">
-                <span className="material-symbols-outlined">history</span>
-                <span>Lịch Sử Trận Đấu</span>
+              <a className={`whack-intro-nav-link ${showQuests ? 'active' : ''}`} href="#" onClick={handleViewQuests}>
+                <span className="material-symbols-outlined">task_alt</span>
+                <span>Nhiệm Vụ</span>
               </a>
             </nav>
 
@@ -529,16 +624,13 @@ const WhackAMaskPhaser = () => {
             </div>
           </aside>
 
-          {/* Main Game Area */}
           <section className="whack-intro-game-area">
-            {/* Background Decoration */}
             <div className="whack-intro-curtains">
               <div className="whack-intro-curtain-left"></div>
               <div className="whack-intro-curtain-right"></div>
               <div className="whack-intro-curtain-top"></div>
             </div>
 
-            {/* Lanterns */}
             <div className="whack-intro-lantern whack-intro-lantern-left">
               <span className="material-symbols-outlined">light</span>
             </div>
@@ -546,8 +638,13 @@ const WhackAMaskPhaser = () => {
               <span className="material-symbols-outlined">light</span>
             </div>
 
-            {!isPlaying ? (
-              /* Start Screen Content */
+            {showLeaderboard ? (
+              <Leaderboard />
+            ) : showShop ? (
+              <Shop />
+            ) : showQuests ? (
+              <Quests />
+            ) : !isPlaying ? (
               <div className="whack-intro-content">
                 <div className="whack-intro-hero-mask">
                   <div className="whack-intro-mask-glow"></div>
@@ -556,7 +653,7 @@ const WhackAMaskPhaser = () => {
                       src="/masks/quan_công-removebg-preview.png"
                       alt="Mặt nạ Tuồng truyền thống"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/256'
+                        e.target.src = '/masks/quan_công-removebg-preview.png'
                       }}
                     />
                   </div>
@@ -570,7 +667,6 @@ const WhackAMaskPhaser = () => {
                   Bước vào sân khấu hoành tráng của nghệ thuật Tuồng Việt Nam truyền thống. 
                   Thử thách phản xạ của bạn với những mặt nạ Tuồng đang xuất hiện!
                 </p>
-
                 <div className="whack-intro-buttons">
                   <button className="whack-intro-play-btn" onClick={handlePlayGame}>
                     <span className="material-symbols-outlined">play_arrow</span>
@@ -591,12 +687,9 @@ const WhackAMaskPhaser = () => {
                 </div>
               </div>
             ) : (
-              /* Game Board */
               <div className="phaser-game-wrapper">
-                <h1 className="phaser-game-title">KIẾM LÚA</h1>
-                
                 <div className="phaser-score-display">
-                  Điểm: <span className="phaser-score-value">{score}</span>
+                  Coin: <span className="phaser-score-value">{score}</span>
                 </div>
 
                 <div ref={gameRef} className="phaser-game-container" />
@@ -605,7 +698,7 @@ const WhackAMaskPhaser = () => {
                   <div className="phaser-game-over">
                     <div className="phaser-game-over-content">
                       <h2>Hết Giờ!</h2>
-                      <p>Điểm Số: {score}</p>
+                      <p>Coin: {score}</p>
                       <button className="phaser-play-again-btn" onClick={handlePlayAgain}>
                         <span className="material-symbols-outlined">replay</span>
                         Chơi Lại
@@ -616,7 +709,6 @@ const WhackAMaskPhaser = () => {
               </div>
             )}
 
-            {/* Floating Decorative Elements */}
             <div className="whack-intro-floating-icons">
               <span className="material-symbols-outlined">swords</span>
               <span className="material-symbols-outlined">music_note</span>
@@ -624,15 +716,14 @@ const WhackAMaskPhaser = () => {
           </section>
         </main>
 
-        {/* Footer */}
         <footer className="whack-intro-footer">
           <div className="whack-intro-footer-users">
             <div className="whack-intro-avatars">
-              <img src="https://i.pravatar.cc/32?img=1" alt="User" />
-              <img src="https://i.pravatar.cc/32?img=2" alt="User" />
-              <img src="https://i.pravatar.cc/32?img=3" alt="User" />
+              <img src="/masks/quan_công-removebg-preview.png" alt="User" />
+              <img src="/masks/triệu_văn_hoán-removebg-preview.png" alt="User" />
+              <img src="/masks/lưu_bị-removebg-preview.png" alt="User" />
             </div>
-            <p>1,248 nghệ sĩ đang trên sân khấu</p>
+            <p>{isAuthenticated ? `Chào ${userInfo.name}! Cùng ${Math.floor(Math.random() * 500) + 800} người chơi khác` : '1,248 nghệ sĩ đang trên sân khấu'}</p>
           </div>
           <div className="whack-intro-footer-links">
             <a href="#">Về Tuồng</a>
@@ -647,4 +738,4 @@ const WhackAMaskPhaser = () => {
   )
 }
 
-export default WhackAMaskPhaser
+export default WhackAMaskGame
