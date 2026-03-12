@@ -260,59 +260,67 @@
 .seating-chart-container {
   overflow-x: auto;
   margin-bottom: 1.5rem;
-  padding: 1rem;
+  padding: 1.5rem;
   background: var(--booking-surface);
   border: 1px solid var(--booking-border);
   border-radius: 12px;
 }
 
-.seating-chart {
-  min-width: 600px;
+.seating-chart-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: fit-content;
   margin: 0 auto;
 }
 
-.seat-row {
+.seat-row-grid {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  justify-content: center;
+  width: 100%;
 }
 
-.row-label {
-  width: 30px;
-  text-align: center;
-  font-weight: bold;
-  color: var(--booking-text-muted);
-  font-size: 0.9rem;
-}
-
-.seats-in-row {
+.seats-grid-container {
   display: flex;
-  gap: 0.3rem;
-  flex: 1;
   justify-content: center;
 }
 
+.seats-grid {
+  /* Grid styles are inline in component */
+}
+
+.seat-empty {
+  width: 40px;
+  height: 40px;
+  /* Empty space for grid alignment */
+}
+
 .seat {
-  width: 35px;
-  height: 35px;
+  width: 40px;
+  height: 40px;
   border: 2px solid var(--booking-border);
   border-radius: 6px;
   background: var(--booking-bg);
   color: var(--booking-text-muted);
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
   position: relative;
+  padding: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .seat:hover:not(:disabled) {
   transform: scale(1.1);
   box-shadow: 0 2px 12px rgba(160, 22, 22, 0.3);
+  z-index: 10;
 }
 
 .seat:disabled {
@@ -332,6 +340,7 @@
   color: white;
   transform: scale(1.1);
   box-shadow: 0 0 12px rgba(160, 22, 22, 0.5);
+  z-index: 10;
 }
 
 .seat-occupied {
@@ -342,10 +351,12 @@
 
 .seat-vip {
   border-color: var(--booking-gold);
+  border-width: 2px;
 }
 
 .seat-premium {
   border-color: var(--booking-primary);
+  border-width: 2px;
 }
 
 .seat-standard {
@@ -1187,14 +1198,33 @@
     grid-template-columns: 1fr;
   }
 
-  .seating-chart {
-    min-width: 100%;
+  .seating-chart-container {
+    padding: 0.5rem;
   }
 
   .seat {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     font-size: 0.65rem;
+  }
+  
+  .seat-empty {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .seats-grid-container .seats-grid {
+    gap: 2px !important;
+  }
+  
+  .seat-row-grid {
+    justify-content: center;
+  }
+  
+  /* Adjust grid columns for mobile */
+  .seats-grid-container .seats-grid > * {
+    width: 32px !important;
+    height: 32px !important;
   }
 }
 

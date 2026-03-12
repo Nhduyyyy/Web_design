@@ -47,15 +47,26 @@ export default function SeatSelection({
       
       const hallSeats = await getSeatsByHall(selectedHall)
       
-      // Transform database seats to booking format
+      if (!hallSeats || hallSeats.length === 0) {
+        setSeats([])
+        setSeatError('Khán phòng này chưa có sơ đồ ghế')
+        return
+      }
+      
+      // Transform database seats to booking format with grid positions
+      // Use position_x and position_y for actual grid coordinates
       const transformedSeats = hallSeats.map(seat => ({
-        id: seat.seat_label || `${seat.row_number}-${seat.seat_number}`,
+        id: seat.id,
         seat_id: seat.id,
-        row: String.fromCharCode(64 + seat.row_number), // Convert 1,2,3 to A,B,C
-        number: seat.seat_number,
+        row: seat.position_y !== null ? seat.position_y : seat.row_number - 1, // Use position_y (0-based) or fallback to row_number
+        col: seat.position_x !== null ? seat.position_x : seat.seat_number - 1, // Use position_x (0-based) or fallback to seat_number
+        rowLabel: String.fromCharCode(65 + (seat.position_y !== null ? seat.position_y : seat.row_number - 1)), // A, B, C...
+        label: seat.seat_label || `${String.fromCharCode(65 + (seat.position_y !== null ? seat.position_y : seat.row_number - 1))}${(seat.position_x !== null ? seat.position_x : seat.seat_number - 1) + 1}`,
         status: seat.status === 'booked' ? 'occupied' : 'available',
         price: getPriceForSeatType(seat.seat_type),
-        type: seat.seat_type
+        type: seat.seat_type,
+        position_x: seat.position_x,
+        position_y: seat.position_y
       }))
       
       setSeats(transformedSeats)
@@ -237,15 +248,31 @@ export default function SeatSelection({
   }
 
   const total = calculateTotal(selectedSeats)
-  const rows = useMemo(() => {
-    const rowMap = new Map()
-    seats.forEach(seat => {
-      if (!rowMap.has(seat.row)) {
-        rowMap.set(seat.row, [])
-      }
-      rowMap.get(seat.row).push(seat)
-    })
-    return Array.from(rowMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+  
+  // Build grid layout from seats using position_x and position_y
+  const buildGridLayout = useMemo(() => {
+    if (!seats || seats.length === 0) return { rows: [], maxCols: 0 }
+    
+    // Find max row and col from positions (0-based)
+    const maxRow = Math.max(...seats.map(s => s.row))
+    const maxCol = Math.max(...seats.map(s => s.col))
+    
+    // Create grid structure - INCLUDE ALL ROWS even if empty
+    const grid = []
+    for (let r = 0; r <= maxRow; r++) {
+      const rowLabel = String.fromCharCode(65 + r) // A, B, C... (0-based)
+      const rowSeats = seats.filter(s => s.row === r).sort((a, b) => a.col - b.col)
+      
+      // Always add row, even if it has no seats
+      grid.push({
+        rowNumber: r,
+        rowLabel,
+        seats: rowSeats,
+        isEmpty: rowSeats.length === 0
+      })
+    }
+    
+    return { rows: grid, maxCols: maxCol + 1 } // +1 because col is 0-based
   }, [seats])
 
   const seatTypeInfo = {
@@ -350,36 +377,62 @@ export default function SeatSelection({
 
           {/* Seating Chart */}
           <div className="seating-chart-container">
-            <div className="seating-chart">
-              {rows.map(([rowLabel, seats]) => (
-                <div key={rowLabel} className="seat-row">
-                  <div className="row-label">{rowLabel}</div>
-                  <div className="seats-in-row">
-                    {seats.map((seat) => {
-                      const status = getSeatStatus(seat, selectedSeats)
-                      const isHovered = hoveredSeat?.id === seat.id
-                      
-                      return (
-                        <motion.button
-                          key={seat.id}
-                          className={`seat seat-${status} seat-${seat.type}`}
-                          onClick={() => handleSeatClick(seat)}
-                          onMouseEnter={() => setHoveredSeat(seat)}
-                          onMouseLeave={() => setHoveredSeat(null)}
-                          disabled={status === 'occupied'}
-                          whileHover={status !== 'occupied' ? { scale: 1.1 } : {}}
-                          whileTap={status !== 'occupied' ? { scale: 0.95 } : {}}
-                          title={`${seat.id} - ${formatPrice(seat.price)}`}
+            {buildGridLayout.rows.length === 0 ? (
+              <div className="empty-message" style={{ textAlign: 'center', padding: '2rem' }}>
+                <p>Không có ghế nào trong khán phòng này</p>
+              </div>
+            ) : (
+              <div className="seating-chart-grid">
+                {buildGridLayout.rows.map((row) => {
+                  // Calculate seat size based on screen width
+                  const isMobile = window.innerWidth <= 768
+                  const seatSize = isMobile ? 32 : 40
+                  
+                  return (
+                    <div key={row.rowNumber} className="seat-row-grid">
+                      <div className="seats-grid-container" style={{ width: '100%' }}>
+                        <div 
+                          className="seats-grid"
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: `repeat(${buildGridLayout.maxCols}, ${seatSize}px)`,
+                            gap: isMobile ? '2px' : '4px',
+                            justifyContent: 'center'
+                          }}
                         >
-                          {seat.number}
-                        </motion.button>
-                      )
-                    })}
-                  </div>
-                  <div className="row-label">{rowLabel}</div>
-                </div>
-              ))}
-            </div>
+                          {Array.from({ length: buildGridLayout.maxCols }, (_, colIndex) => {
+                            const seat = row.seats.find(s => s.col === colIndex)
+                            
+                            if (!seat) {
+                              // Empty space
+                              return <div key={`empty-${row.rowNumber}-${colIndex}`} className="seat-empty"></div>
+                            }
+                            
+                            const status = getSeatStatus(seat, selectedSeats)
+                            
+                            return (
+                              <motion.button
+                                key={seat.id}
+                                className={`seat seat-${status} seat-${seat.type}`}
+                                onClick={() => handleSeatClick(seat)}
+                                onMouseEnter={() => setHoveredSeat(seat)}
+                                onMouseLeave={() => setHoveredSeat(null)}
+                                disabled={status === 'occupied'}
+                                whileHover={status !== 'occupied' ? { scale: 1.1 } : {}}
+                                whileTap={status !== 'occupied' ? { scale: 0.95 } : {}}
+                                title={`Ghế ${seat.label} - ${formatPrice(seat.price)}`}
+                              >
+                                {seat.label}
+                              </motion.button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* Legend */}
@@ -418,7 +471,7 @@ export default function SeatSelection({
               <div className="selected-seats-list">
                 {selectedSeats.map(seat => (
                   <div key={seat.id} className="selected-seat-item">
-                    <span className="seat-id">{seat.id}</span>
+                    <span className="seat-id">{seat.label}</span>
                     <span className="seat-price">{formatPrice(seat.price)}</span>
                   </div>
                 ))}
