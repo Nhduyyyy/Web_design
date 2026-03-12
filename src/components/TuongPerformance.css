@@ -115,9 +115,20 @@
   overflow: hidden;
 }
 
+/* Single-column variant (used for embedded tabs like LivestreamList) */
+.tuong-performance.luxury-streaming .tp-main.tp-main--single {
+  grid-template-columns: 1fr;
+  height: auto;
+  overflow: visible;
+}
+
 @media (min-width: 1024px) {
   .tuong-performance.luxury-streaming .tp-main {
     grid-template-columns: 1fr 2fr;
+  }
+
+  .tuong-performance.luxury-streaming .tp-main.tp-main--single {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -319,12 +330,15 @@
   height: 100%;
   object-fit: cover;
   opacity: 0.4;
-  transition: transform 1s;
+  transition: none;
 }
 
-.tuong-performance.luxury-streaming .tp-video-block:hover .tp-video-bg {
-  transform: scale(1.05);
+.tuong-performance.luxury-streaming .tp-video-media {
+  opacity: 1;
+  border: 0;
 }
+
+/* no hover zoom on video/cover */
 
 .tuong-performance.luxury-streaming .tp-video-overlay {
   position: absolute;

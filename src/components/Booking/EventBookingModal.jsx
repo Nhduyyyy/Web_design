@@ -4,9 +4,9 @@ import EventBookingSummary from './EventBookingSummary'
 import PaymentMethod from './PaymentMethod'
 import EventConfirmation from './EventConfirmation'
 import { useAuth } from '../../contexts/AuthContext'
-import { formatPrice, generateBookingId, sendEmailConfirmation, sendSMSConfirmation, scheduleReminder } from '../../utils/booking'
-import { cancelRegistration } from '../../services/eventService'
-import { getEventById } from '../../services/eventService'
+import { sendEmailConfirmation, sendSMSConfirmation, scheduleReminder } from '../../utils/booking'
+import { cancelRegistration, createEventRegistration, getEventById } from '../../services/eventService'
+import { checkEventRegistrationPaymentStatus } from '../../services/paymentService'
 import { supabase } from '../../lib/supabase'
 import './booking.css'
 
@@ -28,7 +28,11 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
   })
   const [paymentMethod, setPaymentMethod] = useState(null)
   const [paymentResult, setPaymentResult] = useState(null)
-  const [registrationId, setRegistrationId] = useState(null)
+  const [registrationId, setRegistrationId] = useState(null) // event_registrations.id (uuid)
+  const [registrationCode, setRegistrationCode] = useState(null) // event_registrations.registration_code (REG...)
+  const [paymentExpiresAt, setPaymentExpiresAt] = useState(null) // UI-only expiry timestamp
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
+  const successTimerRef = useRef(null)
   
   // Error states
   const [bookingError, setBookingError] = useState(null)
@@ -119,6 +123,9 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
       setPaymentMethod(null)
       setPaymentResult(null)
       setRegistrationId(null)
+      setRegistrationCode(null)
+      setPaymentExpiresAt(null)
+      setShowPaymentSuccess(false)
       setBookingError(null)
       setPaymentError(null)
       setEventData(event) // Initialize event data
@@ -137,6 +144,10 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
     
     return () => {
       // Cleanup on unmount
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current)
+        successTimerRef.current = null
+      }
       if (eventCheckIntervalRef.current) {
         clearInterval(eventCheckIntervalRef.current)
         eventCheckIntervalRef.current = null
@@ -260,13 +271,15 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
     }
   }
   
-  // Cancel pending registration
+  // Cancel pending registration (DB)
   const cancelPendingRegistration = async () => {
     if (!registrationId) return
     
     try {
-      await cancelRegistration(registrationId)
       setRegistrationId(null)
+      setRegistrationCode(null)
+      setPaymentExpiresAt(null)
+      await cancelRegistration(registrationId)
     } catch (error) {
       console.error('Error canceling registration:', error)
     }
@@ -363,11 +376,13 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
     }
     
     try {
+      let latestEventFromDb = null
       // Double-check available slots before creating registration (handle race condition)
       // Only check if event has database ID (not mock data)
       if (event.id && event.id.startsWith && !event.id.startsWith('evt-')) {
         try {
           const latestEventData = await getEventById(event.id)
+          latestEventFromDb = latestEventData
           const maxParticipants = latestEventData.max_participants || latestEventData.maxParticipants || 0
           const currentParticipants = latestEventData.current_participants || latestEventData.currentParticipants || 0
           const availableSlots = Math.max(0, maxParticipants - currentParticipants)
@@ -403,10 +418,32 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
         }
       }
       
-      // Generate registration ID (mock for now, will be replaced with real createEventRegistration)
-      const generatedId = generateBookingId()
-      setRegistrationId(generatedId)
-      setCurrentStep(STEPS.PAYMENT)
+      // Create booking in DB so QR/polling can work with real records
+      if (!user?.id) {
+        setBookingError('Bạn cần đăng nhập để tiếp tục thanh toán.')
+        return
+      }
+
+      const createdReg = await createEventRegistration({
+        event_id: (latestEventFromDb || eventData || event).id,
+        user_id: user.id,
+        participant_name: info.name,
+        participant_email: info.email,
+        participant_phone: info.phone,
+        amount: total,
+        payment_status: total > 0 ? 'pending' : 'completed',
+      })
+
+      setRegistrationId(createdReg.id)
+      setRegistrationCode(createdReg.registration_code)
+      setPaymentExpiresAt(new Date(Date.now() + 15 * 60 * 1000).toISOString())
+
+      if (total > 0) {
+        setCurrentStep(STEPS.PAYMENT)
+      } else {
+        setPaymentResult({ success: true, message: 'Miễn phí' })
+        setCurrentStep(STEPS.CONFIRMATION)
+      }
     } catch (error) {
       console.error('Error in handleSummaryContinue:', error)
       const errorMessage = getErrorMessage(error, 'Không thể tạo mã đăng ký. Vui lòng thử lại.')
@@ -430,9 +467,30 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
       await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, retryCount), 5000)))
       
       // Retry the operation
-      const generatedId = generateBookingId()
-      setRegistrationId(generatedId)
-      setCurrentStep(STEPS.PAYMENT)
+      if (!user?.id) {
+        setBookingError('Bạn cần đăng nhập để tiếp tục thanh toán.')
+        return
+      }
+
+      const latest = (event?.id && event.id.startsWith && !event.id.startsWith('evt-'))
+        ? await getEventById(event.id)
+        : null
+      if (latest) setEventData(prev => ({ ...prev, ...latest }))
+
+      const createdReg = await createEventRegistration({
+        event_id: (latest || eventData || event).id,
+        user_id: user.id,
+        participant_name: customerInfo.name,
+        participant_email: customerInfo.email,
+        participant_phone: customerInfo.phone,
+        amount: total,
+        payment_status: total > 0 ? 'pending' : 'completed',
+      })
+
+      setRegistrationId(createdReg.id)
+      setRegistrationCode(createdReg.registration_code)
+      setPaymentExpiresAt(new Date(Date.now() + 15 * 60 * 1000).toISOString())
+      setCurrentStep(total > 0 ? STEPS.PAYMENT : STEPS.CONFIRMATION)
       setRetryCount(0)
     } catch (error) {
       console.error('Retry booking failed:', error)
@@ -446,6 +504,7 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
   const handlePayment = async (method, amount) => {
     setPaymentMethod(method)
     setPaymentError(null)
+    setShowPaymentSuccess(false)
     
     // Check network before proceeding
     if (!navigator.onLine) {
@@ -459,9 +518,29 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
     }
     
     try {
-      // Import processPayment from utils/booking
-      const bookingUtils = await import('../../utils/booking')
-      const result = await bookingUtils.processPayment(method, amount, registrationId)
+      // For QR, success must be based on DB status (payments.status === 'completed')
+      let result
+      if (method === 'qr') {
+        const status = await checkEventRegistrationPaymentStatus(registrationCode, amount)
+        result = {
+          success: !!status.success,
+          transactionId: status.payment?.transaction_id || null,
+          bookingId: registrationCode,
+          amount,
+          paymentMethod: method,
+          timestamp: status.payment?.completed_at || new Date().toISOString(),
+          message: status.message || (status.success ? 'Thanh toán thành công' : 'Đang chờ thanh toán...'),
+        }
+
+        if (status.amountMismatch) {
+          result.success = false
+          result.message = status.message
+        }
+      } else {
+        // Fallback (wallet/card): current project still simulates payment
+        const bookingUtils = await import('../../utils/booking')
+        result = await bookingUtils.processPayment(method, amount, registrationId)
+      }
       setPaymentResult(result)
       
       if (result.success) {
@@ -485,8 +564,14 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
         
         // Schedule reminder (non-blocking)
         scheduleReminder(event, registration)
-        
-        setCurrentStep(STEPS.CONFIRMATION)
+
+        // Show "payment success" briefly, then move to confirmation/thank you
+        setShowPaymentSuccess(true)
+        if (successTimerRef.current) clearTimeout(successTimerRef.current)
+        successTimerRef.current = setTimeout(() => {
+          setShowPaymentSuccess(false)
+          setCurrentStep(STEPS.CONFIRMATION)
+        }, 1200)
       } else {
         // Payment failed
         setPaymentError(result.message || 'Thanh toán thất bại. Vui lòng thử lại.')
@@ -542,9 +627,7 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
         )
         if (!confirmed) return
         
-        // Cancel registration
         await cancelPendingRegistration()
-        setRegistrationId(null)
       }
     }
     
@@ -573,6 +656,8 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
     setPaymentMethod(null)
     setPaymentResult(null)
     setRegistrationId(null)
+    setRegistrationCode(null)
+    setPaymentExpiresAt(null)
     setBookingError(null)
     setPaymentError(null)
     
@@ -582,8 +667,10 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
   // Handle QR payment timeout
   const handleQRTimeout = async () => {
     setPaymentError('Mã QR đã hết hạn. Vui lòng tạo lại mã QR mới.')
-    // Registration đã được cancel trong PaymentMethod component
+    // Registration can be cancelled in PaymentMethod; clear local state
     setRegistrationId(null)
+    setRegistrationCode(null)
+    setPaymentExpiresAt(null)
   }
 
   if (!isOpen || !event) return null
@@ -622,6 +709,15 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
 
           {/* Step Content */}
           <div className="booking-content">
+            {currentStep === STEPS.PAYMENT && showPaymentSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="booking-success-banner"
+              >
+                ✅ Thanh toán thành công! Đang chuyển sang bước xác nhận...
+              </motion.div>
+            )}
             {/* Show event info at the top for all steps */}
             <div className="event-info-header">
               <h3>{(eventData || event).title}</h3>
@@ -770,7 +866,14 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
             {currentStep === STEPS.PAYMENT && (
               <PaymentMethod
                 total={total}
-                bookingId={registrationId}
+                bookingId={registrationCode} // reference code for transfer_content
+                paymentContext={{
+                  type: 'event',
+                  eventRegistrationId: registrationId,
+                  referenceCode: registrationCode,
+                  expiresAt: paymentExpiresAt,
+                  userId: user?.id || null,
+                }}
                 onPayment={handlePayment}
                 onBack={handleBack}
                 paymentResult={paymentResult}

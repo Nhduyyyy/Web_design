@@ -1,9 +1,13 @@
 import { supabase } from '../lib/supabase'
 
+const generateTransactionId = () => {
+  return `TXN${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`
+}
+
 /**
  * Check payment status from database
  * Backend sẽ cập nhật status khi nhận được webhook từ ngân hàng
- * @param {string} bookingId - Booking code
+ * @param {string} bookingId - Booking code (BK...)
  * @param {number} expectedAmount - Expected payment amount (optional, for validation)
  */
 export const checkPaymentStatus = async (bookingId, expectedAmount = null) => {
@@ -90,6 +94,71 @@ export const checkPaymentStatus = async (bookingId, expectedAmount = null) => {
 }
 
 /**
+ * Check payment status for event registration by registration_code (REG...)
+ * @param {string} registrationCode
+ * @param {number} expectedAmount
+ */
+export const checkEventRegistrationPaymentStatus = async (registrationCode, expectedAmount = null) => {
+  try {
+    const { data: reg, error: regError } = await supabase
+      .from('event_registrations')
+      .select('id, registration_code, amount, payment_status, status')
+      .eq('registration_code', registrationCode)
+      .maybeSingle()
+
+    if (regError) {
+      console.error('Error querying event registration:', regError)
+      return { success: false, message: 'Lỗi kiểm tra thanh toán' }
+    }
+
+    if (!reg) {
+      return { success: false, message: 'Đang chờ thanh toán...', isMock: true }
+    }
+
+    const { data: payment, error: payError } = await supabase
+      .from('payments')
+      .select('id, status, amount, transaction_id, completed_at')
+      .eq('event_registration_id', reg.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (payError) {
+      console.error('Error querying event payment:', payError)
+      return { success: false, message: 'Lỗi kiểm tra thanh toán' }
+    }
+
+    const isPaid = payment?.status === 'completed' || reg.payment_status === 'completed'
+
+    if (isPaid && expectedAmount !== null && payment?.amount) {
+      const tolerance = 1000
+      const amountDiff = Math.abs(payment.amount - expectedAmount)
+      if (amountDiff > tolerance) {
+        return {
+          success: false,
+          registration: reg,
+          payment,
+          amountMismatch: true,
+          expectedAmount,
+          paidAmount: payment.amount,
+          message: `Số tiền thanh toán không khớp. Mong đợi: ${formatPrice(expectedAmount)}, Đã thanh toán: ${formatPrice(payment.amount)}. Vui lòng liên hệ hỗ trợ.`
+        }
+      }
+    }
+
+    return {
+      success: isPaid,
+      registration: reg,
+      payment,
+      message: isPaid ? 'Thanh toán thành công!' : 'Đang chờ thanh toán...'
+    }
+  } catch (error) {
+    console.error('Error checking event registration payment:', error)
+    return { success: false, message: 'Lỗi kiểm tra thanh toán' }
+  }
+}
+
+/**
  * Format price helper (if not imported)
  */
 const formatPrice = (amount) => {
@@ -105,10 +174,10 @@ const formatPrice = (amount) => {
  */
 export const verifyPaymentByContent = async (transferContent) => {
   // Extract booking ID from transfer content
-  // Format: TUONGVN-BK1234567890ABC
-  const bookingId = transferContent.replace('TUONGVN-', '')
-  
-  return checkPaymentStatus(bookingId)
+  // Format: TUONGVN-BK... or TUONGVN-REG...
+  const ref = transferContent.replace('TUONGVN-', '')
+  if (ref.startsWith('REG')) return checkEventRegistrationPaymentStatus(ref)
+  return checkPaymentStatus(ref)
 }
 
 /**
@@ -158,11 +227,12 @@ export const checkDuplicatePayment = async (bookingId, amount) => {
 export const createPaymentRecord = async (paymentData, checkDuplicate = true) => {
   try {
     // Check for duplicate payment if enabled
-    if (checkDuplicate && paymentData.booking_id && paymentData.amount) {
-      const duplicateCheck = await checkDuplicatePayment(
-        paymentData.booking_id,
-        paymentData.amount
-      )
+    if (checkDuplicate && paymentData.amount) {
+      const duplicateCheck = paymentData.booking_id
+        ? await checkDuplicatePayment(paymentData.booking_id, paymentData.amount)
+        : paymentData.event_registration_id
+          ? await checkDuplicateEventPayment(paymentData.event_registration_id, paymentData.amount)
+          : { isDuplicate: false, existingPayment: null }
       
       if (duplicateCheck.isDuplicate) {
         console.warn('Duplicate payment detected:', duplicateCheck.existingPayment)
@@ -175,9 +245,14 @@ export const createPaymentRecord = async (paymentData, checkDuplicate = true) =>
       }
     }
     
+    const payload = {
+      transaction_id: paymentData.transaction_id || generateTransactionId(),
+      ...paymentData,
+    }
+
     const { data, error } = await supabase
       .from('payments')
-      .insert(paymentData)
+      .insert(payload)
       .select()
       .single()
 
@@ -211,5 +286,107 @@ export const createPaymentRecord = async (paymentData, checkDuplicate = true) =>
   } catch (error) {
     console.error('Error creating payment record:', error)
     throw error
+  }
+}
+
+/**
+ * Check for duplicate payment for event registration
+ * @param {string} eventRegistrationId
+ * @param {number} amount
+ */
+export const checkDuplicateEventPayment = async (eventRegistrationId, amount) => {
+  try {
+    const { data: existingPayments, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('event_registration_id', eventRegistrationId)
+      .eq('status', 'completed')
+      .eq('amount', amount)
+      .order('completed_at', { ascending: false })
+      .limit(1)
+
+    if (error) {
+      console.error('Error checking duplicate event payment:', error)
+      return { isDuplicate: false, existingPayment: null }
+    }
+
+    if (existingPayments && existingPayments.length > 0) {
+      return { isDuplicate: true, existingPayment: existingPayments[0] }
+    }
+
+    return { isDuplicate: false, existingPayment: null }
+  } catch (error) {
+    console.error('Error checking duplicate event payment:', error)
+    return { isDuplicate: false, existingPayment: null }
+  }
+}
+
+/**
+ * Mark a QR payment as completed (called when user confirms transfer).
+ * Also confirms the event_registration so participant count updates.
+ *
+ * @param {string} eventRegistrationId - event_registrations.id (uuid)
+ * @param {string|null} paymentId - payments.id (uuid); if null, finds latest pending payment
+ */
+export const completeEventPayment = async (eventRegistrationId, paymentId = null) => {
+  try {
+    const now = new Date().toISOString()
+
+    // 1) Find the pending payment if paymentId not provided
+    let targetPaymentId = paymentId
+    if (!targetPaymentId) {
+      const { data: pendingPayments, error: findError } = await supabase
+        .from('payments')
+        .select('id, status')
+        .eq('event_registration_id', eventRegistrationId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (findError) throw findError
+      if (!pendingPayments?.length) {
+        return { success: false, message: 'Không tìm thấy payment đang chờ xử lý.' }
+      }
+      targetPaymentId = pendingPayments[0].id
+    }
+
+    // 2) Update payment → completed
+    const { error: payError } = await supabase
+      .from('payments')
+      .update({
+        status: 'completed',
+        completed_at: now,
+        updated_at: now,
+      })
+      .eq('id', targetPaymentId)
+
+    if (payError) throw payError
+
+    // 3) Update event_registration → confirmed + payment_status = completed
+    const { data: updatedReg, error: regError } = await supabase
+      .from('event_registrations')
+      .update({
+        payment_status: 'completed',
+        status: 'confirmed',
+        updated_at: now,
+      })
+      .eq('id', eventRegistrationId)
+      .select('id, registration_code, status, payment_status')
+      .single()
+
+    if (regError) throw regError
+
+    return {
+      success: true,
+      message: 'Thanh toán thành công!',
+      registration: updatedReg,
+      paymentId: targetPaymentId,
+    }
+  } catch (error) {
+    console.error('Error completing event payment:', error)
+    return {
+      success: false,
+      message: error?.message || 'Không thể xác nhận thanh toán. Vui lòng liên hệ hỗ trợ.',
+    }
   }
 }
