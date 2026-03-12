@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { logActivity } from './historyService'
 
 // ============================================
 // LIVESTREAM SERVICE
@@ -15,6 +16,12 @@ export const createLivestream = async (livestreamData) => {
     .single()
 
   if (error) throw error
+  await logActivity(
+    livestreamData.theater_id,
+    `Thêm phát trực tiếp «${data.title}»`,
+    'livestream',
+    'add'
+  )
   return data
 }
 
@@ -90,8 +97,11 @@ export const getLivestreamById = async (livestreamId) => {
 
 /**
  * Update livestream
+ * @param {string} livestreamId
+ * @param {object} updates
+ * @param {object} [logMeta] - { theaterId, title } for history logging (optional)
  */
-export const updateLivestream = async (livestreamId, updates) => {
+export const updateLivestream = async (livestreamId, updates, logMeta = null) => {
   const { data, error } = await supabase
     .from('livestreams')
     .update(updates)
@@ -100,6 +110,14 @@ export const updateLivestream = async (livestreamId, updates) => {
     .single()
 
   if (error) throw error
+  if (logMeta?.theaterId) {
+    await logActivity(
+      logMeta.theaterId,
+      `Cập nhật phát trực tiếp «${logMeta.title ?? data.title}»`,
+      'livestream',
+      'edit'
+    )
+  }
   return data
 }
 
@@ -267,14 +285,25 @@ export const subscribeLivestreamComments = (livestreamId, onInsert) => {
 
 /**
  * Delete livestream
+ * @param {string} livestreamId
+ * @param {string} [theaterId]     - optional, for history logging
+ * @param {string} [livestreamTitle] - optional, for history title
  */
-export const deleteLivestream = async (livestreamId) => {
+export const deleteLivestream = async (livestreamId, theaterId = null, livestreamTitle = null) => {
   const { error } = await supabase
     .from('livestreams')
     .delete()
     .eq('id', livestreamId)
 
   if (error) throw error
+  if (theaterId) {
+    await logActivity(
+      theaterId,
+      `Xoá phát trực tiếp${livestreamTitle ? ` «${livestreamTitle}»` : ''}`,
+      'livestream',
+      'delete'
+    )
+  }
 }
 
 // ============================================

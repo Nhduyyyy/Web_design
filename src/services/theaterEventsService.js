@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { logActivity } from './historyService'
 
 // Lấy danh sách sự kiện của theater (dùng cho trang quản lý của nhà hát)
 export const getTheaterEvents = async (theaterId, filters = {}) => {
@@ -40,6 +41,7 @@ export const createEvent = async (theaterId, eventData) => {
     .single()
 
   if (error) throw error
+  await logActivity(theaterId, `Thêm sự kiện mới «${data.title}»`, 'event', 'add')
   return data
 }
 
@@ -57,11 +59,12 @@ export const updateEvent = async (eventId, theaterId, eventData) => {
     .single()
 
   if (error) throw error
+  await logActivity(theaterId, `Cập nhật sự kiện «${data.title}»`, 'event', 'edit')
   return data
 }
 
 // Xóa sự kiện
-export const deleteEvent = async (eventId, theaterId) => {
+export const deleteEvent = async (eventId, theaterId, eventTitle = null) => {
   const { error } = await supabase
     .from('events')
     .delete()
@@ -69,6 +72,12 @@ export const deleteEvent = async (eventId, theaterId) => {
     .eq('theater_id', theaterId)
 
   if (error) throw error
+  await logActivity(
+    theaterId,
+    `Xoá sự kiện${eventTitle ? ` «${eventTitle}»` : ''}`,
+    'event',
+    'delete'
+  )
 }
 
 // Cập nhật trạng thái sự kiện

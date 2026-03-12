@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { logActivity } from '../services/historyService'
 
 /**
  * Hook quản lý CRUD lịch diễn cho một theater cụ thể
@@ -57,6 +58,12 @@ export function useSchedules(theaterId) {
     }
 
     setSchedules((prev) => [...prev, data])
+    await logActivity(
+      theaterId,
+      `Thêm lịch diễn mới «${data.title || 'Không tên'}»`,
+      'schedule',
+      'add'
+    )
     return { data, error: null }
   }
 
@@ -74,10 +81,17 @@ export function useSchedules(theaterId) {
     }
 
     setSchedules((prev) => prev.map((s) => (s.id === id ? data : s)))
+    await logActivity(
+      theaterId,
+      `Cập nhật lịch diễn «${data.title || 'Không tên'}»`,
+      'schedule',
+      'edit'
+    )
     return { data, error: null }
   }
 
   const deleteSchedule = async (id) => {
+    const deletingSchedule = schedules.find((s) => s.id === id)
     const { error } = await supabase.from('schedules').delete().eq('id', id)
 
     if (error) {
@@ -86,6 +100,12 @@ export function useSchedules(theaterId) {
     }
 
     setSchedules((prev) => prev.filter((s) => s.id !== id))
+    await logActivity(
+      theaterId,
+      `Xoá lịch diễn${deletingSchedule?.title ? ` «${deletingSchedule.title}»` : ''}`,
+      'schedule',
+      'delete'
+    )
     return { error: null }
   }
 
