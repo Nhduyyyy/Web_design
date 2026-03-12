@@ -1,0 +1,71 @@
+/* Trang riêng Vũ Đại Loạn Thế – layout wrapper */
+.vdlt-page-root {
+  min-height: 100vh;
+  background: #1a0f0f;
+  display: flex;
+  flex-direction: column;
+}
+
+.vdlt-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(61, 35, 20, 0.95);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  flex-shrink: 0;
+}
+
+.vdlt-page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #d4af37;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.vdlt-page-back:hover {
+  background: rgba(212, 175, 55, 0.15);
+  color: #f5f0e8;
+}
+
+.vdlt-page-back .material-symbols-outlined {
+  font-size: 1.2rem;
+}
+
+.vdlt-page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.25rem;
+  color: #f5f0e8;
+  font-weight: 700;
+}
+
+.vdlt-page-title .material-symbols-outlined {
+  font-size: 1.5rem;
+  color: #d4af37;
+}
+
+.vdlt-page-spacer {
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.vdlt-page-main {
+  flex: 1;
+  overflow: auto;
+  padding: 0.5rem 0;
+}
+
+.vdlt-page-main .vdlt-root {
+  border-radius: 0;
+  min-height: 0;
+}

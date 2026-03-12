@@ -26,6 +26,7 @@ import LivestreamBroadcast from './components/Theater/LivestreamBroadcast'
 import TheaterLivestreams from './components/Theater/TheaterLivestreams'
 import TheaterLivestreamCreate from './components/Theater/TheaterLivestreamCreate'
 import WhackAMaskGame from './components/WhackAMaskGame'
+import VuDaiLoanThePage from './components/VuDaiLoanThe/VuDaiLoanThePage'
 import TheaterEvents from './components/Theater/TheaterEvents'
 import GameSelector from './components/GameSelector'
 import './styles/index.css'
@@ -162,6 +163,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               element={<WhackAMaskGame />} 
             />
             <Route 
+              path="/game/vu-dai-loan-the" 
+              element={<VuDaiLoanThePage />} 
+            />
+            <Route 
               path="/livestreams" 
               element={
                 <ProtectedRoute>
@@ -201,6 +206,3 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 )
 
 console.log('✅ React app rendered')
-
-
-
