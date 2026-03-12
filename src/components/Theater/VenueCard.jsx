@@ -25,7 +25,7 @@ const VenueCard = ({ venue, onEdit, onUpdate }) => {
 
     try {
       setDeleting(true)
-      await deleteVenue(venue.id)
+      await deleteVenue(venue.id, venue.theater_id, venue.name)
       onUpdate()
     } catch (error) {
       console.error('Error deleting venue:', error)

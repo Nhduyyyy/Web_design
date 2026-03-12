@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { logActivity } from './historyService'
 
 // ============================================
 // THEATER SERVICE
@@ -86,6 +87,7 @@ export const updateTheater = async (theaterId, updates) => {
     .single()
 
   if (error) throw error
+  await logActivity(theaterId, 'Cập nhật thông tin nhà hát', 'theater', 'edit')
   return data
 }
 
@@ -155,8 +157,15 @@ export const uploadTheaterLogo = async (theaterId, file) => {
     .from('theater-assets')
     .getPublicUrl(filePath)
 
-  await updateTheater(theaterId, { logo_url: publicUrl })
+  const { data, error } = await supabase
+    .from('theaters')
+    .update({ logo_url: publicUrl, updated_at: new Date().toISOString() })
+    .eq('id', theaterId)
+    .select()
+    .single()
 
+  if (error) throw error
+  await logActivity(theaterId, 'Cập nhật logo nhà hát', 'logo', 'edit')
   return publicUrl
 }
 
@@ -178,8 +187,15 @@ export const uploadTheaterCover = async (theaterId, file) => {
     .from('theater-assets')
     .getPublicUrl(filePath)
 
-  await updateTheater(theaterId, { cover_image_url: publicUrl })
+  const { data, error } = await supabase
+    .from('theaters')
+    .update({ cover_image_url: publicUrl, updated_at: new Date().toISOString() })
+    .eq('id', theaterId)
+    .select()
+    .single()
 
+  if (error) throw error
+  await logActivity(theaterId, 'Cập nhật ảnh bìa nhà hát', 'cover', 'edit')
   return publicUrl
 }
 
@@ -198,6 +214,12 @@ export const createVenue = async (venueData) => {
     .single()
 
   if (error) throw error
+  await logActivity(
+    venueData.theater_id,
+    `Thêm địa điểm mới «${data.name}»`,
+    'venue',
+    'add'
+  )
   return data
 }
 
@@ -231,8 +253,11 @@ export const getVenueById = async (venueId) => {
 
 /**
  * Update venue
+ * @param {string} venueId
+ * @param {object} updates
+ * @param {string} [theaterId] - optional, for history logging
  */
-export const updateVenue = async (venueId, updates) => {
+export const updateVenue = async (venueId, updates, theaterId = null) => {
   const { data, error } = await supabase
     .from('venues')
     .update(updates)
@@ -241,17 +266,32 @@ export const updateVenue = async (venueId, updates) => {
     .single()
 
   if (error) throw error
+  const tid = theaterId ?? data?.theater_id
+  if (tid) {
+    await logActivity(tid, `Cập nhật địa điểm «${data.name}»`, 'venue', 'edit')
+  }
   return data
 }
 
 /**
  * Delete venue
+ * @param {string} venueId
+ * @param {string} [theaterId] - optional, for history logging
+ * @param {string} [venueName]  - optional, for history title
  */
-export const deleteVenue = async (venueId) => {
+export const deleteVenue = async (venueId, theaterId = null, venueName = null) => {
   const { error } = await supabase
     .from('venues')
     .delete()
     .eq('id', venueId)
 
   if (error) throw error
+  if (theaterId) {
+    await logActivity(
+      theaterId,
+      `Xoá địa điểm${venueName ? ` «${venueName}»` : ''}`,
+      'venue',
+      'delete'
+    )
+  }
 }

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { logActivity } from './historyService'
 
 // ============================================
 // PLAY SERVICE
@@ -12,6 +13,12 @@ export const createPlay = async (playData) => {
     .single()
 
   if (error) throw error
+  await logActivity(
+    playData.theater_id,
+    `Thêm vở diễn mới «${data.title}»`,
+    'play',
+    'add'
+  )
   return data
 }
 
@@ -49,7 +56,7 @@ export const getPlayById = async (playId) => {
   return data
 }
 
-export const updatePlay = async (playId, updates) => {
+export const updatePlay = async (playId, updates, theaterId = null) => {
   const { data, error } = await supabase
     .from('plays')
     .update(updates)
@@ -58,16 +65,28 @@ export const updatePlay = async (playId, updates) => {
     .single()
 
   if (error) throw error
+  const tid = theaterId ?? data?.theater_id
+  if (tid) {
+    await logActivity(tid, `Cập nhật vở diễn «${data.title}»`, 'play', 'edit')
+  }
   return data
 }
 
-export const deletePlay = async (playId) => {
+export const deletePlay = async (playId, theaterId = null, playTitle = null) => {
   const { error } = await supabase
     .from('plays')
     .delete()
     .eq('id', playId)
 
   if (error) throw error
+  if (theaterId) {
+    await logActivity(
+      theaterId,
+      `Xoá vở diễn${playTitle ? ` «${playTitle}»` : ''}`,
+      'play',
+      'delete'
+    )
+  }
 }
 
 // ============================================
@@ -82,6 +101,15 @@ export const createPerformance = async (performanceData) => {
     .single()
 
   if (error) throw error
+  const tid = performanceData.theater_id
+  if (tid) {
+    await logActivity(
+      tid,
+      `Thêm buổi diễn mới ngày ${data.performance_date ?? ''}`,
+      'performance',
+      'add'
+    )
+  }
   return data
 }
 
@@ -150,7 +178,7 @@ export const getPerformanceById = async (performanceId) => {
   return data
 }
 
-export const updatePerformance = async (performanceId, updates) => {
+export const updatePerformance = async (performanceId, updates, theaterId = null) => {
   const { data, error } = await supabase
     .from('performances')
     .update(updates)
@@ -159,16 +187,28 @@ export const updatePerformance = async (performanceId, updates) => {
     .single()
 
   if (error) throw error
+  const tid = theaterId ?? data?.theater_id
+  if (tid) {
+    await logActivity(
+      tid,
+      `Cập nhật buổi diễn ngày ${data.performance_date ?? ''}`,
+      'performance',
+      'edit'
+    )
+  }
   return data
 }
 
-export const deletePerformance = async (performanceId) => {
+export const deletePerformance = async (performanceId, theaterId = null) => {
   const { error } = await supabase
     .from('performances')
     .delete()
     .eq('id', performanceId)
 
   if (error) throw error
+  if (theaterId) {
+    await logActivity(theaterId, 'Xoá buổi diễn', 'performance', 'delete')
+  }
 }
 
 export const getTodayPerformances = async (theaterId) => {

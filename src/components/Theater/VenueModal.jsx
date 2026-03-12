@@ -82,7 +82,7 @@ const VenueModal = ({ theater, venue, onClose, onSave }) => {
       }
 
       if (venue) {
-        await updateVenue(venue.id, venueData)
+        await updateVenue(venue.id, venueData, theater.id)
       } else {
         await createVenue(venueData)
       }
