@@ -519,25 +519,12 @@ export const saveSeatLayoutComplete = async (hallId, layoutData, options = {}) =
     }
 
     // 4. Transform seats data for database
-    // Map seat types to valid database enum values
-    // Current database enum values: {standard, vip, balcony, box}
-    // TODO: Run supabase/add_couple_seat_type.sql to add missing enum values
-    const mapSeatType = (type) => {
-      const typeMap = {
-        'couple': 'vip',        // Map to vip until 'couple' is added to enum
-        'wheelchair': 'standard', // Map to standard until 'wheelchair' is added to enum
-        'aisle': 'standard',    // Map to standard until 'aisle' is added to enum
-        'stage': 'standard'     // Map to standard until 'stage' is added to enum
-      };
-      return typeMap[type] || type;
-    };
-    
     const seatsToInsert = layoutData.seats.map(seat => ({
       hall_id: hallId,
       row_number: seat.row + 1, // Convert 0-based to 1-based
       seat_number: seat.col + 1, // Convert 0-based to 1-based
       seat_label: seat.label,
-      seat_type: mapSeatType(seat.type), // Map to valid enum value
+      seat_type: seat.type, // Use seat type directly now that all types are supported
       rotation: seat.rotation || 0,
       zone_id: seat.zoneId || null,
       position_x: seat.col,
