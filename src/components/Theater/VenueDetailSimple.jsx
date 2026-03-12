@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, Edit2, Trash2, Clock, Users, RefreshCw } from 'lucide-react'
@@ -52,13 +52,18 @@ const VenueDetailSimple = () => {
   const [activeTab, setActiveTab] = useState('overview')
 
   // Shows data from 'shows' table (used in TabPlays)
+  const venueShowFilters = useMemo(
+    () => ({ venue_id: hallId }),
+    [hallId],
+  )
+
   const {
     shows,
     loading: showsLoading,
     error: showsError,
     createShow,
     updateShow,
-  } = useShows()
+  } = useShows(venueShowFilters)
 
   useEffect(() => {
     loadVenueData()
@@ -599,10 +604,15 @@ const VenueDetailSimple = () => {
   const handleShowFormSubmit = async (data) => {
     setShowFormLoading(true)
     try {
+      const payload = {
+        ...data,
+        venue_id: hallId,
+      }
+
       if (selectedShow) {
-        await updateShow(selectedShow.id, data)
+        await updateShow(selectedShow.id, payload)
       } else {
-        await createShow(data)
+        await createShow(payload)
       }
       setShowFormOpen(false)
       setSelectedShow(null)
@@ -1030,7 +1040,7 @@ const VenueDetailSimple = () => {
           ))}
           {shows.length === 0 && (
             <div className="col-span-full text-center py-20 text-slate-500">
-              Chưa có vở diễn nào. Hãy tạo vở diễn đầu tiên!
+              Chưa có vở diễn nào cho địa điểm này. Hãy tạo vở diễn đầu tiên!
             </div>
           )}
         </div>
