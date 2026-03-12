@@ -9,9 +9,11 @@ const Shop = () => {
   const { user, isAuthenticated } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('all')
+  const [allShopItems, setAllShopItems] = useState([]) // Cache tất cả items
   const [shopItems, setShopItems] = useState([])
   const [categories, setCategories] = useState([])
   const [userCoins, setUserCoins] = useState(0)
+  const [userRank, setUserRank] = useState(null) // Thêm state cho rank
   const [loading, setLoading] = useState(true)
   const [purchasing, setPurchasing] = useState(null)
 
@@ -65,10 +67,28 @@ const Shop = () => {
       const { data } = await getPlayerStats(user.id)
       if (data) {
         setUserCoins(data.total_coins || 0)
+        setUserRank(data.current_rank) // Lưu rank info
       }
     } catch (error) {
       console.error('Error loading user coins:', error)
     }
+  }
+
+  // Tính multiplier dựa trên rank level
+  const getMultiplier = () => {
+    if (!userRank) return 0
+    
+    const rankLevel = userRank.rank_level || 1
+    // Công thức: mỗi rank level tăng 25%
+    // Rank 1 (Newbie): 0%
+    // Rank 2 (Bronze): 25%
+    // Rank 3 (Silver): 50%
+    // Rank 4 (Gold): 75%
+    // Rank 5 (Platinum): 100%
+    // Rank 6 (Diamond): 125%
+    // Rank 7 (Master): 150%
+    // Rank 8 (Tuồng Master): 175%
+    return (rankLevel - 1) * 25
   }
 
   const handlePurchase = async (item) => {
@@ -123,20 +143,35 @@ const Shop = () => {
       <div className="shop-balance-header">
         <div className="shop-balance-content">
           <div className="shop-balance-info">
-            <p className="shop-balance-label">Your Treasury</p>
+            <p className="shop-balance-label">Kho Báu Của Bạn</p>
             <h1 className="shop-balance-amount">
               {userCoins.toLocaleString()} <span className="shop-balance-unit">Coin</span>
             </h1>
             <div className="shop-balance-multiplier">
-              <span className="shop-multiplier-badge">
-                <span className="material-symbols-outlined">trending_up</span> +150%
-              </span>
-              <span className="shop-multiplier-text">Season Multiplier Active</span>
+              {getMultiplier() > 0 ? (
+                <>
+                  <span className="shop-multiplier-badge">
+                    <span className="material-symbols-outlined">trending_up</span> +{getMultiplier()}%
+                  </span>
+                  <span className="shop-multiplier-text">
+                    {userRank?.rank_name || 'Rank'} Bonus Active
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="shop-multiplier-badge" style={{ opacity: 0.5 }}>
+                    <span className="material-symbols-outlined">info</span> 0%
+                  </span>
+                  <span className="shop-multiplier-text">
+                    Tăng rank để nhận bonus
+                  </span>
+                </>
+              )}
             </div>
           </div>
           <button className="shop-history-btn">
             <span className="material-symbols-outlined">history</span>
-            Transaction History
+            Lịch Sử Giao Dịch
           </button>
         </div>
         <div className="shop-balance-decoration">
@@ -151,7 +186,10 @@ const Shop = () => {
             <button
               key={category.id}
               className={`shop-tab ${activeTab === category.slug ? 'active' : ''}`}
-              onClick={() => setActiveTab(category.slug)}
+              onClick={() => {
+                setActiveTab(category.slug)
+                loadShopItems(category.slug)
+              }}
             >
               <span className="material-symbols-outlined">{category.icon}</span>
               <span>{category.name}</span>
@@ -165,10 +203,10 @@ const Shop = () => {
         <div className="shop-section-header">
           <h2 className="shop-section-title">
             <span className="material-symbols-outlined">auto_stories</span>
-            Featured Items
+            Vật Phẩm Nổi Bật
           </h2>
           <div className="shop-view-all">
-            View Selection <span className="material-symbols-outlined">arrow_forward</span>
+            Xem Tất Cả <span className="material-symbols-outlined">arrow_forward</span>
           </div>
         </div>
 

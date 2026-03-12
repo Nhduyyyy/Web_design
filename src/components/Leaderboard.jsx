@@ -32,7 +32,7 @@ const Leaderboard = () => {
       // Format data cho UI
       const formattedData = topPlayers?.map(player => ({
         rank: Number(player.rank),
-        name: player.full_name || player.email?.split('@')[0] || 'Player',
+        name: player.full_name || player.email?.split('@')[0] || 'Người Chơi',
         score: player.total_coins,
         avatar: player.avatar_url || '/masks/quan_công-removebg-preview.png',
         title: player.rank_name
@@ -56,7 +56,7 @@ const Leaderboard = () => {
         if (rankResult.data) {
           setCurrentUserRank({
             rank: Number(rankResult.data.user_rank) || 0,
-            name: profile?.full_name || profile?.email?.split('@')[0] || 'You',
+            name: profile?.full_name || profile?.email?.split('@')[0] || 'Bạn',
             score: statsResult.data?.total_coins || 0
           })
         }
@@ -73,7 +73,7 @@ const Leaderboard = () => {
   }
 
   const displayData = leaderboardData
-  const currentUser = currentUserRank || { rank: 0, name: 'Player_You', score: 0 }
+  const currentUser = currentUserRank || { rank: 0, name: 'Bạn', score: 0 }
 
   return (
     <div className="leaderboard-container">
@@ -86,8 +86,8 @@ const Leaderboard = () => {
         <>
           <div className="leaderboard-hero">
             <div className="leaderboard-hero-overlay"></div>
-            <span className="leaderboard-subtitle">The Imperial Court</span>
-            <h1 className="leaderboard-title">Hall of Fame</h1>
+            <span className="leaderboard-subtitle">Triều Đình Hoàng Gia</span>
+            <h1 className="leaderboard-title">Đại Sảnh Danh Vọng</h1>
             <div className="leaderboard-divider"></div>
           </div>
           <div style={{ textAlign: 'center', padding: '3rem', color: '#999' }}>
@@ -101,8 +101,8 @@ const Leaderboard = () => {
           {/* Hero Section / Title */}
           <div className="leaderboard-hero">
             <div className="leaderboard-hero-overlay"></div>
-            <span className="leaderboard-subtitle">The Imperial Court</span>
-            <h1 className="leaderboard-title">Hall of Fame</h1>
+            <span className="leaderboard-subtitle">Triều Đình Hoàng Gia</span>
+            <h1 className="leaderboard-title">Đại Sảnh Danh Vọng</h1>
             <div className="leaderboard-divider"></div>
           </div>
 
@@ -118,10 +118,10 @@ const Leaderboard = () => {
                 onError={(e) => e.target.src = '/masks/quan_công-removebg-preview.png'}
               />
             </div>
-            <div className="podium-badge silver-badge">SILVER</div>
+            <div className="podium-badge silver-badge">BẠC</div>
           </div>
           <div className="podium-info silver-info">
-            <p className="podium-name">{displayData[1]?.name || 'Player 2'}</p>
+            <p className="podium-name">{displayData[1]?.name || 'Người Chơi 2'}</p>
             <p className="podium-score">{(displayData[1]?.score || 0).toLocaleString()}</p>
           </div>
         </div>
@@ -139,12 +139,12 @@ const Leaderboard = () => {
                 onError={(e) => e.target.src = '/masks/quan_công-removebg-preview.png'}
               />
             </div>
-            <div className="podium-badge gold-badge">CHAMPION</div>
+            <div className="podium-badge gold-badge">VÔ ĐỊCH</div>
           </div>
           <div className="podium-info gold-info">
-            <p className="podium-title">{displayData[0]?.title || 'Champion'}</p>
-            <p className="podium-name">{displayData[0]?.name || 'Player 1'}</p>
-            <p className="podium-score">{(displayData[0]?.score || 0).toLocaleString()} pts</p>
+            <p className="podium-title">{displayData[0]?.title || 'Vô Địch'}</p>
+            <p className="podium-name">{displayData[0]?.name || 'Người Chơi 1'}</p>
+            <p className="podium-score">{(displayData[0]?.score || 0).toLocaleString()} điểm</p>
           </div>
         </div>
 
@@ -158,10 +158,10 @@ const Leaderboard = () => {
                 onError={(e) => e.target.src = '/masks/quan_công-removebg-preview.png'}
               />
             </div>
-            <div className="podium-badge bronze-badge">BRONZE</div>
+            <div className="podium-badge bronze-badge">ĐỒNG</div>
           </div>
           <div className="podium-info bronze-info">
-            <p className="podium-name">{displayData[2]?.name || 'Player 3'}</p>
+            <p className="podium-name">{displayData[2]?.name || 'Người Chơi 3'}</p>
             <p className="podium-score">{(displayData[2]?.score || 0).toLocaleString()}</p>
           </div>
         </div>
@@ -178,13 +178,13 @@ const Leaderboard = () => {
                 <span className="material-symbols-outlined">person</span>
               </div>
               <div className="current-user-details">
-                <p className="current-user-label">Your Current Rank</p>
+                <p className="current-user-label">Hạng Của Bạn</p>
                 <p className="current-user-name">{currentUser.name}</p>
               </div>
             </div>
             <div className="current-user-right">
               <p className="current-user-score">{currentUser.score.toLocaleString()}</p>
-              <p className="current-user-score-label">High Score</p>
+              <p className="current-user-score-label">Điểm Cao Nhất</p>
             </div>
           </div>
         </div>
@@ -194,7 +194,7 @@ const Leaderboard = () => {
       {displayData.length > 3 && (
         <div className="leaderboard-list">
           <div className="leaderboard-list-header">
-            <h3>Top Performer List</h3>
+            <h3>Danh Sách Cao Thủ</h3>
             <span className="material-symbols-outlined">groups</span>
           </div>
           <div className="leaderboard-rows">
