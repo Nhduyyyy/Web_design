@@ -11,7 +11,11 @@ import {
   MousePointer,
   Hand,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Info,
+  MapPin,
+  Tag,
+  Palette
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,21 +27,17 @@ import {
 import { useSeatLayoutStore } from '@/stores/seatLayoutStore';
 import { ToolType } from '@/types/seat.types';
 
-const tools = [
-  { id: ToolType.SELECT, icon: MousePointer, label: 'Chọn (V)', color: 'text-gray-300' },
-  { id: ToolType.PAN, icon: Hand, label: 'Di chuyển', color: 'text-gray-300' },
-  { id: ToolType.STANDARD, icon: Armchair, label: 'Ghế thường (1)', color: 'text-gray-400' },
-  { id: ToolType.VIP, icon: Star, label: 'Ghế VIP (2)', color: 'text-yellow-300' },
-  { id: ToolType.COUPLE, icon: Sofa, label: 'Ghế đôi (3)', color: 'text-pink-300' },
-  { id: ToolType.WHEELCHAIR, icon: Accessibility, label: 'Ghế xe lăn (4)', color: 'text-cyan-300' },
-  { id: ToolType.AISLE, icon: DoorOpen, label: 'Lối đi (5)', color: 'text-gray-400' },
-  { id: ToolType.STAGE, icon: Square, label: 'Khu vực sân khấu (6)', color: 'text-red-300' },
-  { id: ToolType.DELETE, icon: Trash2, label: 'Xóa (D)', color: 'text-red-400' },
-];
-
 export default function SeatToolbar() {
-  const { selectedTool, setSelectedTool } = useSeatLayoutStore();
+  const { selectedTool, setSelectedTool, selectedCells, seats } = useSeatLayoutStore();
   const [isToolsExpanded, setIsToolsExpanded] = useState(true);
+  const [isSeatInfoExpanded, setIsSeatInfoExpanded] = useState(true);
+
+  // Get selected seat info
+  const selectedSeat = selectedCells && selectedCells.length === 1 && seats
+    ? seats.find(seat => seat.id === selectedCells[0])
+    : null;
+
+  const showSeatInfo = selectedTool === ToolType.SELECT && selectedSeat && seats && seats.length > 0;
 
   // Group tools by category
   const toolCategories = [
@@ -84,11 +84,11 @@ export default function SeatToolbar() {
     >
       <TooltipProvider>
         <div className="flex flex-col h-full w-full">
-          {/* Tools Section */}
-          <div className="flex-1 w-full overflow-y-auto">
+          {/* Tools Subsection */}
+          <div className="flex-shrink-0">
             {/* Tools Header */}
             <div 
-              className="sticky top-0 p-4 border-b cursor-pointer hover:bg-white hover:bg-opacity-5 transition-colors duration-200"
+              className="p-4 border-b cursor-pointer hover:bg-white hover:bg-opacity-5 transition-colors duration-200"
               style={{ 
                 borderColor: '#7F1D1D',
                 background: 'linear-gradient(180deg, #1A0505, #2B0707)'
@@ -122,7 +122,7 @@ export default function SeatToolbar() {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
               >
-                {toolCategories.map((category, categoryIndex) => (
+                {toolCategories.map((category) => (
                   <div key={category.name} className="mb-6">
                     {/* Category Header */}
                     <div className="mb-3 mt-4">
@@ -214,6 +214,131 @@ export default function SeatToolbar() {
               </motion.div>
             )}
           </div>
+
+          {/* Seat Info Subsection */}
+          <div className="border-t flex-shrink-0" style={{ borderColor: '#7F1D1D' }}>
+            {/* Seat Info Header */}
+            <div 
+              className="p-4 cursor-pointer hover:bg-white hover:bg-opacity-5 transition-colors duration-200"
+              onClick={() => setIsSeatInfoExpanded(!isSeatInfoExpanded)}
+            >
+              <div className="flex items-center gap-3">
+                {isSeatInfoExpanded ? (
+                  <ChevronDown className="w-4 h-4" style={{ color: '#6B8DB5' }} />
+                ) : (
+                  <ChevronRight className="w-4 h-4" style={{ color: '#6B8DB5' }} />
+                )}
+                <Info className="w-4 h-4" style={{ color: '#6B8DB5' }} />
+                <span className="font-semibold text-base" style={{ color: '#6B8DB5' }}>
+                  Thông tin ghế
+                </span>
+              </div>
+            </div>
+
+            {/* Seat Info Content */}
+            {isSeatInfoExpanded && (
+              <motion.div 
+                className="px-4 pb-4"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              >
+                {showSeatInfo ? (
+                  <div className="space-y-2">
+                    {/* Seat Label */}
+                    <div className="flex items-center gap-3 p-2 rounded-lg" style={{ background: '#3B0A0A' }}>
+                      <MapPin className="w-4 h-4" style={{ color: '#6B8DB5' }} />
+                      <div className="flex-1">
+                        <div className="text-xs font-medium" style={{ color: '#9CA3AF' }}>
+                          VỊ TRÍ GHẾ
+                        </div>
+                        <div className="text-sm font-semibold" style={{ color: '#E5E7EB' }}>
+                          {selectedSeat?.label || 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Seat Type */}
+                    <div className="flex items-center gap-3 p-2 rounded-lg" style={{ background: '#3B0A0A' }}>
+                      <Tag className="w-4 h-4" style={{ color: '#6B8DB5' }} />
+                      <div className="flex-1">
+                        <div className="text-xs font-medium" style={{ color: '#9CA3AF' }}>
+                          LOẠI GHẾ
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {selectedSeat?.type === 'standard' && <Armchair className="w-4 h-4 text-gray-400" />}
+                          {selectedSeat?.type === 'vip' && <Star className="w-4 h-4 text-yellow-300" />}
+                          {selectedSeat?.type === 'couple' && <Sofa className="w-4 h-4 text-pink-300" />}
+                          {selectedSeat?.type === 'wheelchair' && <Accessibility className="w-4 h-4 text-cyan-300" />}
+                          {selectedSeat?.type === 'aisle' && <DoorOpen className="w-4 h-4 text-gray-400" />}
+                          {selectedSeat?.type === 'stage' && <Square className="w-4 h-4 text-red-300" />}
+                          <span className="text-sm font-medium" style={{ color: '#E5E7EB' }}>
+                            {selectedSeat?.type === 'standard' && 'Ghế thường'}
+                            {selectedSeat?.type === 'vip' && 'Ghế VIP'}
+                            {selectedSeat?.type === 'couple' && 'Ghế đôi'}
+                            {selectedSeat?.type === 'wheelchair' && 'Ghế xe lăn'}
+                            {selectedSeat?.type === 'aisle' && 'Lối đi'}
+                            {selectedSeat?.type === 'stage' && 'Sân khấu'}
+                            {!selectedSeat?.type && 'Không xác định'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Grid Position */}
+                    <div className="flex items-center gap-3 p-2 rounded-lg" style={{ background: '#3B0A0A' }}>
+                      <Palette className="w-4 h-4" style={{ color: '#6B8DB5' }} />
+                      <div className="flex-1">
+                        <div className="text-xs font-medium" style={{ color: '#9CA3AF' }}>
+                          TỌA ĐỘ LƯỚI
+                        </div>
+                        <div className="text-sm font-medium" style={{ color: '#E5E7EB' }}>
+                          Hàng {(selectedSeat?.row ?? -1) + 1}, Cột {(selectedSeat?.col ?? -1) + 1}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div className="flex items-center gap-3 p-2 rounded-lg" style={{ background: '#3B0A0A' }}>
+                      <div className={`w-3 h-3 rounded-full ${
+                        selectedSeat?.status === 'available' ? 'bg-green-400' :
+                        selectedSeat?.status === 'occupied' ? 'bg-red-400' :
+                        selectedSeat?.status === 'reserved' ? 'bg-yellow-400' : 'bg-gray-400'
+                      }`} />
+                      <div className="flex-1">
+                        <div className="text-xs font-medium" style={{ color: '#9CA3AF' }}>
+                          TRẠNG THÁI
+                        </div>
+                        <div className="text-sm font-medium" style={{ color: '#E5E7EB' }}>
+                          {selectedSeat?.status === 'available' && 'Có sẵn'}
+                          {selectedSeat?.status === 'occupied' && 'Đã đặt'}
+                          {selectedSeat?.status === 'reserved' && 'Đã giữ chỗ'}
+                          {!selectedSeat?.status && 'Không xác định'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Empty State */
+                  <div className="flex flex-col items-center justify-center p-6 rounded-lg" style={{ background: '#3B0A0A' }}>
+                    <Info className="w-8 h-8 mb-3" style={{ color: '#6B8DB5' }} />
+                    <div className="text-center">
+                      <div className="text-sm font-medium mb-1" style={{ color: '#E5E7EB' }}>
+                        Chưa chọn ghế
+                      </div>
+                      <div className="text-xs" style={{ color: '#9CA3AF' }}>
+                        {selectedTool === ToolType.SELECT 
+                          ? 'Hãy click vào ghế để xem thông tin'
+                          : 'Chọn công cụ "Chọn" và click vào ghế'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </div>
+
         </div>
       </TooltipProvider>
     </motion.div>

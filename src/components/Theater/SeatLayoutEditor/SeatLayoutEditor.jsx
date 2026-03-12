@@ -36,9 +36,6 @@ export default function SeatLayoutEditor() {
   const [showZoneManager, setShowZoneManager] = useState(false);
   
   const { 
-    seats, 
-    config,
-    zones,
     isDirty,
     autoSaveEnabled,
     loadSeats, 
