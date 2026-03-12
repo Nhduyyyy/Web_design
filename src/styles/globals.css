@@ -89,7 +89,7 @@
   }
   
   .seat-selected {
-    @apply ring-2 ring-primary ring-offset-2 ring-offset-background;
+    /* Removed ring border for cleaner look */
   }
   
   .seat-disabled {

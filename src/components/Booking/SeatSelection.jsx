@@ -81,9 +81,12 @@ export default function SeatSelection({
   
   const getPriceForSeatType = (type) => {
     const prices = {
-      vip: 500000,
-      premium: 350000,
       standard: 250000,
+      vip: 500000,
+      couple: 600000,
+      wheelchair: 250000,
+      // Legacy types
+      premium: 350000,
       economy: 150000
     }
     return prices[type] || 250000
@@ -341,10 +344,10 @@ export default function SeatSelection({
   }, [seats])
 
   const seatTypeInfo = {
-    vip: { label: 'VIP', color: '#FFD700', price: '500,000₫' },
-    premium: { label: 'Premium', color: '#FF6B6B', price: '350,000₫' },
-    standard: { label: 'Standard', color: '#4ECDC4', price: '250,000₫' },
-    economy: { label: 'Economy', color: '#95E1D3', price: '150,000₫' }
+    standard: { label: 'Ghế thường', color: '#808080', price: '250,000₫' },
+    vip: { label: 'Ghế VIP', color: '#FFD700', price: '500,000₫' },
+    couple: { label: 'Ghế đôi', color: '#FF69B4', price: '600,000₫' },
+    wheelchair: { label: 'Ghế xe lăn', color: '#00CED1', price: '250,000₫' }
   }
 
   return (

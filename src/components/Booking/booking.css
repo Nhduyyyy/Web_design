@@ -369,17 +369,52 @@
 }
 
 .seat-vip {
-  border-color: var(--booking-gold);
+  /* border-color: #FFD700; */
+  /*border-width: 2px;*/
+}
+
+.seat-vip.seat-available {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: #FFD700;
+  color: #FFD700;
+}
+
+.seat-couple {
+  border-color: #FF69B4;
   border-width: 2px;
 }
 
-.seat-premium {
-  border-color: var(--booking-primary);
-  border-width: 2px;
+.seat-couple.seat-available {
+  background: rgba(255, 105, 180, 0.15);
+  border-color: #FF69B4;
+  color: #FF69B4;
 }
 
 .seat-standard {
-  border-color: rgba(212, 175, 55, 0.5);
+  border-color: #808080;
+}
+
+.seat-standard.seat-available {
+  background: rgba(128, 128, 128, 0.15);
+  border-color: #808080;
+  color: #808080;
+}
+
+.seat-wheelchair {
+  /*border-color: #00CED1;
+  border-width: 2px;*/
+}
+
+.seat-wheelchair.seat-available {
+  background: rgba(0, 206, 209, 0.15);
+  border-color: #00CED1;
+  color: #00CED1;
+}
+
+/* Legacy seat types - keep for backward compatibility */
+.seat-premium {
+  border-color: var(--booking-primary);
+  border-width: 2px;
 }
 
 .seat-economy {
@@ -429,6 +464,76 @@
   height: 24px;
   border: 2px solid var(--booking-border);
   border-radius: 4px;
+}
+
+/* Legend seat type colors */
+.legend-seat.seat-standard {
+  background: rgba(128, 128, 128, 0.15);
+  border-color: #808080;
+}
+
+.legend-seat.seat-vip {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: #FFD700;
+}
+
+.legend-seat.seat-couple {
+  background: rgba(255, 105, 180, 0.15);
+  border-color: #FF69B4;
+}
+
+.legend-seat.seat-wheelchair {
+  background: rgba(0, 206, 209, 0.15);
+  border-color: #00CED1;
+}
+
+.legend-seat.seat-available {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: var(--booking-gold);
+  animation: seat-color-cycle 4s infinite;
+}
+
+@keyframes seat-color-cycle {
+  0% {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: #FFD700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+  }
+  25% {
+    background: rgba(0, 206, 209, 0.15);
+    border-color: #00CED1;
+    box-shadow: 0 0 8px rgba(0, 206, 209, 0.3);
+  }
+  50% {
+    background: rgba(128, 128, 128, 0.15);
+    border-color: #808080;
+    box-shadow: 0 0 8px rgba(128, 128, 128, 0.3);
+  }
+  75% {
+    background: rgba(255, 105, 180, 0.15);
+    border-color: #FF69B4;
+    box-shadow: 0 0 8px rgba(255, 105, 180, 0.3);
+  }
+  100% {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: #FFD700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+  }
+}
+
+.legend-seat.seat-selected {
+  background: var(--booking-primary);
+  border-color: var(--booking-primary);
+}
+
+.legend-seat.seat-occupied {
+  background: rgba(160, 22, 22, 0.25);
+  border-color: rgba(160, 22, 22, 0.5);
+}
+
+.legend-seat.seat-aisle {
+  background: rgba(100, 100, 100, 0.2);
+  border-color: rgba(150, 150, 150, 0.3);
 }
 
 .selected-seats-summary {
