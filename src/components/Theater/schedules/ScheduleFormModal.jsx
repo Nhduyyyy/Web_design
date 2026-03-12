@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react'
 import PricingEditor from './PricingEditor'
 import { STATUS_OPTIONS, validateSchedulePayload } from '../../../utils/scheduleHelpers'
-import { getShows } from '../../../services/scheduleService'
 import { getVenuesByTheater } from '../../../services/theaterService'
 
 export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClose }) {
   const isEdit = !!schedule
 
   const [form, setForm] = useState({
-    show_id: schedule?.show_id || '',
     venue_id: schedule?.venue_id || '',
     title: schedule?.title || '',
     description: schedule?.description || '',
@@ -23,7 +21,6 @@ export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClo
 
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState({})
-  const [shows, setShows] = useState([])
   const [venues, setVenues] = useState([])
   const [loadingOptions, setLoadingOptions] = useState(true)
 
@@ -32,12 +29,8 @@ export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClo
     const loadOptions = async () => {
       try {
         setLoadingOptions(true)
-        const [showsData, venuesData] = await Promise.all([
-          getShows().catch(() => []),
-          theaterId ? getVenuesByTheater(theaterId).catch(() => []) : Promise.resolve([]),
-        ])
+        const venuesData = theaterId ? await getVenuesByTheater(theaterId).catch(() => []) : []
         if (!active) return
-        setShows(showsData || [])
         setVenues(venuesData || [])
       } finally {
         if (active) setLoadingOptions(false)
@@ -108,27 +101,6 @@ export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClo
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-200">
-                Vở diễn *
-              </label>
-              <select
-                className="w-full rounded-md border border-border-gold bg-background-dark px-3 py-2 text-sm text-slate-100"
-                value={form.show_id}
-                onChange={(e) => handleChange('show_id', e.target.value)}
-                disabled={loadingOptions}
-              >
-                <option value="">Chọn vở diễn</option>
-                {shows.map((show) => (
-                  <option key={show.id} value={show.id}>
-                    {show.title}
-                  </option>
-                ))}
-              </select>
-              {errors.show_id && (
-                <p className="mt-1 text-xs text-red-400">{errors.show_id}</p>
-              )}
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-200">
                 Địa điểm *
               </label>
               <select
@@ -147,6 +119,16 @@ export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClo
               {errors.venue_id && (
                 <p className="mt-1 text-xs text-red-400">{errors.venue_id}</p>
               )}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-200">
+                Múi giờ
+              </label>
+              <input
+                className="w-full rounded-md border border-border-gold bg-background-dark px-3 py-2 text-sm text-slate-100"
+                value={form.timezone}
+                onChange={(e) => handleChange('timezone', e.target.value)}
+              />
             </div>
           </div>
 
@@ -197,16 +179,6 @@ export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClo
                   </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-200">
-                Múi giờ
-              </label>
-              <input
-                className="w-full rounded-md border border-border-gold bg-background-dark px-3 py-2 text-sm text-slate-100"
-                value={form.timezone}
-                onChange={(e) => handleChange('timezone', e.target.value)}
-              />
             </div>
           </div>
 

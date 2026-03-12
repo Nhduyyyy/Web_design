@@ -27,7 +27,6 @@ export const getSchedules = async (filters = {}) => {
     .select(`
       *,
       theater:theaters(*),
-      show:shows(*),
       venue:venues(*)
     `)
     // Chỉ hiển thị các lịch công khai cho phía public
@@ -70,7 +69,6 @@ export const getScheduleById = async (scheduleId) => {
     .select(`
       *,
       theater:theaters(*),
-      show:shows(*),
       venue:venues(*)
     `)
     .eq('id', scheduleId)
@@ -88,7 +86,6 @@ export const getSchedulesByTheater = async (theaterId) => {
     .from('schedules')
     .select(`
       *,
-      show:shows(*),
       venue:venues(*)
     `)
     .eq('theater_id', theaterId)

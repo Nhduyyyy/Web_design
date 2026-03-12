@@ -20,7 +20,7 @@ export function useSchedules(theaterId) {
 
       let query = supabase
         .from('schedules')
-        .select('*, venues(id, name), shows(id, title)')
+        .select('*, venues(id, name)')
         .eq('theater_id', theaterId)
         .order('start_datetime', { ascending: true })
 
