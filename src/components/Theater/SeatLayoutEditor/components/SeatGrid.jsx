@@ -14,24 +14,18 @@ const SeatGrid = memo(() => {
       className="absolute inset-0 pointer-events-none"
       style={{ width: '100%', height: '100%' }}
     >
-      <defs>
-        <pattern
-          id="grid"
-          width={cellSize}
-          height={cellSize}
-          patternUnits="userSpaceOnUse"
-        >
-          <path
-            d={`M ${cellSize} 0 L 0 0 0 ${cellSize}`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="0.5"
-            className="text-muted-foreground/20"
+      {/* Grid dots at intersection points */}
+      {Array.from({ length: rows + 1 }).map((_, row) =>
+        Array.from({ length: cols + 1 }).map((_, col) => (
+          <circle
+            key={`dot-${row}-${col}`}
+            cx={col * cellSize}
+            cy={row * cellSize}
+            r="1.5"
+            className="fill-white"
           />
-        </pattern>
-      </defs>
-      
-      <rect width={width} height={height} fill="url(#grid)" />
+        ))
+      )}
       
       {/* Row labels */}
       {Array.from({ length: rows }).map((_, i) => (
