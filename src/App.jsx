@@ -10,6 +10,7 @@ import LearningPage from './components/LearningPage'
 import AboutPage from './components/AboutPage'
 import ProfilePage from './components/Profile/ProfilePage'
 import ChatDemo from './components/ChatDemo'
+import PromotionBanner from './components/PromotionBanner'
 import './styles/App.css'
 
 const sectionTransition = {
@@ -105,6 +106,9 @@ function App() {
       )}
 
       <ChatDemo />
+      
+      {/* Promotion Banner - Tự động hiện/ẩn */}
+      <PromotionBanner />
     </div>
   )
 }

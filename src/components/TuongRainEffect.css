@@ -1,0 +1,79 @@
+/* Tuong Rain Effect Container */
+.tuong-rain-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Individual Raindrop */
+.tuong-raindrop {
+  position: absolute;
+  top: -50px;
+  color: #D4AF37; /* Màu vàng Tuồng */
+  animation: fall linear infinite;
+  user-select: none;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+/* Falling Animation */
+@keyframes fall {
+  0% {
+    top: -50px;
+    transform: translateY(0) rotate(var(--rotation));
+    opacity: 0;
+  }
+  
+  10% {
+    opacity: var(--opacity, 0.3);
+  }
+  
+  90% {
+    opacity: var(--opacity, 0.3);
+  }
+  
+  100% {
+    top: 100vh;
+    transform: translateY(50px) rotate(calc(var(--rotation) + 360deg));
+    opacity: 0;
+  }
+}
+
+/* Variant colors for different icons */
+.tuong-raindrop:nth-child(3n) {
+  color: #d33131; /* Màu đỏ Tuồng */
+  text-shadow: 0 0 10px rgba(211, 49, 49, 0.3);
+}
+
+.tuong-raindrop:nth-child(3n+1) {
+  color: #FFD700; /* Màu vàng kim */
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.tuong-raindrop:nth-child(3n+2) {
+  color: #CD7F32; /* Màu đồng */
+  text-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+}
+
+/* Subtle glow effect */
+.tuong-raindrop:nth-child(5n) {
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tuong-raindrop {
+    font-size: 16px !important;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .tuong-raindrop {
+    animation-duration: 20s !important;
+  }
+}
