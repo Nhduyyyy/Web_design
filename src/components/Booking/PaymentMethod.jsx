@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { formatPrice } from '../../utils/booking'
 import { validatePayment } from '../../utils/validation'
 import { generateStaticQR } from '../../services/qrPaymentService'
-import { checkPaymentStatus } from '../../services/paymentService'
+import { checkPaymentStatus, checkEventRegistrationPaymentStatus, createPaymentRecord, completeEventPayment } from '../../services/paymentService'
 import { cancelBooking } from '../../services/bookingService'
 import './booking.css'
 
@@ -36,6 +36,10 @@ const PAYMENT_METHODS = [
 export default function PaymentMethod({ 
   total, 
   bookingId, 
+  bookingDbId,
+  bookingExpiresAt,
+  userId,
+  paymentContext,
   onPayment, 
   onBack, 
   paymentResult,
@@ -50,7 +54,8 @@ export default function PaymentMethod({
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentError, setPaymentError] = useState(null)
   const [qrRetryCount, setQrRetryCount] = useState(0)
-  
+  const [isConfirmingTransfer, setIsConfirmingTransfer] = useState(false)
+
   // QR Code states
   const [qrData, setQrData] = useState(null)
   const [isGeneratingQR, setIsGeneratingQR] = useState(false)
@@ -58,6 +63,7 @@ export default function PaymentMethod({
   const [paymentStatus, setPaymentStatus] = useState(null)
   const pollingIntervalRef = useRef(null)
   const lastPaymentStatusRef = useRef(null)
+  const fakeSuccessTimeoutRef = useRef(null)
   
   // QR Timeout states
   const [timeRemaining, setTimeRemaining] = useState(QR_PAYMENT_TIMEOUT)
@@ -77,12 +83,62 @@ export default function PaymentMethod({
         clearInterval(pollingIntervalRef.current)
         pollingIntervalRef.current = null
       }
+      if (fakeSuccessTimeoutRef.current) {
+        clearTimeout(fakeSuccessTimeoutRef.current)
+        fakeSuccessTimeoutRef.current = null
+      }
       if (timeoutTimerRef.current) {
         clearInterval(timeoutTimerRef.current)
         timeoutTimerRef.current = null
       }
     }
   }, [selectedMethod, total, bookingId])
+  
+  // Fake auto-complete for event QR payments after 30s (demo mode)
+  useEffect(() => {
+    // Only apply to event registrations using QR, when QR is visible and not yet successful/timeout
+    if (
+      paymentContext?.type === 'event' &&
+      selectedMethod === 'qr' &&
+      qrData &&
+      !paymentStatus?.success &&
+      !isTimeout
+    ) {
+      // Reset any existing timer
+      if (fakeSuccessTimeoutRef.current) {
+        clearTimeout(fakeSuccessTimeoutRef.current)
+      }
+      
+      fakeSuccessTimeoutRef.current = setTimeout(async () => {
+        try {
+          if (!paymentContext?.eventRegistrationId) return
+          
+          const result = await completeEventPayment(paymentContext.eventRegistrationId)
+          if (result.success) {
+            const successStatus = { success: true, message: 'Thanh toán thành công (giả lập sau 30 giây).' }
+            setPaymentStatus(successStatus)
+            lastPaymentStatusRef.current = successStatus
+            await onPayment('qr', total)
+          }
+        } catch (error) {
+          console.error('Fake auto-complete payment error:', error)
+        }
+      }, 30000) // 30 seconds
+      
+      return () => {
+        if (fakeSuccessTimeoutRef.current) {
+          clearTimeout(fakeSuccessTimeoutRef.current)
+          fakeSuccessTimeoutRef.current = null
+        }
+      }
+    }
+    
+    // Cleanup if conditions no longer met
+    if (fakeSuccessTimeoutRef.current) {
+      clearTimeout(fakeSuccessTimeoutRef.current)
+      fakeSuccessTimeoutRef.current = null
+    }
+  }, [paymentContext?.type, paymentContext?.eventRegistrationId, selectedMethod, qrData, paymentStatus?.success, isTimeout, total, onPayment])
   
   // QR Timeout countdown timer
   useEffect(() => {
@@ -126,7 +182,10 @@ export default function PaymentMethod({
     
     try {
       // Cancel booking
-      await cancelBooking(bookingId)
+      const bookingUuid = paymentContext?.type === 'booking'
+        ? paymentContext.bookingDbId
+        : bookingDbId
+      if (bookingUuid) await cancelBooking(bookingUuid)
       
       // Stop polling
       if (pollingIntervalRef.current) {
@@ -192,15 +251,63 @@ export default function PaymentMethod({
     
     try {
       const qr = await generateStaticQR(bookingId, total)
+
+      // Create payment record in DB so webhook/checkPaymentStatus can work
+      if (paymentContext?.type === 'event' && paymentContext?.eventRegistrationId) {
+        const expiresAt = paymentContext?.expiresAt
+          ? new Date(paymentContext.expiresAt).toISOString()
+          : new Date(Date.now() + QR_PAYMENT_TIMEOUT).toISOString()
+
+        await createPaymentRecord({
+          event_registration_id: paymentContext.eventRegistrationId,
+          user_id: paymentContext.userId || userId || null,
+          amount: total,
+          payment_method: 'qr',
+          status: 'pending',
+          transfer_content: qr.transferContent,
+          bank_account_no: qr.bankInfo?.accountNo,
+          bank_account_name: qr.bankInfo?.accountName,
+          bank_code: qr.bankInfo?.bankCode,
+          expires_at: expiresAt,
+          qr_code_url: qr.qrImageUrl,
+        })
+      } else if (bookingDbId) {
+        const expiresAt = bookingExpiresAt
+          ? new Date(bookingExpiresAt).toISOString()
+          : new Date(Date.now() + QR_PAYMENT_TIMEOUT).toISOString()
+
+        await createPaymentRecord({
+          booking_id: bookingDbId,
+          user_id: userId || null,
+          amount: total,
+          payment_method: 'qr',
+          status: 'pending',
+          transfer_content: qr.transferContent,
+          bank_account_no: qr.bankInfo?.accountNo,
+          bank_account_name: qr.bankInfo?.accountName,
+          bank_code: qr.bankInfo?.bankCode,
+          expires_at: expiresAt,
+          qr_code_url: qr.qrImageUrl,
+        })
+      }
+
       setQrData(qr)
       setQrRetryCount(0) // Reset retry count on success
       setIsTimeout(false) // Reset timeout state
       qrStartTimeRef.current = Date.now() // Reset start time
-      setTimeRemaining(QR_PAYMENT_TIMEOUT) // Reset timer
+      const expiry = paymentContext?.expiresAt || bookingExpiresAt
+      if (expiry) {
+        const remaining = Math.max(0, new Date(expiry).getTime() - Date.now())
+        setTimeRemaining(remaining)
+      } else {
+        setTimeRemaining(QR_PAYMENT_TIMEOUT) // Reset timer
+      }
     } catch (error) {
       console.error('Error generating QR:', error)
-      
-      if (isNetworkError(error)) {
+
+      if (error?.code === '42501' || String(error?.message || '').toLowerCase().includes('permission')) {
+        setPaymentError('Không có quyền tạo thanh toán (RLS 42501). Hãy kiểm tra policy cho bảng payments/event_registrations trên Supabase.')
+      } else if (isNetworkError(error)) {
         setPaymentError('Lỗi kết nối mạng. Vui lòng kiểm tra kết nối và thử lại.')
       } else {
         setPaymentError('Không thể tạo mã QR. Vui lòng thử lại.')
@@ -230,20 +337,20 @@ export default function PaymentMethod({
     
     setIsCheckingPayment(true)
     try {
-      // Pass expectedAmount for amount mismatch validation
-      const status = await checkPaymentStatus(bookingId, total)
-      
+      // Use correct check function based on payment context
+      const isEventPayment = paymentContext?.type === 'event' && paymentContext?.eventRegistrationId
+      const status = isEventPayment
+        ? await checkEventRegistrationPaymentStatus(paymentContext.referenceCode || bookingId, total)
+        : await checkPaymentStatus(bookingId, total)
+
       // Check for amount mismatch
       if (status.amountMismatch) {
         setPaymentError(status.message)
-        setPaymentStatus({
-          success: false,
-          message: status.message
-        })
+        setPaymentStatus({ success: false, message: status.message })
         return
       }
       
-      // Chỉ update state nếu có thay đổi thực sự (success status thay đổi)
+      // Only update state if success status actually changed
       const hasChanged = lastPaymentStatusRef.current?.success !== status.success
       
       if (hasChanged) {
@@ -251,24 +358,43 @@ export default function PaymentMethod({
         lastPaymentStatusRef.current = status
         
         if (status.success) {
-          // Payment successful, trigger onPayment callback
           await onPayment('qr', total)
         }
       }
     } catch (error) {
       console.error('Error checking payment:', error)
       
-      // Retry with exponential backoff (max 3 times)
       if (retryCount < 3 && isNetworkError(error)) {
         const delay = Math.min(1000 * Math.pow(2, retryCount), 5000)
-        setTimeout(() => {
-          checkPayment(retryCount + 1)
-        }, delay)
+        setTimeout(() => { checkPayment(retryCount + 1) }, delay)
       } else if (retryCount >= 3) {
         setPaymentError('Không thể kiểm tra trạng thái thanh toán. Vui lòng thử lại sau.')
       }
     } finally {
       setIsCheckingPayment(false)
+    }
+  }
+
+  // Called when user clicks "Tôi đã chuyển khoản" (event QR only)
+  const handleConfirmTransfer = async () => {
+    if (isConfirmingTransfer || !paymentContext?.eventRegistrationId) return
+    setIsConfirmingTransfer(true)
+    setPaymentError(null)
+
+    try {
+      const result = await completeEventPayment(paymentContext.eventRegistrationId)
+      if (result.success) {
+        const successStatus = { success: true, message: 'Thanh toán thành công!' }
+        setPaymentStatus(successStatus)
+        lastPaymentStatusRef.current = successStatus
+        await onPayment('qr', total)
+      } else {
+        setPaymentError(result.message || 'Không thể xác nhận thanh toán. Vui lòng thử lại.')
+      }
+    } catch (err) {
+      setPaymentError('Lỗi xác nhận thanh toán. Vui lòng thử lại.')
+    } finally {
+      setIsConfirmingTransfer(false)
     }
   }
 
@@ -389,7 +515,41 @@ export default function PaymentMethod({
                 onCopy={copyTransferContent}
                 isTimeout={isTimeout}
               />
-              
+
+              {/* "Tôi đã chuyển khoản" button: only for event payments, when not yet confirmed, not timed out */}
+              {paymentContext?.type === 'event' && !isTimeout && !paymentStatus?.success && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{ textAlign: 'center', marginTop: '1.5rem' }}
+                >
+                  <button
+                    type="button"
+                    onClick={handleConfirmTransfer}
+                    disabled={isConfirmingTransfer}
+                    className="btn-primary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.85rem 2rem',
+                      fontSize: '1rem',
+                      cursor: isConfirmingTransfer ? 'not-allowed' : 'pointer',
+                      opacity: isConfirmingTransfer ? 0.7 : 1,
+                    }}
+                  >
+                    {isConfirmingTransfer ? (
+                      <><span className="spinner" /> Đang xác nhận...</>
+                    ) : (
+                      '✅ Tôi đã chuyển khoản xong'
+                    )}
+                  </button>
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'rgba(248,250,252,0.55)' }}>
+                    Bấm sau khi chuyển khoản thành công để hệ thống xác nhận đăng ký
+                  </p>
+                </motion.div>
+              )}
+
               {/* Regenerate QR Button when timeout */}
               {isTimeout && (
                 <div style={{ textAlign: 'center', marginTop: '1rem' }}>

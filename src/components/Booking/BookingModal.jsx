@@ -7,7 +7,7 @@ import Confirmation from './Confirmation'
 import { useAuth } from '../../contexts/AuthContext'
 import { generateSeatingChart, calculateTotal, generateBookingId, processPayment, sendEmailConfirmation, sendSMSConfirmation, scheduleReminder } from '../../utils/booking'
 import { reserveSeats, releaseSeats } from '../../services/scheduleService'
-import { cancelBooking } from '../../services/bookingService'
+import { cancelBooking, createBooking } from '../../services/bookingService'
 import { getScheduleById } from '../../services/scheduleService'
 import './booking.css'
 
@@ -31,7 +31,9 @@ export default function BookingModal({ event, isOpen, onClose }) {
   })
   const [paymentMethod, setPaymentMethod] = useState(null)
   const [paymentResult, setPaymentResult] = useState(null)
-  const [bookingId, setBookingId] = useState(null)
+  const [bookingId, setBookingId] = useState(null) // booking_code
+  const [bookingDbId, setBookingDbId] = useState(null) // bookings.id (uuid)
+  const [bookingExpiresAt, setBookingExpiresAt] = useState(null) // bookings.payment_expires_at
   
   // Error states
   const [bookingError, setBookingError] = useState(null)
@@ -57,6 +59,8 @@ export default function BookingModal({ event, isOpen, onClose }) {
       setPaymentMethod(null)
       setPaymentResult(null)
       setBookingId(null)
+      setBookingDbId(null)
+      setBookingExpiresAt(null)
       setReservedSeatIds([])
       setBookingError(null)
       setPaymentError(null)
@@ -81,7 +85,7 @@ export default function BookingModal({ event, isOpen, onClose }) {
         releaseReservedSeats()
       }
       // Cancel booking if exists and is pending
-      if (bookingId) {
+      if (bookingDbId) {
         cancelPendingBooking()
       }
     }
@@ -118,11 +122,13 @@ export default function BookingModal({ event, isOpen, onClose }) {
   
   // Cancel pending booking
   const cancelPendingBooking = async () => {
-    if (!bookingId) return
+    if (!bookingDbId) return
     
     try {
-      await cancelBooking(bookingId)
+      await cancelBooking(bookingDbId)
       setBookingId(null)
+      setBookingDbId(null)
+      setBookingExpiresAt(null)
     } catch (error) {
       console.error('Error canceling booking:', error)
     }
@@ -233,9 +239,26 @@ export default function BookingModal({ event, isOpen, onClose }) {
     }
     
     try {
-      // Generate booking ID (mock for now, will be replaced with real createBooking)
-      const generatedId = generateBookingId()
-      setBookingId(generatedId)
+      if (!user?.id) {
+        setBookingError('Bạn cần đăng nhập để tiếp tục thanh toán.')
+        return
+      }
+
+      const seatIds = selectedSeats.map(s => s.seat_id || s.id).filter(Boolean)
+      const createdBooking = await createBooking({
+        user_id: user.id,
+        schedule_id: event?.schedule_id,
+        customer_name: info.name,
+        customer_email: info.email,
+        customer_phone: info.phone,
+        seat_ids: seatIds,
+        total_amount: calculateTotal(selectedSeats),
+        payment_timeout_minutes: 15,
+      })
+
+      setBookingDbId(createdBooking.id)
+      setBookingId(createdBooking.booking_code)
+      setBookingExpiresAt(createdBooking.payment_expires_at || null)
       setCurrentStep(STEPS.PAYMENT)
     } catch (error) {
       console.error('Error in handleSummaryContinue:', error)
@@ -259,9 +282,26 @@ export default function BookingModal({ event, isOpen, onClose }) {
       // Wait a bit before retry (exponential backoff)
       await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, retryCount), 5000)))
       
-      // Retry the operation
-      const generatedId = generateBookingId()
-      setBookingId(generatedId)
+      if (!user?.id) {
+        setBookingError('Bạn cần đăng nhập để tiếp tục thanh toán.')
+        return
+      }
+
+      const seatIds = selectedSeats.map(s => s.seat_id || s.id).filter(Boolean)
+      const createdBooking = await createBooking({
+        user_id: user.id,
+        schedule_id: event?.schedule_id,
+        customer_name: customerInfo.name,
+        customer_email: customerInfo.email,
+        customer_phone: customerInfo.phone,
+        seat_ids: seatIds,
+        total_amount: calculateTotal(selectedSeats),
+        payment_timeout_minutes: 15,
+      })
+
+      setBookingDbId(createdBooking.id)
+      setBookingId(createdBooking.booking_code)
+      setBookingExpiresAt(createdBooking.payment_expires_at || null)
       setCurrentStep(STEPS.PAYMENT)
       setRetryCount(0)
     } catch (error) {
@@ -416,6 +456,8 @@ export default function BookingModal({ event, isOpen, onClose }) {
     setPaymentError('Mã QR đã hết hạn. Vui lòng tạo lại mã QR mới.')
     // Booking đã được cancel trong PaymentMethod component
     setBookingId(null)
+    setBookingDbId(null)
+    setBookingExpiresAt(null)
   }
 
   if (!isOpen || !event) return null
@@ -600,6 +642,15 @@ export default function BookingModal({ event, isOpen, onClose }) {
               <PaymentMethod
                 total={total}
                 bookingId={bookingId}
+                bookingDbId={bookingDbId}
+                bookingExpiresAt={bookingExpiresAt}
+                userId={user?.id || null}
+                paymentContext={{
+                  type: 'booking',
+                  bookingDbId,
+                  userId: user?.id || null,
+                  expiresAt: bookingExpiresAt,
+                }}
                 onPayment={handlePayment}
                 onBack={handleBack}
                 paymentResult={paymentResult}
