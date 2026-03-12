@@ -15,17 +15,17 @@ const SeatGrid = memo(() => {
       style={{ width: '100%', height: '100%' }}
     >
       {/* Grid dots at intersection points */}
-      {Array.from({ length: rows + 1 }).map((_, row) =>
-        Array.from({ length: cols + 1 }).map((_, col) => (
+      {Array.from({ length: rows + 1 }, (_, row) =>
+        Array.from({ length: cols + 1 }, (_, col) => (
           <circle
             key={`dot-${row}-${col}`}
             cx={col * cellSize}
             cy={row * cellSize}
             r="1.5"
-            className="fill-white"
+            fill="white"
           />
         ))
-      )}
+      ).flat()}
       
       {/* Row labels */}
       {Array.from({ length: rows }).map((_, i) => (

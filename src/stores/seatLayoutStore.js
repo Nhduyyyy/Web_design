@@ -60,8 +60,24 @@ export const useSeatLayoutStore = create(
     ...initialState,
 
     // Layout actions
-    setRows: (rows) => set({ rows }),
-    setCols: (cols) => set({ cols }),
+    setRows: (rows) => set((state) => {
+      state.rows = rows;
+      // Remove seats outside new bounds
+      state.seats = state.seats.filter(seat => seat.row < rows);
+      state.selectedCells = state.selectedCells.filter(id => 
+        state.seats.some(seat => seat.id === id)
+      );
+      get().pushHistory();
+    }),
+    setCols: (cols) => set((state) => {
+      state.cols = cols;
+      // Remove seats outside new bounds
+      state.seats = state.seats.filter(seat => seat.col < cols);
+      state.selectedCells = state.selectedCells.filter(id => 
+        state.seats.some(seat => seat.id === id)
+      );
+      get().pushHistory();
+    }),
     setCellSize: (cellSize) => set({ cellSize }),
     setShowGrid: (showGrid) => set({ showGrid }),
     setLabelType: (labelType) => set({ labelType }),
@@ -271,13 +287,29 @@ export const useSeatLayoutStore = create(
     
     updateConfig: (updates) => set((state) => {
       Object.assign(state.config, updates);
-      // Sync with top-level state
-      if (updates.rows !== undefined) state.rows = updates.rows;
-      if (updates.cols !== undefined) state.cols = updates.cols;
+      
+      // Sync with top-level state and clean up seats if needed
+      if (updates.rows !== undefined) {
+        state.rows = updates.rows;
+        // Remove seats outside new bounds
+        state.seats = state.seats.filter(seat => seat.row < updates.rows);
+      }
+      if (updates.cols !== undefined) {
+        state.cols = updates.cols;
+        // Remove seats outside new bounds
+        state.seats = state.seats.filter(seat => seat.col < updates.cols);
+      }
       if (updates.cellSize !== undefined) state.cellSize = updates.cellSize;
       if (updates.showGrid !== undefined) state.showGrid = updates.showGrid;
       if (updates.labelType !== undefined) state.labelType = updates.labelType;
+      
+      // Clean up selected cells that no longer exist
+      state.selectedCells = state.selectedCells.filter(id => 
+        state.seats.some(seat => seat.id === id)
+      );
+      
       state.isDirty = true;
+      get().pushHistory();
     }),
 
     // Zone actions

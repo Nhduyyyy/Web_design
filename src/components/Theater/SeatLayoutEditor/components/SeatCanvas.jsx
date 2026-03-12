@@ -2,10 +2,11 @@ import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useSeatLayoutStore } from '@/stores/seatLayoutStore';
-import { ToolType } from '@/types/seat.types';
+import { ToolType, SeatType } from '@/types/seat.types';
 import { generateSeat } from '../utils/seatGenerator';
 import SeatGrid from './SeatGrid';
 import SeatCell from './SeatCell';
+import StageArea from './StageArea';
 import ZoomControls from './ZoomControls';
 
 export default function SeatCanvas() {
@@ -114,7 +115,7 @@ export default function SeatCanvas() {
   }), [cols, rows, cellSize]);
 
   return (
-    <div className="seat-canvas relative w-full h-full overflow-hidden bg-muted/10">
+    <div className="seat-canvas relative w-full h-full overflow-hidden" style={{ backgroundColor: '#1A0F0F' }}>
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <motion.div
           ref={canvasRef}
@@ -131,7 +132,8 @@ export default function SeatCanvas() {
             mass: 0.5
           }}
           style={{
-            transformOrigin: '0 0'
+            transformOrigin: '0 0',
+            backgroundColor: '#1A0F0F'
           }}
           onClick={handleCanvasClick}
           onMouseDown={handleMouseDown}
@@ -141,17 +143,21 @@ export default function SeatCanvas() {
         >
           <div className="relative" style={canvasStyle}>
             <SeatGrid />
+            <StageArea />
             
             <AnimatePresence mode="popLayout">
-              {seats.map((seat) => (
-                <SeatCell key={seat.id} seat={seat} />
-              ))}
+              {seats
+                .filter(seat => seat.type !== SeatType.STAGE) // Ẩn các seat loại STAGE vì đã render trong StageArea
+                .map((seat) => (
+                  <SeatCell key={seat.id} seat={seat} />
+                ))
+              }
             </AnimatePresence>
           </div>
         </motion.div>
+        
+        <ZoomControls />
       </DndContext>
-      
-      <ZoomControls />
     </div>
   );
 }
