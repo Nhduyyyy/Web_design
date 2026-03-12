@@ -197,6 +197,18 @@ export default function SeatSelection({
   }, [scheduleId, event?.schedule_id, selectedSeats, onSeatsChange, userId])
 
   const handleSeatClick = (seat) => {
+    // Check if seat is aisle/walkway - cannot be selected
+    if (seat.label && (
+      seat.label.includes('LỐI ĐI') ||
+      seat.label.includes('AISLE') ||
+      seat.label.includes('LỐI') ||
+      seat.label.includes('ĐI')
+    )) {
+      setSeatError('Đây là lối đi, không thể chọn')
+      setTimeout(() => setSeatError(null), 3000)
+      return
+    }
+    
     // Check if seat is occupied or reserved by someone else
     if (seat.status === 'occupied') {
       setSeatError('Ghế này đã được đặt')
@@ -263,16 +275,69 @@ export default function SeatSelection({
       const rowLabel = String.fromCharCode(65 + r) // A, B, C... (0-based)
       const rowSeats = seats.filter(s => s.row === r).sort((a, b) => a.col - b.col)
       
+      // Check if this row contains stage labels
+      const stageSeats = rowSeats.filter(s => 
+        s.label && (
+          s.label.includes('SÂN KHẤU') || 
+          s.label.includes('STAGE') ||
+          s.label.includes('SÂN') ||
+          s.label.includes('KHẤU')
+        )
+      )
+      
+      const hasStage = stageSeats.length > 0
+      
       // Always add row, even if it has no seats
       grid.push({
         rowNumber: r,
         rowLabel,
         seats: rowSeats,
-        isEmpty: rowSeats.length === 0
+        isEmpty: rowSeats.length === 0,
+        hasStage,
+        stageSeats: hasStage ? stageSeats : []
       })
     }
     
-    return { rows: grid, maxCols: maxCol + 1 } // +1 because col is 0-based
+    // Group consecutive stage rows
+    const processedRows = []
+    let i = 0
+    while (i < grid.length) {
+      const row = grid[i]
+      
+      if (row.hasStage) {
+        // Find consecutive stage rows
+        const stageGroup = [row]
+        let j = i + 1
+        while (j < grid.length && grid[j].hasStage) {
+          stageGroup.push(grid[j])
+          j++
+        }
+        
+        // Calculate merged stage dimensions
+        const allStageSeats = stageGroup.flatMap(r => r.stageSeats)
+        const minCol = Math.min(...allStageSeats.map(s => s.col))
+        const maxColStage = Math.max(...allStageSeats.map(s => s.col))
+        
+        processedRows.push({
+          type: 'stage-merged',
+          rowNumbers: stageGroup.map(r => r.rowNumber),
+          rowCount: stageGroup.length,
+          minCol,
+          maxCol: maxColStage,
+          colCount: maxColStage - minCol + 1
+        })
+        
+        i = j // Skip processed stage rows
+      } else {
+        processedRows.push({
+          type: 'normal',
+          ...row
+        })
+        i++
+      }
+    }
+    
+    return { rows: processedRows, maxCols: maxCol + 1 } // +1 because col is 0-based
   }, [seats])
 
   const seatTypeInfo = {
@@ -370,11 +435,6 @@ export default function SeatSelection({
             </motion.div>
           )}
 
-          {/* Stage */}
-          <div className="stage-area">
-            <div className="stage">SÂN KHẤU</div>
-          </div>
-
           {/* Seating Chart */}
           <div className="seating-chart-container">
             {buildGridLayout.rows.length === 0 ? (
@@ -383,11 +443,36 @@ export default function SeatSelection({
               </div>
             ) : (
               <div className="seating-chart-grid">
-                {buildGridLayout.rows.map((row) => {
+                {buildGridLayout.rows.map((row, idx) => {
                   // Calculate seat size based on screen width
                   const isMobile = window.innerWidth <= 768
                   const seatSize = isMobile ? 32 : 40
+                  const gap = isMobile ? 2 : 4
                   
+                  // If this is a merged stage group
+                  if (row.type === 'stage-merged') {
+                    const stageWidth = row.colCount * seatSize + (row.colCount - 1) * gap
+                    const stageHeight = row.rowCount * seatSize + (row.rowCount - 1) * gap
+                    
+                    return (
+                      <div key={`stage-${idx}`} className="seat-row-grid stage-row">
+                        <div className="seats-grid-container" style={{ width: '100%' }}>
+                          <div 
+                            className="stage-label-merged"
+                            style={{
+                              width: `${stageWidth}px`,
+                              height: `${stageHeight}px`,
+                              margin: '0 auto'
+                            }}
+                          >
+                            SÂN KHẤU
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+                  
+                  // Normal row rendering
                   return (
                     <div key={row.rowNumber} className="seat-row-grid">
                       <div className="seats-grid-container" style={{ width: '100%' }}>
@@ -396,7 +481,7 @@ export default function SeatSelection({
                           style={{
                             display: 'grid',
                             gridTemplateColumns: `repeat(${buildGridLayout.maxCols}, ${seatSize}px)`,
-                            gap: isMobile ? '2px' : '4px',
+                            gap: `${gap}px`,
                             justifyContent: 'center'
                           }}
                         >
@@ -406,6 +491,27 @@ export default function SeatSelection({
                             if (!seat) {
                               // Empty space
                               return <div key={`empty-${row.rowNumber}-${colIndex}`} className="seat-empty"></div>
+                            }
+                            
+                            // Check if this is an aisle/walkway
+                            const isAisle = seat.label && (
+                              seat.label.includes('LỐI ĐI') ||
+                              seat.label.includes('AISLE') ||
+                              seat.label.includes('LỐI') ||
+                              seat.label.includes('ĐI')
+                            )
+                            
+                            if (isAisle) {
+                              // Render aisle as non-clickable
+                              return (
+                                <div 
+                                  key={seat.id}
+                                  className="seat seat-aisle"
+                                  title="Lối đi"
+                                >
+                                  {seat.label}
+                                </div>
+                              )
                             }
                             
                             const status = getSeatStatus(seat, selectedSeats)
@@ -456,6 +562,10 @@ export default function SeatSelection({
               <div className="legend-item">
                 <div className="legend-seat seat-occupied"></div>
                 <span>Đã bán</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-seat seat-aisle"></div>
+                <span>Lối đi</span>
               </div>
             </div>
           </div>
