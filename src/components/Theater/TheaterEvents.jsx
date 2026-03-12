@@ -66,7 +66,9 @@ const TheaterEvents = () => {
     if (!events?.length) {
       return {
         total: 0,
-        published: 0,
+        scheduled: 0,
+        ongoing: 0,
+        completed: 0,
         upcoming7Days: 0,
         currentMonthParticipants: 0,
       }
@@ -80,10 +82,12 @@ const TheaterEvents = () => {
     let currentMonthParticipants = 0
 
     const total = events.length
-    const published = events.filter((e) => e.status === 'published').length
+    const scheduled = events.filter((e) => e.status === 'scheduled').length
+    const ongoing = events.filter((e) => e.status === 'ongoing').length
+    const completed = events.filter((e) => e.status === 'completed').length
 
     for (const e of events) {
-      if (e.status === 'published' && e.event_date) {
+      if (e.status === 'scheduled' && e.event_date) {
         const d = new Date(e.event_date)
         if (d >= now && d <= sevenDaysLater) {
           upcoming7Days += 1
@@ -98,7 +102,14 @@ const TheaterEvents = () => {
       }
     }
 
-    return { total, published, upcoming7Days, currentMonthParticipants }
+    return {
+      total,
+      scheduled,
+      ongoing,
+      completed,
+      upcoming7Days,
+      currentMonthParticipants,
+    }
   }, [events])
 
   const handleCreateClick = () => {
@@ -118,8 +129,8 @@ const TheaterEvents = () => {
   const handleToggleStatus = async (event) => {
     try {
       if (event.status === 'draft') {
-        await updateStatus(event.id, 'published')
-      } else if (event.status === 'published') {
+        await updateStatus(event.id, 'scheduled')
+      } else if (event.status === 'scheduled') {
         await updateStatus(event.id, 'cancelled')
       }
     } catch (err) {
@@ -237,9 +248,9 @@ const TheaterEvents = () => {
             </p>
           </div>
           <div className="rounded-xl border border-emerald-500/50 bg-emerald-500/5 p-4">
-            <p className="text-xs text-emerald-200">🟢 Đang đăng</p>
+            <p className="text-xs text-emerald-200">📅 Đã lên lịch</p>
             <p className="mt-2 text-2xl font-bold text-emerald-100">
-              {stats.published}
+              {stats.scheduled}
             </p>
           </div>
           <div className="rounded-xl border border-sky-500/50 bg-sky-500/5 p-4">

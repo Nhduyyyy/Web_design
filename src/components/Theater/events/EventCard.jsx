@@ -32,9 +32,9 @@ const EventCard = ({ event, onView, onEdit, onToggleStatus, onDelete }) => {
     : 'Chưa có thời gian'
 
   return (
-    <div className="group h-[540px] w-[480px] overflow-hidden rounded-xl border border-border-gold/30 bg-transparent shadow-[0_0_30px_rgba(0,0,0,0.6)] transition-transform duration-300 hover:scale-[1.01] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]">
-      <div className="flex h-full">
-        <div className="relative h-full w-2/5 overflow-hidden">
+    <div className="group h-[540px] w-full overflow-hidden rounded-xl border border-border-gold/30 bg-transparent shadow-[0_0_30px_rgba(0,0,0,0.6)] transition-transform duration-300 hover:scale-[1.01] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]">
+      <div className="flex h-full min-h-[260px]">
+        <div className="relative h-auto w-2/5 overflow-hidden">
           {thumbnail_url ? (
             <img
               src={thumbnail_url}
@@ -128,7 +128,7 @@ const EventCard = ({ event, onView, onEdit, onToggleStatus, onDelete }) => {
               >
                 {status === 'draft'
                   ? 'Đăng'
-                  : status === 'published'
+                  : status === 'scheduled'
                   ? 'Hủy đăng'
                   : 'Cập nhật'}
               </button>

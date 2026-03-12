@@ -32,14 +32,14 @@ function getBankName(bankCode) {
 }
 
 /**
- * Lấy thông tin tài khoản từ config
+ * Lấy thông tin tài khoản từ config 
  */
 async function getBankAccountInfo() {
   // Lấy từ environment variables hoặc dùng default
   // Từ QR code URL: https://img.vietqr.io/image/VBA-2005206295400-compact.png
-  const accountNo = import.meta.env.VITE_BANK_ACCOUNT || '2005206295400'
-  const accountName = import.meta.env.VITE_BANK_ACCOUNT_NAME || 'PHUNG VAN DAT'
-  const bankCode = import.meta.env.VITE_BANK_CODE || 'VBA'
+  const accountNo = import.meta.env.VITE_BANK_ACCOUNT || '5650506310'
+  const accountName = import.meta.env.VITE_BANK_ACCOUNT_NAME || 'NGUYEN VAN HIEU'
+  const bankCode = import.meta.env.VITE_BANK_CODE || 'BIDV'
   
   return {
     accountNo,

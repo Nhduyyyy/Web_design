@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { validateEventForm } from '../../../utils/eventHelpers'
+import {
+  uploadTheaterAsset,
+  validateImageFile,
+} from '../../../utils/storageHelpers'
 
 const EMPTY_FORM = {
   type: '',
@@ -35,6 +39,7 @@ const EventFormModal = ({ theaterId, event, onSubmit, onClose }) => {
   const [venues, setVenues] = useState([])
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
+  const [thumbnailFile, setThumbnailFile] = useState(null)
 
   useEffect(() => {
     if (!theaterId) return
@@ -76,30 +81,83 @@ const EventFormModal = ({ theaterId, event, onSubmit, onClose }) => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = {
-      ...form,
-      duration: form.duration ? Number(form.duration) : null,
-      max_participants: form.max_participants
-        ? Number(form.max_participants)
-        : null,
-      price: form.price !== '' ? Number(form.price) : 0,
-      event_date: form.event_date
-        ? new Date(form.event_date).toISOString()
-        : null,
-    }
+  const handleThumbnailFileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    const validationErrors = validateEventForm(payload)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
+    const validationMsg = validateImageFile(file)
+    if (validationMsg) {
+      setErrors((prev) => ({ ...prev, thumbnail_url: validationMsg }))
       return
     }
 
+    setErrors((prev) => {
+      const next = { ...prev }
+      delete next.thumbnail_url
+      return next
+    })
+    setThumbnailFile(file)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
     setSubmitting(true)
     try {
+      let thumbnailUrl = form.thumbnail_url || ''
+
+      if (thumbnailFile) {
+        const theaterForStorage =
+          theaterId || event?.theater_id || 'unknown-theater'
+
+        const validationMsg = validateImageFile(thumbnailFile)
+        if (validationMsg) {
+          setErrors((prev) => ({ ...prev, thumbnail_url: validationMsg }))
+          setSubmitting(false)
+          return
+        }
+
+        const uploadedUrl = await uploadTheaterAsset(
+          theaterForStorage,
+          thumbnailFile,
+          'events',
+          event?.id,
+        )
+
+        if (!uploadedUrl) {
+          setErrors((prev) => ({
+            ...prev,
+            thumbnail_url: 'Không thể upload ảnh. Vui lòng thử lại.',
+          }))
+          setSubmitting(false)
+          return
+        }
+
+        thumbnailUrl = uploadedUrl
+      }
+
+      const payload = {
+        ...form,
+        thumbnail_url: thumbnailUrl,
+        duration: form.duration ? Number(form.duration) : null,
+        max_participants: form.max_participants
+          ? Number(form.max_participants)
+          : null,
+        price: form.price !== '' ? Number(form.price) : 0,
+        event_date: form.event_date
+          ? new Date(form.event_date).toISOString()
+          : null,
+      }
+
+      const validationErrors = validateEventForm(payload)
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors)
+        setSubmitting(false)
+        return
+      }
+
       await onSubmit(payload)
       setErrors({})
+      setThumbnailFile(null)
     } catch (err) {
       console.error('Error submitting event form:', err)
       setErrors({ general: err.message || 'Không thể lưu sự kiện' })
@@ -162,16 +220,38 @@ const EventFormModal = ({ theaterId, event, onSubmit, onClose }) => {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-300">
-                  Ảnh bìa (URL)
+                  Ảnh bìa
                 </label>
-                <input
-                  className="w-full rounded-md border border-border-gold bg-background-dark px-3 py-2 text-sm text-slate-100"
-                  value={form.thumbnail_url}
-                  onChange={(e) =>
-                    handleChange('thumbnail_url', e.target.value)
-                  }
-                  placeholder="https://..."
-                />
+                <div className="space-y-2">
+                  {form.thumbnail_url && (
+                    <div className="flex items-center gap-3">
+                      <div className="h-14 w-24 overflow-hidden rounded-md border border-border-gold/60 bg-black/40">
+                        <img
+                          src={form.thumbnail_url}
+                          alt="Thumbnail preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <p className="flex-1 text-xs text-slate-400 break-all">
+                        Ảnh hiện tại sẽ được thay thế nếu bạn upload ảnh mới.
+                      </p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailFileChange}
+                    className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-background-dark hover:file:bg-primary/90"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Hỗ trợ JPG, PNG, WebP. Tối đa 50MB.
+                  </p>
+                  {errors.thumbnail_url && (
+                    <p className="mt-1 text-xs text-red-400">
+                      {errors.thumbnail_url}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -398,7 +478,7 @@ const EventFormModal = ({ theaterId, event, onSubmit, onClose }) => {
                 onChange={(e) => handleChange('status', e.target.value)}
               >
                 <option value="draft">Bản nháp</option>
-                <option value="published">Đăng ngay</option>
+                <option value="scheduled">Lên lịch</option>
               </select>
               <p className="text-xs text-slate-500">
                 Bạn luôn có thể chỉnh sửa và đổi trạng thái sau này.

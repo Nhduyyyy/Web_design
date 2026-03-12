@@ -22,12 +22,20 @@ export const checkPaymentStatus = async (bookingId, expectedAmount = null) => {
         )
       `)
       .eq('booking_code', bookingId)
-      .single()
+      .maybeSingle()
 
     if (error) {
+      console.error('Error querying booking status:', error)
+      return {
+        success: false,
+        message: 'Lỗi kiểm tra thanh toán'
+      }
+    }
+
+    if (!booking) {
       // Nếu không tìm thấy trong database, có thể là booking chưa được tạo
       // Hoặc đang dùng dữ liệu tĩnh
-      console.warn('Booking not found in database, using mock check:', error)
+      console.warn('Booking not found in database, using mock check')
       return {
         success: false,
         message: 'Đang chờ thanh toán...',
