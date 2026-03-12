@@ -46,7 +46,6 @@ export const getBookingById = async (bookingId) => {
       *,
       schedule:schedules(
         *,
-        show:shows(*),
         venue:venues(*),
         theater:theaters(*)
       )
@@ -68,7 +67,6 @@ export const getBookingByCode = async (bookingCode) => {
       *,
       schedule:schedules(
         *,
-        show:shows(*),
         venue:venues(*),
         theater:theaters(*)
       )
@@ -90,7 +88,6 @@ export const getBookingsByUser = async (userId) => {
       *,
       schedule:schedules(
         *,
-        show:shows(*),
         venue:venues(*),
         theater:theaters(*)
       )

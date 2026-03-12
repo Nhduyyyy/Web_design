@@ -15,6 +15,7 @@ import AdminDashboard from './components/Admin/AdminDashboard'
 import TheaterDashboard from './components/Theater/TheaterDashboard'
 import TheaterSchedules from './components/Theater/TheaterSchedules'
 import TheaterShows from './components/Theater/TheaterShows'
+import TheaterProfilePage from './components/Theater/TheaterProfilePage'
 import VenueDetailSimple from './components/Theater/VenueDetailSimple'
 import SeatLayoutEditor from './components/Theater/SeatLayoutEditor'
 import OrganizationRegistration from './components/Organization/OrganizationRegistration'
@@ -79,6 +80,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               element={
                 <TheaterRoute>
                   <TheaterDashboard />
+                </TheaterRoute>
+              } 
+            />
+            <Route 
+              path="/theater/profile" 
+              element={
+                <TheaterRoute>
+                  <TheaterProfilePage />
                 </TheaterRoute>
               } 
             />

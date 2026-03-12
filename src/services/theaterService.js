@@ -33,7 +33,7 @@ export const getApprovedTheaters = async () => {
 }
 
 /**
- * Get theaters by owner
+ * Get theaters by owner (may return multiple rows)
  */
 export const getTheatersByOwner = async (ownerId) => {
   const { data, error } = await supabase
@@ -41,6 +41,20 @@ export const getTheatersByOwner = async (ownerId) => {
     .select('*')
     .eq('owner_id', ownerId)
     .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * Get single theater by owner (profile page)
+ */
+export const getTheaterByOwner = async (ownerId) => {
+  const { data, error } = await supabase
+    .from('theaters')
+    .select('*')
+    .eq('owner_id', ownerId)
+    .single()
 
   if (error) throw error
   return data
@@ -66,7 +80,7 @@ export const getTheaterById = async (theaterId) => {
 export const updateTheater = async (theaterId, updates) => {
   const { data, error } = await supabase
     .from('theaters')
-    .update(updates)
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', theaterId)
     .select()
     .single()
@@ -132,13 +146,13 @@ export const uploadTheaterLogo = async (theaterId, file) => {
   const filePath = `${theaterId}/${fileName}`
 
   const { error: uploadError } = await supabase.storage
-    .from('theater-images')
+    .from('theater-assets')
     .upload(filePath, file, { upsert: true })
 
   if (uploadError) throw uploadError
 
   const { data: { publicUrl } } = supabase.storage
-    .from('theater-images')
+    .from('theater-assets')
     .getPublicUrl(filePath)
 
   await updateTheater(theaterId, { logo_url: publicUrl })
@@ -155,13 +169,13 @@ export const uploadTheaterCover = async (theaterId, file) => {
   const filePath = `${theaterId}/${fileName}`
 
   const { error: uploadError } = await supabase.storage
-    .from('theater-images')
+    .from('theater-assets')
     .upload(filePath, file, { upsert: true })
 
   if (uploadError) throw uploadError
 
   const { data: { publicUrl } } = supabase.storage
-    .from('theater-images')
+    .from('theater-assets')
     .getPublicUrl(filePath)
 
   await updateTheater(theaterId, { cover_image_url: publicUrl })

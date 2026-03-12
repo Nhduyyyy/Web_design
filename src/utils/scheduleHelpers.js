@@ -15,7 +15,6 @@ export function formatDateTime(dt) {
 export function validateSchedulePayload(form) {
   const errors = {}
 
-  if (!form.show_id) errors.show_id = 'Vui lòng chọn vở diễn'
   if (!form.venue_id) errors.venue_id = 'Vui lòng chọn địa điểm'
   if (!form.title || !form.title.trim()) errors.title = 'Tiêu đề không được để trống'
   if (form.title && form.title.length > 255) {

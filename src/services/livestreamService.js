@@ -29,7 +29,6 @@ export const getLivestreams = async (filters = {}) => {
       theater:theaters(*),
       schedule:schedules(
         *,
-        show:shows(*),
         venue:venues(*)
       )
     `)
@@ -79,7 +78,6 @@ export const getLivestreamById = async (livestreamId) => {
       theater:theaters(*),
       schedule:schedules(
         *,
-        show:shows(*),
         venue:venues(*)
       )
     `)
