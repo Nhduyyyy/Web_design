@@ -26,6 +26,10 @@ export const getShows = async (filters) => {
     query = query.lte('duration', filters.maxDuration)
   }
 
+  if (filters?.venue_id) {
+    query = query.eq('venue_id', filters.venue_id)
+  }
+
   const { data, error } = await query
   if (error) throw error
   return data || []
