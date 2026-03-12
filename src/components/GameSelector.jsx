@@ -40,6 +40,21 @@ const GameSelector = () => {
             </ul>
             <div className="game-card-badge game-card-badge-new">New!</div>
           </Link>
+
+          {/* Vũ Đại Loạn Thế */}
+          <Link to="/game/vu-dai-loan-the" className="game-card">
+            <div className="game-card-icon">
+              <span className="material-symbols-outlined">theater_comedy</span>
+            </div>
+            <h2>Vũ Đại Loạn Thế</h2>
+            <p>Auto Battler 8 người – Sân khấu tuồng. Ghép tướng, kích hoạt tộc & hệ.</p>
+            <ul className="game-features">
+              <li>🎭 5 tộc vở tuồng</li>
+              <li>⚔️ 30 tướng</li>
+              <li>🥁 Trống Chầu – Đại Vũ Đài</li>
+            </ul>
+            <div className="game-card-badge game-card-badge-new">Auto Battler</div>
+          </Link>
         </div>
 
         <div className="game-selector-info">
