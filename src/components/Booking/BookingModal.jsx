@@ -65,6 +65,11 @@ export default function BookingModal({ event, isOpen, onClose }) {
       setBookingError(null)
       setPaymentError(null)
       
+      // Load full schedule data to get venue_id
+      if (event.schedule_id) {
+        loadScheduleData()
+      }
+      
       // Check schedule status
       checkScheduleStatus()
       
@@ -90,6 +95,21 @@ export default function BookingModal({ event, isOpen, onClose }) {
       }
     }
   }, [isOpen, event])
+  
+  // Load schedule data to get venue_id
+  const loadScheduleData = async () => {
+    if (!event?.schedule_id) return
+    
+    try {
+      const schedule = await getScheduleById(event.schedule_id)
+      // Update event with venue_id if not already present
+      if (schedule.venue_id && !event.venue_id) {
+        event.venue_id = schedule.venue_id
+      }
+    } catch (error) {
+      console.error('Error loading schedule data:', error)
+    }
+  }
   
   // Check schedule status
   const checkScheduleStatus = async () => {

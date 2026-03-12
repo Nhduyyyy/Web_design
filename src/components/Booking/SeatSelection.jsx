@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import { getSeatStatus, formatPrice, calculateTotal } from '../../utils/booking'
 import { validateSeatSelection } from '../../utils/validation'
+import { getSeatsByHall } from '../../services/hallService'
+import FloorHallSelector from './FloorHallSelector'
 import './booking.css'
 
 export default function SeatSelection({ 
@@ -21,10 +23,60 @@ export default function SeatSelection({
   const [conflictWarning, setConflictWarning] = useState(null)
   const subscriptionRef = useRef(null)
   
+  // Floor and Hall selection
+  const [selectedFloor, setSelectedFloor] = useState(null)
+  const [selectedHall, setSelectedHall] = useState(null)
+  const [loadingSeats, setLoadingSeats] = useState(false)
+  
   // Update seats when seatingChart prop changes
   useEffect(() => {
     setSeats(seatingChart)
   }, [seatingChart])
+  
+  // Load seats when hall is selected
+  useEffect(() => {
+    if (selectedHall) {
+      loadSeatsFromHall()
+    }
+  }, [selectedHall])
+  
+  const loadSeatsFromHall = async () => {
+    try {
+      setLoadingSeats(true)
+      setSeatError(null)
+      
+      const hallSeats = await getSeatsByHall(selectedHall)
+      
+      // Transform database seats to booking format
+      const transformedSeats = hallSeats.map(seat => ({
+        id: seat.seat_label || `${seat.row_number}-${seat.seat_number}`,
+        seat_id: seat.id,
+        row: String.fromCharCode(64 + seat.row_number), // Convert 1,2,3 to A,B,C
+        number: seat.seat_number,
+        status: seat.status === 'booked' ? 'occupied' : 'available',
+        price: getPriceForSeatType(seat.seat_type),
+        type: seat.seat_type
+      }))
+      
+      setSeats(transformedSeats)
+      onSeatsChange([]) // Reset selected seats when changing hall
+    } catch (error) {
+      console.error('Error loading seats:', error)
+      setSeatError('Không thể tải danh sách ghế. Vui lòng thử lại.')
+    } finally {
+      setLoadingSeats(false)
+    }
+  }
+  
+  const getPriceForSeatType = (type) => {
+    const prices = {
+      vip: 500000,
+      premium: 350000,
+      standard: 250000,
+      economy: 150000
+    }
+    return prices[type] || 250000
+  }
   
   // Real-time subscription for seat updates
   useEffect(() => {
@@ -211,132 +263,172 @@ export default function SeatSelection({
       className="step-content seat-selection"
     >
       <h2>Chọn Ghế (Bước Quan Trọng Nhất)</h2>
-      <p className="step-description">Chọn ghế bạn muốn ngồi. Click vào ghế để chọn/bỏ chọn.</p>
+      <p className="step-description">Chọn tầng, khán phòng và ghế bạn muốn ngồi.</p>
       
-      {/* Real-time Conflict Warning */}
-      {conflictWarning && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="conflict-warning"
-          style={{
-            background: '#fff3cd',
-            border: '2px solid #ffc107',
-            borderRadius: '8px',
-            padding: '1rem',
-            marginBottom: '1rem',
-            fontWeight: 600,
-            color: '#856404'
-          }}
-        >
-          {conflictWarning}
-        </motion.div>
+      {/* Floor and Hall Selector */}
+      {event?.venue_id && (
+        <FloorHallSelector
+          venueId={event.venue_id}
+          selectedFloor={selectedFloor}
+          selectedHall={selectedHall}
+          onFloorChange={setSelectedFloor}
+          onHallChange={setSelectedHall}
+        />
       )}
       
-      {seatError && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="seat-error-message"
-          style={{
-            background: '#fff1f2',
-            border: '2px solid #f44336',
-            color: '#c62828',
-            padding: '0.75rem 1rem',
-            borderRadius: '8px',
-            marginBottom: '1rem',
-            fontWeight: 600
-          }}
-        >
-          ⚠️ {seatError}
-        </motion.div>
+      {/* Show message if no hall selected */}
+      {!selectedHall && (
+        <div className="empty-message" style={{ 
+          textAlign: 'center', 
+          padding: '2rem', 
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '12px',
+          marginBottom: '1.5rem'
+        }}>
+          <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>👆 Vui lòng chọn tầng và khán phòng</p>
+          <p style={{ fontSize: '0.9rem', color: 'var(--booking-text-muted)' }}>
+            Chọn tầng trước, sau đó chọn khán phòng để xem sơ đồ ghế
+          </p>
+        </div>
       )}
-
-      {/* Stage */}
-      <div className="stage-area">
-        <div className="stage">SÂN KHẤU</div>
-      </div>
-
-      {/* Seating Chart */}
-      <div className="seating-chart-container">
-        <div className="seating-chart">
-          {rows.map(([rowLabel, seats]) => (
-            <div key={rowLabel} className="seat-row">
-              <div className="row-label">{rowLabel}</div>
-              <div className="seats-in-row">
-                {seats.map((seat) => {
-                  const status = getSeatStatus(seat, selectedSeats)
-                  const isHovered = hoveredSeat?.id === seat.id
-                  
-                  return (
-                    <motion.button
-                      key={seat.id}
-                      className={`seat seat-${status} seat-${seat.type}`}
-                      onClick={() => handleSeatClick(seat)}
-                      onMouseEnter={() => setHoveredSeat(seat)}
-                      onMouseLeave={() => setHoveredSeat(null)}
-                      disabled={status === 'occupied'}
-                      whileHover={status !== 'occupied' ? { scale: 1.1 } : {}}
-                      whileTap={status !== 'occupied' ? { scale: 0.95 } : {}}
-                      title={`${seat.id} - ${formatPrice(seat.price)}`}
-                    >
-                      {seat.number}
-                    </motion.button>
-                  )
-                })}
-              </div>
-              <div className="row-label">{rowLabel}</div>
-            </div>
-          ))}
+      
+      {/* Loading state */}
+      {loadingSeats && (
+        <div className="loading-spinner" style={{ textAlign: 'center', padding: '2rem' }}>
+          <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
+          <p>Đang tải sơ đồ ghế...</p>
         </div>
-      </div>
+      )}
+      
+      {/* Seat selection (only show when hall is selected and not loading) */}
+      {selectedHall && !loadingSeats && (
+        <>
+          {/* Real-time Conflict Warning */}
+          {conflictWarning && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="conflict-warning"
+              style={{
+                background: '#fff3cd',
+                border: '2px solid #ffc107',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1rem',
+                fontWeight: 600,
+                color: '#856404'
+              }}
+            >
+              {conflictWarning}
+            </motion.div>
+          )}
+          
+          {seatError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="seat-error-message"
+              style={{
+                background: '#fff1f2',
+                border: '2px solid #f44336',
+                color: '#c62828',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                marginBottom: '1rem',
+                fontWeight: 600
+              }}
+            >
+              ⚠️ {seatError}
+            </motion.div>
+          )}
 
-      {/* Legend */}
-      <div className="seat-legend">
-        <h4>Chú thích:</h4>
-        <div className="legend-items">
-          {Object.entries(seatTypeInfo).map(([type, info]) => (
-            <div key={type} className="legend-item">
-              <div className={`legend-seat seat-${type}`}></div>
-              <span>{info.label} ({info.price})</span>
+          {/* Stage */}
+          <div className="stage-area">
+            <div className="stage">SÂN KHẤU</div>
+          </div>
+
+          {/* Seating Chart */}
+          <div className="seating-chart-container">
+            <div className="seating-chart">
+              {rows.map(([rowLabel, seats]) => (
+                <div key={rowLabel} className="seat-row">
+                  <div className="row-label">{rowLabel}</div>
+                  <div className="seats-in-row">
+                    {seats.map((seat) => {
+                      const status = getSeatStatus(seat, selectedSeats)
+                      const isHovered = hoveredSeat?.id === seat.id
+                      
+                      return (
+                        <motion.button
+                          key={seat.id}
+                          className={`seat seat-${status} seat-${seat.type}`}
+                          onClick={() => handleSeatClick(seat)}
+                          onMouseEnter={() => setHoveredSeat(seat)}
+                          onMouseLeave={() => setHoveredSeat(null)}
+                          disabled={status === 'occupied'}
+                          whileHover={status !== 'occupied' ? { scale: 1.1 } : {}}
+                          whileTap={status !== 'occupied' ? { scale: 0.95 } : {}}
+                          title={`${seat.id} - ${formatPrice(seat.price)}`}
+                        >
+                          {seat.number}
+                        </motion.button>
+                      )
+                    })}
+                  </div>
+                  <div className="row-label">{rowLabel}</div>
+                </div>
+              ))}
             </div>
-          ))}
-          <div className="legend-item">
-            <div className="legend-seat seat-available"></div>
-            <span>Trống</span>
           </div>
-          <div className="legend-item">
-            <div className="legend-seat seat-selected"></div>
-            <span>Đã chọn</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-seat seat-occupied"></div>
-            <span>Đã bán</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Selected Seats Summary */}
-      {selectedSeats.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="selected-seats-summary"
-        >
-          <h4>Ghế đã chọn ({selectedSeats.length}):</h4>
-          <div className="selected-seats-list">
-            {selectedSeats.map(seat => (
-              <div key={seat.id} className="selected-seat-item">
-                <span className="seat-id">{seat.id}</span>
-                <span className="seat-price">{formatPrice(seat.price)}</span>
+          {/* Legend */}
+          <div className="seat-legend">
+            <h4>Chú thích:</h4>
+            <div className="legend-items">
+              {Object.entries(seatTypeInfo).map(([type, info]) => (
+                <div key={type} className="legend-item">
+                  <div className={`legend-seat seat-${type}`}></div>
+                  <span>{info.label} ({info.price})</span>
+                </div>
+              ))}
+              <div className="legend-item">
+                <div className="legend-seat seat-available"></div>
+                <span>Trống</span>
               </div>
-            ))}
+              <div className="legend-item">
+                <div className="legend-seat seat-selected"></div>
+                <span>Đã chọn</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-seat seat-occupied"></div>
+                <span>Đã bán</span>
+              </div>
+            </div>
           </div>
-          <div className="total-preview">
-            <strong>Tổng cộng: {formatPrice(total)}</strong>
-          </div>
-        </motion.div>
+
+          {/* Selected Seats Summary */}
+          {selectedSeats.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="selected-seats-summary"
+            >
+              <h4>Ghế đã chọn ({selectedSeats.length}):</h4>
+              <div className="selected-seats-list">
+                {selectedSeats.map(seat => (
+                  <div key={seat.id} className="selected-seat-item">
+                    <span className="seat-id">{seat.id}</span>
+                    <span className="seat-price">{formatPrice(seat.price)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="total-preview">
+                <strong>Tổng cộng: {formatPrice(total)}</strong>
+              </div>
+            </motion.div>
+          )}
+        </>
       )}
 
       {/* Navigation */}
@@ -347,7 +439,7 @@ export default function SeatSelection({
         <button
           className="btn-primary"
           onClick={handleContinue}
-          disabled={selectedSeats.length === 0}
+          disabled={selectedSeats.length === 0 || !selectedHall}
         >
           Tiếp tục đến tóm tắt →
         </button>
