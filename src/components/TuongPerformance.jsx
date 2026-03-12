@@ -17,6 +17,38 @@ const TABS = [
   { id: 'events', label: 'Sự Kiện' }
 ]
 
+function normalizeEmbedUrl(rawUrl) {
+  const url = (rawUrl || '').trim()
+  if (!url) return null
+
+  try {
+    const u = new URL(url)
+    const host = u.hostname.replace(/^www\./, '')
+
+    // YouTube: convert watch/short links to /embed/{id}
+    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtu.be') {
+      let id = ''
+
+      if (host === 'youtu.be') {
+        id = u.pathname.split('/').filter(Boolean)[0] || ''
+      } else if (u.pathname === '/watch') {
+        id = u.searchParams.get('v') || ''
+      } else if (u.pathname.startsWith('/embed/')) {
+        id = u.pathname.split('/').filter(Boolean)[1] || ''
+      } else if (u.pathname.startsWith('/shorts/')) {
+        id = u.pathname.split('/').filter(Boolean)[1] || ''
+      }
+
+      if (!id) return url
+      return `https://www.youtube.com/embed/${id}`
+    }
+
+    return url
+  } catch {
+    return url
+  }
+}
+
 // Chuyển centi-giây (currentTime) thành chuỗi "M:SS" hoặc "H:MM:SS"
 function formatTime(centisec) {
   if (centisec == null || centisec < 0) return '0:00'
@@ -52,6 +84,7 @@ function TuongPerformance({ setActiveSection }) {
   const [currentTime, setCurrentTime] = useState(0) // centiseconds
   const [progressPercent, setProgressPercent] = useState(0)
   const [showInteractiveScene, setShowInteractiveScene] = useState(false)
+  const [isTrailerPlaying, setIsTrailerPlaying] = useState(false)
 
   // Tổng thời lượng vở (duration là phút; centiseconds = phút * 60 * 100)
   const totalMinutes = useMemo(() => {
@@ -60,6 +93,17 @@ function TuongPerformance({ setActiveSection }) {
     return d > 0 ? d : 0
   }, [selectedPerformance?.duration])
   const totalCentisec = totalMinutes * 60 * 100
+  const trailerUrl = useMemo(
+    () => normalizeEmbedUrl(selectedPerformance?.trailer_url),
+    [selectedPerformance?.trailer_url],
+  )
+
+  const trailerAutoplayUrl = useMemo(() => {
+    if (!trailerUrl) return null
+    // Trailer URLs are typically embed URLs (e.g. YouTube). Add autoplay/mute safely.
+    const sep = trailerUrl.includes('?') ? '&' : '?'
+    return `${trailerUrl}${sep}autoplay=1&mute=1`
+  }, [trailerUrl])
 
   // Search UI (watch tab)
   const [searchQuery, setSearchQuery] = useState('')
@@ -132,6 +176,11 @@ function TuongPerformance({ setActiveSection }) {
   }, [currentPage, totalPages])
 
   const handlePlay = () => {
+    if (trailerUrl) {
+      setIsTrailerPlaying(true)
+      setIsPlaying(true)
+      return
+    }
     if (totalCentisec <= 0) return
     setIsPlaying(true)
     const interval = setInterval(() => {
@@ -151,11 +200,26 @@ function TuongPerformance({ setActiveSection }) {
 
   const handlePause = () => {
     setIsPlaying(false)
+    if (trailerUrl) {
+      setIsTrailerPlaying(false)
+    }
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
   }
+
+  // Reset playback state when switching shows (prevents trailer continuing on next card)
+  useEffect(() => {
+    setIsTrailerPlaying(false)
+    setIsPlaying(false)
+    setCurrentTime(0)
+    setProgressPercent(0)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+  }, [selectedPerformance?.id])
 
   // cleanup on unmount
   useEffect(() => {
@@ -323,53 +387,31 @@ function TuongPerformance({ setActiveSection }) {
 
           <div className="tp-content custom-scrollbar">
             <div className="tp-video-block">
-              <img
-                className="tp-video-bg"
-                src={selectedHeroImage}
-                alt=""
-              />
-              <div className="tp-video-overlay">
-                <button
-                  type="button"
-                  className="tp-video-play-btn"
-                  onClick={isPlaying ? handlePause : handlePlay}
-                  aria-label={isPlaying ? 'Tạm dừng' : 'Phát'}
-                >
-                  <span className="material-symbols-outlined">play_arrow</span>
-                </button>
-                <p className="tp-video-prompt">Nhấn Play để xem</p>
-              </div>
-              <div className="tp-video-controls">
-                <div className="tp-progress-track">
-                  <div
-                    className="tp-progress-fill"
-                    style={{ width: `${progressPercent || (totalCentisec ? (currentTime / totalCentisec) * 100 : 0)}%` }}
+              {trailerUrl && isTrailerPlaying ? (
+                <iframe
+                  className="tp-video-bg tp-video-media"
+                  src={trailerAutoplayUrl || trailerUrl}
+                  title={`${selectedPerformance?.title || 'Trailer'} trailer`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <img className="tp-video-bg" src={selectedHeroImage} alt="" />
+              )}
+
+              {!(trailerUrl && isTrailerPlaying) && (
+                <div className="tp-video-overlay">
+                  <button
+                    type="button"
+                    className="tp-video-play-btn"
+                    onClick={isPlaying ? handlePause : handlePlay}
+                    aria-label={isPlaying ? 'Tạm dừng' : trailerUrl ? 'Phát trailer' : 'Phát'}
                   >
-                    <span className="tp-progress-knob" />
-                  </div>
+                    <span className="material-symbols-outlined">play_arrow</span>
+                  </button>
+                  <p className="tp-video-prompt">{trailerUrl ? 'Nhấn Play để xem trailer' : 'Nhấn Play để xem'}</p>
                 </div>
-                <div className="tp-controls-row">
-                  <div className="tp-controls-left">
-                    <button type="button" className="tp-control-icon" onClick={isPlaying ? handlePause : handlePlay}>
-                      <span className="material-symbols-outlined">play_arrow</span>
-                    </button>
-                    <button type="button" className="tp-control-icon">
-                      <span className="material-symbols-outlined">volume_up</span>
-                    </button>
-                    <span className="tp-time-text">
-                      {formatTime(currentTime)} / {totalMinutes}:00
-                    </span>
-                  </div>
-                  <div className="tp-controls-right">
-                    <button type="button" className="tp-control-icon">
-                      <span className="material-symbols-outlined">settings</span>
-                    </button>
-                    <button type="button" className="tp-control-icon">
-                      <span className="material-symbols-outlined">fullscreen</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {selectedPerformance && (
