@@ -21,12 +21,12 @@ import { useSeatLayoutStore } from '@/stores/seatLayoutStore';
 import { SeatType } from '@/types/seat.types';
 
 const seatTypeInfo = {
-  [SeatType.STANDARD]: { icon: Armchair, label: 'Standard', color: 'bg-theater-standard' },
+  [SeatType.STANDARD]: { icon: Armchair, label: 'Thường', color: 'bg-theater-standard' },
   [SeatType.VIP]: { icon: Star, label: 'VIP', color: 'bg-theater-vip' },
-  [SeatType.COUPLE]: { icon: Sofa, label: 'Couple', color: 'bg-theater-couple' },
-  [SeatType.WHEELCHAIR]: { icon: Accessibility, label: 'Wheelchair', color: 'bg-theater-wheelchair' },
-  [SeatType.AISLE]: { icon: Minus, label: 'Aisle', color: 'bg-gray-400' },
-  [SeatType.STAGE]: { icon: Square, label: 'Stage', color: 'bg-theater-stage' },
+  [SeatType.COUPLE]: { icon: Sofa, label: 'Đôi', color: 'bg-theater-couple' },
+  [SeatType.WHEELCHAIR]: { icon: Accessibility, label: 'Xe lăn', color: 'bg-theater-wheelchair' },
+  [SeatType.AISLE]: { icon: Minus, label: 'Lối đi', color: 'bg-gray-400' },
+  [SeatType.STAGE]: { icon: Square, label: 'Sân khấu', color: 'bg-theater-stage' },
 };
 
 export default function SeatSidebar() {
@@ -55,15 +55,15 @@ export default function SeatSidebar() {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="grid">
             <Settings className="w-4 h-4 mr-2" />
-            Grid
+            Lưới
           </TabsTrigger>
           <TabsTrigger value="types">
             <Palette className="w-4 h-4 mr-2" />
-            Types
+            Loại ghế
           </TabsTrigger>
           <TabsTrigger value="stats">
             <BarChart3 className="w-4 h-4 mr-2" />
-            Stats
+            Thống kê
           </TabsTrigger>
         </TabsList>
 
@@ -71,12 +71,12 @@ export default function SeatSidebar() {
         <TabsContent value="grid" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Grid Settings</CardTitle>
-              <CardDescription>Configure the layout grid</CardDescription>
+              <CardTitle>Cài đặt lưới</CardTitle>
+              <CardDescription>Cấu hình lưới bố trí</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label>Rows: {rows}</Label>
+                <Label>Số hàng: {rows}</Label>
                 <Slider
                   value={[rows]}
                   onValueChange={([value]) => setRows(value)}
@@ -87,7 +87,7 @@ export default function SeatSidebar() {
               </div>
 
               <div className="space-y-2">
-                <Label>Columns: {cols}</Label>
+                <Label>Số cột: {cols}</Label>
                 <Slider
                   value={[cols]}
                   onValueChange={([value]) => setCols(value)}
@@ -98,7 +98,7 @@ export default function SeatSidebar() {
               </div>
 
               <div className="space-y-2">
-                <Label>Cell Size: {cellSize}px</Label>
+                <Label>Kích thước ô: {cellSize}px</Label>
                 <Slider
                   value={[cellSize]}
                   onValueChange={([value]) => setCellSize(value)}
@@ -109,7 +109,7 @@ export default function SeatSidebar() {
               </div>
 
               <div className="flex items-center justify-between">
-                <Label>Show Grid Lines</Label>
+                <Label>Hiển thị đường lưới</Label>
                 <button
                   onClick={() => setShowGrid(!showGrid)}
                   className={`
@@ -134,8 +134,8 @@ export default function SeatSidebar() {
         <TabsContent value="types" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Seat Types</CardTitle>
-              <CardDescription>Available seat types and counts</CardDescription>
+              <CardTitle>Loại ghế</CardTitle>
+              <CardDescription>Các loại ghế có sẵn và số lượng</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {Object.entries(seatTypeInfo).map(([type, info]) => {
@@ -162,13 +162,13 @@ export default function SeatSidebar() {
         <TabsContent value="stats" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Statistics</CardTitle>
-              <CardDescription>Layout overview and metrics</CardDescription>
+              <CardTitle>Thống kê</CardTitle>
+              <CardDescription>Tổng quan và số liệu bố trí</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary">{stats.total}</div>
-                <div className="text-sm text-muted-foreground">Total Seats</div>
+                <div className="text-sm text-muted-foreground">Tổng số ghế</div>
               </div>
 
               <div className="space-y-4">
@@ -194,15 +194,15 @@ export default function SeatSidebar() {
 
               <div className="pt-4 border-t space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Grid Size</span>
+                  <span className="text-muted-foreground">Kích thước lưới</span>
                   <span className="font-medium">{rows} × {cols}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Capacity</span>
-                  <span className="font-medium">{rows * cols} cells</span>
+                  <span className="text-muted-foreground">Sức chứa</span>
+                  <span className="font-medium">{rows * cols} ô</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Utilization</span>
+                  <span className="text-muted-foreground">Tỷ lệ sử dụng</span>
                   <span className="font-medium">
                     {((stats.total / (rows * cols)) * 100).toFixed(1)}%
                   </span>

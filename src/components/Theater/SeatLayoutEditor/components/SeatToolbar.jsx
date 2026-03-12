@@ -24,15 +24,15 @@ import { ToolType } from '@/types/seat.types';
 import HistoryControls from './HistoryControls';
 
 const tools = [
-  { id: ToolType.SELECT, icon: MousePointer, label: 'Select (V)', color: 'text-gray-600' },
-  { id: ToolType.PAN, icon: Hand, label: 'Pan', color: 'text-gray-600' },
-  { id: ToolType.STANDARD, icon: Armchair, label: 'Standard Seat (1)', color: 'text-theater-standard' },
-  { id: ToolType.VIP, icon: Star, label: 'VIP Seat (2)', color: 'text-theater-vip' },
-  { id: ToolType.COUPLE, icon: Sofa, label: 'Couple Seat (3)', color: 'text-theater-couple' },
-  { id: ToolType.WHEELCHAIR, icon: Accessibility, label: 'Wheelchair Seat (4)', color: 'text-theater-wheelchair' },
-  { id: ToolType.AISLE, icon: Minus, label: 'Aisle (5)', color: 'text-gray-400' },
-  { id: ToolType.STAGE, icon: Square, label: 'Stage Area (6)', color: 'text-theater-stage' },
-  { id: ToolType.DELETE, icon: Trash2, label: 'Delete (D)', color: 'text-destructive' },
+  { id: ToolType.SELECT, icon: MousePointer, label: 'Chọn (V)', color: 'text-gray-600' },
+  { id: ToolType.PAN, icon: Hand, label: 'Di chuyển', color: 'text-gray-600' },
+  { id: ToolType.STANDARD, icon: Armchair, label: 'Ghế thường (1)', color: 'text-theater-standard' },
+  { id: ToolType.VIP, icon: Star, label: 'Ghế VIP (2)', color: 'text-theater-vip' },
+  { id: ToolType.COUPLE, icon: Sofa, label: 'Ghế đôi (3)', color: 'text-theater-couple' },
+  { id: ToolType.WHEELCHAIR, icon: Accessibility, label: 'Ghế xe lăn (4)', color: 'text-theater-wheelchair' },
+  { id: ToolType.AISLE, icon: Minus, label: 'Lối đi (5)', color: 'text-gray-400' },
+  { id: ToolType.STAGE, icon: Square, label: 'Khu vực sân khấu (6)', color: 'text-theater-stage' },
+  { id: ToolType.DELETE, icon: Trash2, label: 'Xóa (D)', color: 'text-destructive' },
 ];
 
 export default function SeatToolbar() {

@@ -33,7 +33,7 @@ export default function ZoomControls() {
             </Button>
           </TooltipTrigger>
           <TooltipContent side="left">
-            <p>Zoom In (+)</p>
+            <p>Phóng to (+)</p>
           </TooltipContent>
         </Tooltip>
 
@@ -53,7 +53,7 @@ export default function ZoomControls() {
             </Button>
           </TooltipTrigger>
           <TooltipContent side="left">
-            <p>Zoom Out (-)</p>
+            <p>Thu nhỏ (-)</p>
           </TooltipContent>
         </Tooltip>
 
@@ -68,7 +68,7 @@ export default function ZoomControls() {
             </Button>
           </TooltipTrigger>
           <TooltipContent side="left">
-            <p>Reset Zoom (0)</p>
+            <p>Đặt lại zoom (0)</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

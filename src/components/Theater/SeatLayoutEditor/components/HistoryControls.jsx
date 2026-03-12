@@ -33,7 +33,7 @@ export default function HistoryControls() {
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Undo (Ctrl+Z)</p>
+            <p>Hoàn tác (Ctrl+Z)</p>
           </TooltipContent>
         </Tooltip>
 
@@ -49,7 +49,7 @@ export default function HistoryControls() {
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Redo (Ctrl+Y)</p>
+            <p>Làm lại (Ctrl+Y)</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
