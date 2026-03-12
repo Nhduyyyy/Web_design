@@ -16,7 +16,8 @@ import { supabase } from '../lib/supabase'
  */
 export const getShopItems = async (categorySlug = null) => {
   try {
-    let query = supabase
+    // Load tất cả items một lần với category join
+    const { data, error } = await supabase
       .from('shop_items')
       .select(`
         *,
@@ -25,15 +26,17 @@ export const getShopItems = async (categorySlug = null) => {
       .eq('is_active', true)
       .order('display_order', { ascending: true })
 
-    if (categorySlug && categorySlug !== 'all') {
-      query = query.eq('shop_categories.slug', categorySlug)
-    }
-
-    const { data, error } = await query
-
     if (error) throw error
 
-    return { data, error: null }
+    // Filter ở client-side nếu cần
+    let filteredData = data
+    if (categorySlug && categorySlug !== 'all' && data) {
+      filteredData = data.filter(item => 
+        item.category && item.category.slug === categorySlug
+      )
+    }
+
+    return { data: filteredData, error: null }
   } catch (error) {
     console.error('Error fetching shop items:', error)
     return { data: null, error }

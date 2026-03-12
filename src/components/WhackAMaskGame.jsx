@@ -4,6 +4,7 @@ import Phaser from 'phaser'
 import Leaderboard from './Leaderboard'
 import Shop from './Shop'
 import Quests from './Quests'
+import TuongRainEffect from './TuongRainEffect'
 import { getPlayerStats, saveGameResult, initializePlayerStats } from '../services/gameService'
 import { updateQuestProgress } from '../services/questService'
 import './WhackAMaskIntro.css'
@@ -539,6 +540,9 @@ const WhackAMaskGame = () => {
 
   return (
     <div className="whack-intro-root">
+      {/* Tuong Rain Effect Background */}
+      <TuongRainEffect />
+      
       <div className="whack-intro-container">
         <header className="whack-intro-header">
           <div className="whack-intro-logo">
