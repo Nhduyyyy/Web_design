@@ -97,14 +97,16 @@ export const useSeatLayoutStore = create(
         });
         
         // Regenerate all labels immediately within the same state update
-        const occupiedRows = [...new Set(state.seats.map(seat => seat.row))].sort((a, b) => a - b);
+        // Only count actual seats (not stage or aisle) for labeling
+        const actualSeats = state.seats.filter(s => s.type !== 'stage' && s.type !== 'aisle');
+        const occupiedRows = [...new Set(actualSeats.map(seat => seat.row))].sort((a, b) => a - b);
         const rowMapping = {};
         occupiedRows.forEach((gridRow, index) => {
           rowMapping[gridRow] = index;
         });
         
         const seatsByRow = {};
-        state.seats.forEach(seat => {
+        actualSeats.forEach(seat => {
           if (!seatsByRow[seat.row]) {
             seatsByRow[seat.row] = [];
           }
@@ -125,6 +127,15 @@ export const useSeatLayoutStore = create(
           });
         });
         
+        // Set labels for non-seat items
+        state.seats.forEach(seat => {
+          if (seat.type === 'stage') {
+            seat.label = 'SÂN KHẤU';
+          } else if (seat.type === 'aisle') {
+            seat.label = 'LỐI ĐI';
+          }
+        });
+        
         get().pushHistory();
       }
     }),
@@ -134,14 +145,16 @@ export const useSeatLayoutStore = create(
       state.selectedCells = state.selectedCells.filter(id => id !== seatId);
       
       // Regenerate all labels immediately within the same state update
-      const occupiedRows = [...new Set(state.seats.map(seat => seat.row))].sort((a, b) => a - b);
+      // Only count actual seats (not stage or aisle) for labeling
+      const actualSeats = state.seats.filter(s => s.type !== 'stage' && s.type !== 'aisle');
+      const occupiedRows = [...new Set(actualSeats.map(seat => seat.row))].sort((a, b) => a - b);
       const rowMapping = {};
       occupiedRows.forEach((gridRow, index) => {
         rowMapping[gridRow] = index;
       });
       
       const seatsByRow = {};
-      state.seats.forEach(seat => {
+      actualSeats.forEach(seat => {
         if (!seatsByRow[seat.row]) {
           seatsByRow[seat.row] = [];
         }
@@ -160,6 +173,15 @@ export const useSeatLayoutStore = create(
             seat.label = `${displayRow + 1}-${index + 1}`;
           }
         });
+      });
+      
+      // Set labels for non-seat items
+      state.seats.forEach(seat => {
+        if (seat.type === 'stage') {
+          seat.label = 'SÂN KHẤU';
+        } else if (seat.type === 'aisle') {
+          seat.label = 'LỐI ĐI';
+        }
       });
       
       get().pushHistory();
@@ -185,14 +207,16 @@ export const useSeatLayoutStore = create(
           seat.col = newCol;
           
           // Regenerate all labels immediately within the same state update
-          const occupiedRows = [...new Set(state.seats.map(seat => seat.row))].sort((a, b) => a - b);
+          // Only count actual seats (not stage or aisle) for labeling
+          const actualSeats = state.seats.filter(s => s.type !== 'stage' && s.type !== 'aisle');
+          const occupiedRows = [...new Set(actualSeats.map(seat => seat.row))].sort((a, b) => a - b);
           const rowMapping = {};
           occupiedRows.forEach((gridRow, index) => {
             rowMapping[gridRow] = index;
           });
           
           const seatsByRow = {};
-          state.seats.forEach(seat => {
+          actualSeats.forEach(seat => {
             if (!seatsByRow[seat.row]) {
               seatsByRow[seat.row] = [];
             }
@@ -211,6 +235,15 @@ export const useSeatLayoutStore = create(
                 seat.label = `${displayRow + 1}-${index + 1}`;
               }
             });
+          });
+          
+          // Set labels for non-seat items
+          state.seats.forEach(seat => {
+            if (seat.type === 'stage') {
+              seat.label = 'SÂN KHẤU';
+            } else if (seat.type === 'aisle') {
+              seat.label = 'LỐI ĐI';
+            }
           });
           
           get().pushHistory();
@@ -250,8 +283,9 @@ export const useSeatLayoutStore = create(
 
     // Regenerate all labels
     regenerateAllLabels: () => set((state) => {
-      // Get all unique rows that have seats, sorted by row number
-      const occupiedRows = [...new Set(state.seats.map(seat => seat.row))].sort((a, b) => a - b);
+      // Only count actual seats (not stage or aisle) for labeling
+      const actualSeats = state.seats.filter(s => s.type !== 'stage' && s.type !== 'aisle');
+      const occupiedRows = [...new Set(actualSeats.map(seat => seat.row))].sort((a, b) => a - b);
       
       // Create mapping from grid row to display row (A, B, C...)
       const rowMapping = {};
@@ -259,9 +293,9 @@ export const useSeatLayoutStore = create(
         rowMapping[gridRow] = index;
       });
       
-      // Group seats by grid row
+      // Group actual seats by grid row
       const seatsByRow = {};
-      state.seats.forEach(seat => {
+      actualSeats.forEach(seat => {
         if (!seatsByRow[seat.row]) {
           seatsByRow[seat.row] = [];
         }
@@ -281,6 +315,15 @@ export const useSeatLayoutStore = create(
             seat.label = `${displayRow + 1}-${index + 1}`;
           }
         });
+      });
+      
+      // Set labels for non-seat items
+      state.seats.forEach(seat => {
+        if (seat.type === 'stage') {
+          seat.label = 'SÂN KHẤU';
+        } else if (seat.type === 'aisle') {
+          seat.label = 'LỐI ĐI';
+        }
       });
     }),
 

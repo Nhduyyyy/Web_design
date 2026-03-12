@@ -352,7 +352,7 @@ export default function SeatLayoutEditor() {
       <SeatToolbar />
 
       {/* Main Content */}
-      <div className="seat-editor-main">
+      <div className="seat-editor-main ml-80">
         <div className="seat-editor-canvas-container">
           <SeatCanvas />
         </div>

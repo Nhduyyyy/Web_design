@@ -6,7 +6,7 @@ import {
   Sofa, 
   Star, 
   Accessibility, 
-  Minus, 
+  DoorOpen, 
   Square 
 } from 'lucide-react';
 import { useSeatLayoutStore } from '@/stores/seatLayoutStore';
@@ -17,7 +17,7 @@ const seatIcons = {
   [SeatType.VIP]: Star,
   [SeatType.COUPLE]: Sofa,
   [SeatType.WHEELCHAIR]: Accessibility,
-  [SeatType.AISLE]: Minus,
+  [SeatType.AISLE]: DoorOpen,
   [SeatType.STAGE]: Square,
 };
 
@@ -28,6 +28,15 @@ const seatClasses = {
   [SeatType.WHEELCHAIR]: 'seat-wheelchair',
   [SeatType.AISLE]: 'seat-aisle',
   [SeatType.STAGE]: 'seat-stage',
+};
+
+const seatBackgrounds = {
+  [SeatType.STANDARD]: 'bg-gray-600',
+  [SeatType.VIP]: 'bg-yellow-500',
+  [SeatType.COUPLE]: 'bg-pink-600',
+  [SeatType.WHEELCHAIR]: 'bg-blue-600',
+  [SeatType.AISLE]: 'bg-gray-400',
+  [SeatType.STAGE]: 'bg-red-700',
 };
 
 const SeatCell = forwardRef(({ seat }, ref) => {
@@ -130,15 +139,17 @@ const SeatCell = forwardRef(({ seat }, ref) => {
       onClick={handleClick}
       onContextMenu={handleRightClick}
     >
-      <div className="flex flex-col items-center justify-center gap-0.5 p-1 rounded-md bg-opacity-90" 
+      <div className={`flex flex-col items-center justify-center gap-0.5 p-1 rounded-lg text-white shadow-lg ${seatBackgrounds[seat.type] || 'bg-gray-600'}`}
            style={{ 
              width: cellSize - 8, 
              height: cellSize - 8,
              maxWidth: '100%',
              maxHeight: '100%'
            }}>
-        <Icon className="w-4 h-4 flex-shrink-0" />
-        <span className="text-[10px] font-medium leading-none">{seat.label}</span>
+        <Icon className="w-4 h-4 flex-shrink-0 drop-shadow-sm" />
+        {seat.type !== 'aisle' && (
+          <span className="text-[10px] font-bold leading-none drop-shadow-sm">{seat.label}</span>
+        )}
       </div>
     </motion.div>
   );
