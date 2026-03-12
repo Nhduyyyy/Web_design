@@ -11,7 +11,8 @@ const EVENT_TYPES = [
 const EVENT_STATUS = [
   { value: '', label: 'Tất cả trạng thái' },
   { value: 'draft', label: 'Bản nháp' },
-  { value: 'published', label: 'Đã đăng' },
+  { value: 'scheduled', label: 'Đã lên lịch' },
+  { value: 'ongoing', label: 'Đang diễn ra' },
   { value: 'cancelled', label: 'Đã hủy' },
   { value: 'completed', label: 'Đã kết thúc' },
 ]

@@ -198,7 +198,7 @@ CREATE POLICY "theater_assets_insert"
     AND EXISTS (
       SELECT 1 FROM public.profiles
       WHERE id = auth.uid()
-        AND role IN ('theater_owner', 'admin')
+        AND role IN ('theater', 'admin')
     )
   );
 
@@ -210,7 +210,7 @@ CREATE POLICY "theater_assets_delete"
     AND EXISTS (
       SELECT 1 FROM public.profiles
       WHERE id = auth.uid()
-        AND role IN ('theater_owner', 'admin')
+        AND role IN ('theater', 'admin')
     )
   );
 

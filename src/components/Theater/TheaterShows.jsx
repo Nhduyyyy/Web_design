@@ -3,14 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Search, RefreshCw, Clock, Users, Eye, Edit2, Trash2, X } from 'lucide-react'
 import { useShows } from '../../hooks/useShows'
 import TheaterHeader from './TheaterHeader'
+import { uploadTheaterAsset, validateImageFile } from '../../utils/storageHelpers'
 
 const ShowCard = ({ show, onEdit, onDelete, onView }) => {
   return (
     <motion.div
       whileHover={{ y: -4 }}
-      className="bg-white rounded-2xl overflow-hidden shadow-md border border-amber-100"
+      className="flex flex-col rounded-2xl overflow-hidden border border-border-gold/40 bg-surface-dark shadow-[0_0_30px_rgba(0,0,0,0.55)] transition-transform duration-300 hover:shadow-[0_0_40px_rgba(212,175,55,0.18)]"
     >
-      <div className="relative h-48 bg-amber-50">
+      <div className="relative h-48 bg-background-dark">
         {show.thumbnail_url ? (
           <img
             src={show.thumbnail_url}
@@ -18,20 +19,24 @@ const ShowCard = ({ show, onEdit, onDelete, onView }) => {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-amber-200 text-4xl">
+          <div className="w-full h-full flex items-center justify-center text-primary/60 text-4xl">
             🎭
           </div>
         )}
       </div>
 
       <div className="p-4 space-y-2">
-        <h3 className="font-bold text-lg text-gray-900 line-clamp-1">{show.title}</h3>
+        <h3 className="font-bold text-lg text-slate-50 line-clamp-1">
+          {show.title}
+        </h3>
 
         {show.description && (
-          <p className="text-sm text-gray-500 line-clamp-2">{show.description}</p>
+          <p className="text-sm text-slate-400 line-clamp-2">
+            {show.description}
+          </p>
         )}
 
-        <div className="flex flex-wrap gap-2 text-xs text-gray-400">
+        <div className="flex flex-wrap gap-2 text-xs text-slate-400">
           {show.duration && (
             <span className="flex items-center gap-1">
               <Clock size={12} /> {show.duration} phút
@@ -49,35 +54,34 @@ const ShowCard = ({ show, onEdit, onDelete, onView }) => {
             {show.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs"
+                className="px-2 py-0.5 rounded-full text-xs border border-amber-500/40 bg-amber-100/10 text-amber-200"
               >
                 {tag}
               </span>
             ))}
           </div>
         )}
-
-        <div className="flex gap-2 pt-2 border-t border-gray-100">
+      </div>
+      <div className="mt-auto flex gap-2 mx-4 mb-2 pt-2 border-t border-border-gold/30">
           <button
             onClick={() => onView(show)}
-            className="flex-1 flex items-center justify-center gap-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg py-1.5"
+            className="flex-1 flex items-center justify-center gap-1 rounded-lg border border-border-gold/40 bg-background-dark/60 py-1.5 text-sm text-slate-100 hover:bg-background-dark"
           >
             <Eye size={14} /> Xem
           </button>
           <button
             onClick={() => onEdit(show)}
-            className="flex-1 flex items-center justify-center gap-1 text-sm text-amber-600 hover:bg-amber-50 rounded-lg py-1.5"
+            className="flex-1 flex items-center justify-center gap-1 rounded-lg border border-border-gold/40 bg-background-dark/60 py-1.5 text-sm text-primary hover:bg-background-dark"
           >
             <Edit2 size={14} /> Sửa
           </button>
           <button
             onClick={() => onDelete(show)}
-            className="flex-1 flex items-center justify-center gap-1 text-sm text-red-500 hover:bg-red-50 rounded-lg py-1.5"
+            className="flex-1 flex items-center justify-center gap-1 rounded-lg border border-red-500/50 bg-red-500/10 py-1.5 text-sm text-red-300 hover:bg-red-500/20"
           >
             <Trash2 size={14} /> Xóa
           </button>
         </div>
-      </div>
     </motion.div>
   )
 }
@@ -98,6 +102,8 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
   const [tagInput, setTagInput] = useState('')
   const [charInput, setCharInput] = useState('')
   const [errors, setErrors] = useState({})
+  const [thumbnailFile, setThumbnailFile] = useState(null)
+  const [coverFile, setCoverFile] = useState(null)
 
   const validate = () => {
     const newErrors = {}
@@ -109,10 +115,110 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
     return Object.keys(newErrors).length === 0
   }
 
+  const handleThumbnailFileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validationMsg = validateImageFile(file)
+    if (validationMsg) {
+      setErrors((prev) => ({ ...prev, thumbnail_url: validationMsg }))
+      return
+    }
+
+    setErrors((prev) => {
+      const next = { ...prev }
+      delete next.thumbnail_url
+      return next
+    })
+    setThumbnailFile(file)
+  }
+
+  const handleCoverFileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validationMsg = validateImageFile(file)
+    if (validationMsg) {
+      setErrors((prev) => ({ ...prev, cover_image_url: validationMsg }))
+      return
+    }
+
+    setErrors((prev) => {
+      const next = { ...prev }
+      delete next.cover_image_url
+      return next
+    })
+    setCoverFile(file)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) return
-    await onSubmit(form)
+
+    try {
+      const storageTheaterId = initialData?.theater_id || 'theater-shows'
+      const payload = { ...form }
+
+      if (thumbnailFile) {
+        const validationMsg = validateImageFile(thumbnailFile)
+        if (validationMsg) {
+          setErrors((prev) => ({ ...prev, thumbnail_url: validationMsg }))
+          return
+        }
+
+        const uploadedThumbnailUrl = await uploadTheaterAsset(
+          storageTheaterId,
+          thumbnailFile,
+          'events',
+          initialData?.id,
+        )
+
+        if (!uploadedThumbnailUrl) {
+          setErrors((prev) => ({
+            ...prev,
+            thumbnail_url: 'Không thể upload ảnh thumbnail. Vui lòng thử lại.',
+          }))
+          return
+        }
+
+        payload.thumbnail_url = uploadedThumbnailUrl
+      }
+
+      if (coverFile) {
+        const validationMsg = validateImageFile(coverFile)
+        if (validationMsg) {
+          setErrors((prev) => ({ ...prev, cover_image_url: validationMsg }))
+          return
+        }
+
+        const uploadedCoverUrl = await uploadTheaterAsset(
+          storageTheaterId,
+          coverFile,
+          'events',
+          initialData?.id,
+        )
+
+        if (!uploadedCoverUrl) {
+          setErrors((prev) => ({
+            ...prev,
+            cover_image_url: 'Không thể upload ảnh bìa. Vui lòng thử lại.',
+          }))
+          return
+        }
+
+        payload.cover_image_url = uploadedCoverUrl
+      }
+
+      await onSubmit(payload)
+      setThumbnailFile(null)
+      setCoverFile(null)
+    } catch (err) {
+      console.error('Error submitting show form:', err)
+      setErrors((prev) => ({
+        ...prev,
+        general: err.message || 'Không thể lưu vở diễn',
+      }))
+    }
   }
 
   const addTag = () => {
@@ -194,23 +300,89 @@ const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
         {errors.duration && <p className="text-red-500 text-xs mt-1">{errors.duration}</p>}
       </div>
 
-      {['thumbnail_url', 'cover_image_url', 'trailer_url'].map((field) => (
-        <div key={field}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {field === 'thumbnail_url'
-              ? 'URL Thumbnail'
-              : field === 'cover_image_url'
-              ? 'URL Ảnh Bìa'
-              : 'URL Trailer'}
-          </label>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Ảnh thumbnail vở diễn
+        </label>
+        <div className="space-y-2">
+          {form.thumbnail_url && (
+            <div className="flex items-center gap-3">
+              <div className="h-14 w-24 overflow-hidden rounded-md border border-border-gold/60 bg-black/40">
+                <img
+                  src={form.thumbnail_url}
+                  alt="Thumbnail hiện tại"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <p className="flex-1 text-xs text-slate-400 break-all">
+                Ảnh hiện tại sẽ được thay thế nếu bạn upload ảnh mới.
+              </p>
+            </div>
+          )}
           <input
-            value={form[field] || ''}
-            onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
-            className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
-            placeholder="https://..."
+            type="file"
+            accept="image/*"
+            onChange={handleThumbnailFileChange}
+            className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-background-dark hover:file:bg-primary/90"
           />
+          <p className="mt-1 text-[11px] text-slate-500">
+            Hỗ trợ JPG, PNG, WebP. Tối đa 50MB.
+          </p>
+          {errors.thumbnail_url && (
+            <p className="mt-1 text-xs text-red-400">{errors.thumbnail_url}</p>
+          )}
         </div>
-      ))}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Ảnh bìa chi tiết
+        </label>
+        <div className="space-y-2">
+          {form.cover_image_url && (
+            <div className="flex items-center gap-3">
+              <div className="h-14 w-24 overflow-hidden rounded-md border border-border-gold/60 bg-black/40">
+                <img
+                  src={form.cover_image_url}
+                  alt="Ảnh bìa hiện tại"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <p className="flex-1 text-xs text-slate-400 break-all">
+                Ảnh hiện tại sẽ được thay thế nếu bạn upload ảnh mới.
+              </p>
+            </div>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleCoverFileChange}
+            className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-background-dark hover:file:bg-primary/90"
+          />
+          <p className="mt-1 text-[11px] text-slate-500">
+            Hỗ trợ JPG, PNG, WebP. Tối đa 50MB.
+          </p>
+          {errors.cover_image_url && (
+            <p className="mt-1 text-xs text-red-400">
+              {errors.cover_image_url}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          URL Trailer
+        </label>
+        <input
+          value={form.trailer_url || ''}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, trailer_url: e.target.value }))
+          }
+          className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+          placeholder="https://..."
+        />
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
@@ -523,22 +695,27 @@ const TheaterShows = () => {
           </div>
 
           <div className="space-y-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="relative col-span-1 md:col-span-1">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Tìm kiếm theo tên vở diễn..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-background-dark border border-border-gold/40 text-slate-100 placeholder:text-slate-500 focus:ring-2 focus:ring-primary outline-none"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div className="flex flex-col gap-2">
+                <span className="text-xs text-slate-400 font-medium">Tìm kiếm</span>
+                <div className="relative">
+                  <Search
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Tìm kiếm theo tên vở diễn..."
+                    className="w-full h-11 pl-10 pr-4 rounded-xl bg-background-dark border border-border-gold/40 text-slate-100 placeholder:text-slate-500 focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <span className="text-xs text-slate-400 font-medium">Thời lượng (phút)</span>
+                <span className="text-xs text-slate-400 font-medium">
+                  Thời lượng (phút)
+                </span>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -546,7 +723,7 @@ const TheaterShows = () => {
                     value={minDuration}
                     onChange={(e) => setMinDuration(e.target.value)}
                     placeholder="Từ"
-                    className="w-full rounded-xl bg-background-dark border border-border-gold/40 text-slate-100 px-3 py-2 text-sm placeholder:text-slate-500 focus:ring-2 focus:ring-primary outline-none"
+                    className="w-full h-11 rounded-xl bg-background-dark border border-border-gold/40 text-slate-100 px-3 text-sm placeholder:text-slate-500 focus:ring-2 focus:ring-primary outline-none"
                   />
                   <input
                     type="number"
@@ -554,13 +731,13 @@ const TheaterShows = () => {
                     value={maxDuration}
                     onChange={(e) => setMaxDuration(e.target.value)}
                     placeholder="Đến"
-                    className="w-full rounded-xl bg-background-dark border border-border-gold/40 text-slate-100 px-3 py-2 text-sm placeholder:text-slate-500 focus:ring-2 focus:ring-primary outline-none"
+                    className="w-full h-11 rounded-xl bg-background-dark border border-border-gold/40 text-slate-100 px-3 text-sm placeholder:text-slate-500 focus:ring-2 focus:ring-primary outline-none"
                   />
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <span className="text-xs text-slate-400 font-medium flex justify-between">
+                <span className="text-xs text-slate-400 font-medium flex justify-between items-center">
                   <span>Tags</span>
                   <button
                     type="button"
@@ -570,30 +747,59 @@ const TheaterShows = () => {
                     <RefreshCw size={12} /> Xóa lọc
                   </button>
                 </span>
-                <div className="flex flex-wrap gap-2 max-h-20 overflow-y-auto pr-1">
-                  {allTags.length === 0 && (
-                    <span className="text-xs text-slate-500 italic">
-                      Chưa có tag nào. Thêm tag trong form vở diễn.
-                    </span>
-                  )}
-                  {allTags.map((tag) => {
-                    const active = selectedTags.includes(tag)
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => toggleTagFilter(tag)}
-                        className={`px-2 py-1 rounded-full text-xs border transition-colors ${
-                          active
-                            ? 'bg-amber-500 text-black border-amber-400'
-                            : 'bg-background-dark text-amber-200 border-amber-500/40 hover:bg-amber-500/20'
-                        }`}
-                      >
-                        {tag}
-                      </button>
-                    )
-                  })}
-                </div>
+
+                <details className="relative group">
+                  <summary className="list-none cursor-pointer select-none">
+                    <div className="h-11 rounded-xl bg-background-dark border border-border-gold/40 text-slate-100 px-3 flex items-center justify-between gap-3 focus-within:ring-2 focus-within:ring-primary">
+                      <div className="flex-1 min-w-0">
+                        {selectedTags.length > 0 ? (
+                          <span className="text-sm text-slate-100 truncate">
+                            {selectedTags.join(', ')}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-slate-500">
+                            Chọn tags...
+                          </span>
+                        )}
+                      </div>
+                      <span className="material-symbols-outlined text-base text-slate-400 transition-transform group-open:rotate-180">
+                        expand_more
+                      </span>
+                    </div>
+                  </summary>
+
+                  <div className="absolute z-40 mt-2 w-full rounded-xl border border-border-gold/40 bg-surface-dark shadow-[0_0_30px_rgba(0,0,0,0.6)] overflow-hidden">
+                    <div className="max-h-64 overflow-y-auto p-2">
+                      {allTags.length === 0 && (
+                        <div className="px-2 py-2 text-xs text-slate-500 italic">
+                          Chưa có tag nào. Thêm tag trong form vở diễn.
+                        </div>
+                      )}
+
+                      {allTags.map((tag) => {
+                        const active = selectedTags.includes(tag)
+                        return (
+                          <label
+                            key={tag}
+                            className={`flex items-center gap-2 rounded-lg px-2 py-2 text-sm cursor-pointer transition-colors ${
+                              active
+                                ? 'bg-amber-500/15 text-amber-200'
+                                : 'hover:bg-background-dark text-slate-200'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={active}
+                              onChange={() => toggleTagFilter(tag)}
+                              className="h-4 w-4 accent-amber-400"
+                            />
+                            <span className="truncate">{tag}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </details>
               </div>
             </div>
           </div>
@@ -655,16 +861,16 @@ const TheaterShows = () => {
 
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center">
-            <p className="text-lg font-semibold mb-2">Xóa vở diễn?</p>
-            <p className="text-gray-500 text-sm mb-6">
-              Bạn có chắc muốn xóa "<strong>{deleteTarget.title}</strong>"? Hành động này
+          <div className="bg-surface-dark rounded-2xl border border-border-gold/40 p-6 max-w-sm w-full text-center shadow-[0_0_40px_rgba(0,0,0,0.65)]">
+            <p className="text-lg font-semibold mb-2 text-slate-50">Xóa vở diễn?</p>
+            <p className="text-slate-400 text-sm mb-6">
+              Bạn có chắc muốn xóa "<strong className="text-slate-100">{deleteTarget.title}</strong>"? Hành động này
               không thể hoàn tác.
             </p>
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="px-5 py-2 border rounded-lg text-gray-600 hover:bg-gray-50"
+                className="px-5 py-2 rounded-lg border border-border-gold/40 text-slate-200 hover:bg-background-dark"
               >
                 Hủy
               </button>

@@ -25,7 +25,8 @@ export const EVENT_TYPE_LABELS = {
 
 export const EVENT_STATUS_CONFIG = {
   draft: { label: 'Bản nháp', color: 'gray' },
-  published: { label: 'Đã đăng', color: 'green' },
+  scheduled: { label: 'Đã lên lịch', color: 'green' },
+  ongoing: { label: 'Đang diễn ra', color: 'green' },
   cancelled: { label: 'Đã hủy', color: 'red' },
   completed: { label: 'Đã kết thúc', color: 'purple' },
 }

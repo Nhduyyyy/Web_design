@@ -1,37 +1,94 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import EventDetail from './EventDetail'
-import { getEventsByType, formatEventDateForCard, formatDuration } from '../data/eventsData'
+import EventBookingModal from './Booking/EventBookingModal'
+import { formatEventDateForCard, formatDuration } from '../data/eventsData'
 import { formatPrice } from '../utils/booking'
+import { supabase } from '../lib/supabase'
 import './Events.css'
 
 const FILTER_TABS = [
   { id: 'all', label: 'Tất cả' },
   { id: 'workshop', label: 'Workshop' },
   { id: 'tour', label: 'Tour Backstage' },
-  { id: 'meet-artist', label: 'Gặp Nghệ Sĩ' }
+  { id: 'meet_artist', label: 'Gặp Nghệ Sĩ' }
 ]
 
 export default function Events() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [bookingEvent, setBookingEvent] = useState(null)
+
+  useEffect(() => {
+    let ignore = false
+
+    const load = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const { data, error: queryError } = await supabase
+          .from('events')
+          .select(
+            `
+            id,
+            type,
+            thumbnail_url,
+            title,
+            description,
+            event_date,
+            duration,
+            instructor,
+            guide,
+            artists,
+            current_participants,
+            max_participants,
+            price,
+            tags,
+            venues (id, name, address, city)
+          `,
+          )
+          .in('status', ['scheduled', 'ongoing', 'completed'])
+          .order('event_date', { ascending: true })
+
+        if (queryError) throw queryError
+        if (!ignore) setEvents(data || [])
+      } catch (err) {
+        console.error('Failed to load events:', err)
+        if (!ignore) setError(err.message || 'Không thể tải danh sách sự kiện')
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   const filteredEvents = useMemo(() => {
-    let result = getEventsByType(activeFilter === 'all' ? 'all' : activeFilter)
+    let result = events
+    if (activeFilter !== 'all') {
+      result = result.filter((event) => event.type === activeFilter)
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       result = result.filter(event =>
         event.title.toLowerCase().includes(q) ||
         event.description.toLowerCase().includes(q) ||
-        event.tags.some(tag => tag.toLowerCase().includes(q))
+        (event.tags || []).some(tag => tag.toLowerCase().includes(q))
       )
     }
-    return result.sort((a, b) => new Date(a.date) - new Date(b.date))
-  }, [activeFilter, searchQuery])
+    return result.sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
+  }, [events, activeFilter, searchQuery])
 
   const getAvailabilityStatus = (event) => {
-    const pct = (event.currentParticipants / event.maxParticipants) * 100
+    const pct = (event.current_participants / event.max_participants) * 100
     if (pct >= 90) return { status: 'almost-full', text: 'Còn ít chỗ' }
     if (pct >= 50) return { status: 'limited', text: 'Còn ít chỗ' }
     return { status: 'available', text: 'Còn chỗ' }
@@ -77,7 +134,18 @@ export default function Events() {
           </div>
         </div>
 
-        {filteredEvents.length === 0 ? (
+        {loading ? (
+          <div className="empty-state">
+            <div className="empty-icon">⏳</div>
+            <p>Đang tải sự kiện...</p>
+          </div>
+        ) : error ? (
+          <div className="empty-state">
+            <div className="empty-icon">⚠️</div>
+            <p>Không thể tải sự kiện</p>
+            <p className="empty-subtitle">{error}</p>
+          </div>
+        ) : filteredEvents.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📅</div>
             <p>Không tìm thấy sự kiện nào</p>
@@ -87,6 +155,12 @@ export default function Events() {
           <div className="events-grid">
             {filteredEvents.map((event) => {
               const availability = getAvailabilityStatus(event)
+              const venue = Array.isArray(event.venues) ? event.venues[0] : event.venues
+              const locationText = venue?.name
+                ? `${venue.name}${venue.address ? ` - ${venue.address}` : ''}${
+                    venue.city ? ` - ${venue.city}` : ''
+                  }`
+                : 'Chưa có địa điểm'
               return (
                 <motion.article
                   key={event.id}
@@ -98,7 +172,7 @@ export default function Events() {
                 >
                   <div className="event-card-inner">
                     <div className="event-thumbnail">
-                      <img src={event.thumbnail} alt={event.title} />
+                      <img src={event.thumbnail_url} alt={event.title} />
                       {availability.status !== 'available' && (
                         <div className={`availability-badge ${availability.status}`}>
                           {availability.text}
@@ -112,15 +186,15 @@ export default function Events() {
                         <div className="event-meta">
                           <div className="meta-item">
                             <span className="meta-icon" aria-hidden>📅</span>
-                            <span>{formatEventDateForCard(event.date)}</span>
+                            <span>{formatEventDateForCard(event.event_date)}</span>
                           </div>
                           <div className="meta-item">
                             <span className="meta-icon" aria-hidden>⏱</span>
-                            <span>{formatDuration(event.duration)}</span>
+                            <span>{formatDuration(event.duration || 0)}</span>
                           </div>
                           <div className="meta-item">
                             <span className="meta-icon" aria-hidden>📍</span>
-                            <span>{event.venue.name}, {event.venue.city}</span>
+                            <span>{locationText}</span>
                           </div>
                           {event.type === 'tour' && event.guide && (
                             <div className="meta-item">
@@ -134,10 +208,10 @@ export default function Events() {
                               <span>{event.instructor}</span>
                             </div>
                           )}
-                          {event.type === 'meet-artist' && event.artists && (
+                          {event.type === 'meet_artist' && event.artists && (
                             <div className="meta-item">
                               <span className="meta-icon" aria-hidden>🎭</span>
-                              <span>{event.artists.length} nghệ sĩ</span>
+                              <span>{(event.artists || []).length} nghệ sĩ</span>
                             </div>
                           )}
                         </div>
@@ -147,7 +221,7 @@ export default function Events() {
                           <div className="participants-info">
                             <span className="participants-label">Đã đăng ký</span>
                             <span className="participants-count">
-                              {event.currentParticipants}/{event.maxParticipants}
+                              {event.current_participants}/{event.max_participants}
                             </span>
                           </div>
                           <div className="event-price">
@@ -161,13 +235,17 @@ export default function Events() {
                         <button
                           type="button"
                           className="btn-register"
-                          disabled={event.currentParticipants >= event.maxParticipants}
+                          disabled={event.current_participants >= event.max_participants}
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (event.currentParticipants < event.maxParticipants) setSelectedEvent(event)
+                            if (event.current_participants < event.max_participants) {
+                              setBookingEvent(event)
+                            }
                           }}
                         >
-                          {event.currentParticipants >= event.maxParticipants ? 'Đã hết chỗ' : 'Đăng ký ngay'}
+                          {event.current_participants >= event.max_participants
+                            ? 'Đã hết chỗ'
+                            : 'Đăng ký ngay'}
                           <span aria-hidden>→</span>
                         </button>
                       </div>
@@ -185,6 +263,16 @@ export default function Events() {
           <EventDetail
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {bookingEvent && (
+          <EventBookingModal
+            event={bookingEvent}
+            isOpen={!!bookingEvent}
+            onClose={() => setBookingEvent(null)}
           />
         )}
       </AnimatePresence>
