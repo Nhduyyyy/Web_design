@@ -48,6 +48,7 @@ export default function SeatLayoutEditor() {
     getLayoutData,
     markClean,
     markDirty,
+    regenerateAllLabels,
     reset 
   } = useSeatLayoutStore();
 
@@ -94,6 +95,10 @@ export default function SeatLayoutEditor() {
       
       if (layoutData.seats && layoutData.seats.length > 0) {
         loadSeats(layoutData.seats);
+        // Regenerate all labels to use sequential numbering
+        setTimeout(() => {
+          regenerateAllLabels();
+        }, 100);
         toast.success(`Đã tải ${layoutData.seats.length} ghế`);
       } else {
         // Only show message once per session

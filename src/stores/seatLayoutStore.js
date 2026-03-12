@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { generateSeatId, generateLabel } from '../components/Theater/SeatLayoutEditor/utils/seatNumbering';
+import { generateSeatId, generateLabel, generateSequentialLabel } from '../components/Theater/SeatLayoutEditor/utils/seatNumbering';
 
 const MAX_HISTORY = 50;
 
@@ -89,11 +89,42 @@ export const useSeatLayoutStore = create(
         s => s.row === seat.row && s.col === seat.col
       );
       if (!exists) {
+        // Add seat with temporary label first
         state.seats.push({
           id: seat.id || generateSeatId(),
           ...seat,
-          label: seat.label || generateLabel(seat.row, seat.col, state.labelType)
+          label: 'temp' // Temporary label, will be regenerated
         });
+        
+        // Regenerate all labels immediately within the same state update
+        const occupiedRows = [...new Set(state.seats.map(seat => seat.row))].sort((a, b) => a - b);
+        const rowMapping = {};
+        occupiedRows.forEach((gridRow, index) => {
+          rowMapping[gridRow] = index;
+        });
+        
+        const seatsByRow = {};
+        state.seats.forEach(seat => {
+          if (!seatsByRow[seat.row]) {
+            seatsByRow[seat.row] = [];
+          }
+          seatsByRow[seat.row].push(seat);
+        });
+        
+        Object.keys(seatsByRow).forEach(gridRow => {
+          const gridRowNum = parseInt(gridRow);
+          const displayRow = rowMapping[gridRowNum];
+          const seatsInRow = seatsByRow[gridRow].sort((a, b) => a.col - b.col);
+          
+          seatsInRow.forEach((seat, index) => {
+            if (state.labelType === 'letters') {
+              seat.label = `${String.fromCharCode(65 + displayRow)}${index + 1}`;
+            } else {
+              seat.label = `${displayRow + 1}-${index + 1}`;
+            }
+          });
+        });
+        
         get().pushHistory();
       }
     }),
@@ -101,6 +132,36 @@ export const useSeatLayoutStore = create(
     removeSeat: (seatId) => set((state) => {
       state.seats = state.seats.filter(s => s.id !== seatId);
       state.selectedCells = state.selectedCells.filter(id => id !== seatId);
+      
+      // Regenerate all labels immediately within the same state update
+      const occupiedRows = [...new Set(state.seats.map(seat => seat.row))].sort((a, b) => a - b);
+      const rowMapping = {};
+      occupiedRows.forEach((gridRow, index) => {
+        rowMapping[gridRow] = index;
+      });
+      
+      const seatsByRow = {};
+      state.seats.forEach(seat => {
+        if (!seatsByRow[seat.row]) {
+          seatsByRow[seat.row] = [];
+        }
+        seatsByRow[seat.row].push(seat);
+      });
+      
+      Object.keys(seatsByRow).forEach(gridRow => {
+        const gridRowNum = parseInt(gridRow);
+        const displayRow = rowMapping[gridRowNum];
+        const seatsInRow = seatsByRow[gridRow].sort((a, b) => a.col - b.col);
+        
+        seatsInRow.forEach((seat, index) => {
+          if (state.labelType === 'letters') {
+            seat.label = `${String.fromCharCode(65 + displayRow)}${index + 1}`;
+          } else {
+            seat.label = `${displayRow + 1}-${index + 1}`;
+          }
+        });
+      });
+      
       get().pushHistory();
     }),
 
@@ -122,7 +183,36 @@ export const useSeatLayoutStore = create(
         if (!occupied) {
           seat.row = newRow;
           seat.col = newCol;
-          seat.label = generateLabel(newRow, newCol, state.labelType);
+          
+          // Regenerate all labels immediately within the same state update
+          const occupiedRows = [...new Set(state.seats.map(seat => seat.row))].sort((a, b) => a - b);
+          const rowMapping = {};
+          occupiedRows.forEach((gridRow, index) => {
+            rowMapping[gridRow] = index;
+          });
+          
+          const seatsByRow = {};
+          state.seats.forEach(seat => {
+            if (!seatsByRow[seat.row]) {
+              seatsByRow[seat.row] = [];
+            }
+            seatsByRow[seat.row].push(seat);
+          });
+          
+          Object.keys(seatsByRow).forEach(gridRow => {
+            const gridRowNum = parseInt(gridRow);
+            const displayRow = rowMapping[gridRowNum];
+            const seatsInRow = seatsByRow[gridRow].sort((a, b) => a.col - b.col);
+            
+            seatsInRow.forEach((seat, index) => {
+              if (state.labelType === 'letters') {
+                seat.label = `${String.fromCharCode(65 + displayRow)}${index + 1}`;
+              } else {
+                seat.label = `${displayRow + 1}-${index + 1}`;
+              }
+            });
+          });
+          
           get().pushHistory();
         }
       }
@@ -135,6 +225,64 @@ export const useSeatLayoutStore = create(
     }),
 
     loadSeats: (seats) => set({ seats }),
+
+    // Helper function to regenerate labels for a specific row
+    regenerateRowLabels: (row) => set((state) => {
+      // Get all unique rows that have seats, sorted by row number
+      const occupiedRows = [...new Set(state.seats.map(seat => seat.row))].sort((a, b) => a - b);
+      
+      // Find display row for the given grid row
+      const displayRow = occupiedRows.indexOf(row);
+      if (displayRow === -1) return; // Row not found
+      
+      const seatsInRow = state.seats
+        .filter(seat => seat.row === row)
+        .sort((a, b) => a.col - b.col); // Sort by column position
+      
+      seatsInRow.forEach((seat, index) => {
+        if (state.labelType === 'letters') {
+          seat.label = `${String.fromCharCode(65 + displayRow)}${index + 1}`;
+        } else {
+          seat.label = `${displayRow + 1}-${index + 1}`;
+        }
+      });
+    }),
+
+    // Regenerate all labels
+    regenerateAllLabels: () => set((state) => {
+      // Get all unique rows that have seats, sorted by row number
+      const occupiedRows = [...new Set(state.seats.map(seat => seat.row))].sort((a, b) => a - b);
+      
+      // Create mapping from grid row to display row (A, B, C...)
+      const rowMapping = {};
+      occupiedRows.forEach((gridRow, index) => {
+        rowMapping[gridRow] = index;
+      });
+      
+      // Group seats by grid row
+      const seatsByRow = {};
+      state.seats.forEach(seat => {
+        if (!seatsByRow[seat.row]) {
+          seatsByRow[seat.row] = [];
+        }
+        seatsByRow[seat.row].push(seat);
+      });
+      
+      // Regenerate labels for each row
+      Object.keys(seatsByRow).forEach(gridRow => {
+        const gridRowNum = parseInt(gridRow);
+        const displayRow = rowMapping[gridRowNum];
+        const seatsInRow = seatsByRow[gridRow].sort((a, b) => a.col - b.col);
+        
+        seatsInRow.forEach((seat, index) => {
+          if (state.labelType === 'letters') {
+            seat.label = `${String.fromCharCode(65 + displayRow)}${index + 1}`;
+          } else {
+            seat.label = `${displayRow + 1}-${index + 1}`;
+          }
+        });
+      });
+    }),
 
     // Selection actions
     selectCell: (seatId) => set((state) => {
