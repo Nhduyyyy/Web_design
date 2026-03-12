@@ -115,9 +115,20 @@
   overflow: hidden;
 }
 
+/* Single-column variant (used for embedded tabs like LivestreamList) */
+.tuong-performance.luxury-streaming .tp-main.tp-main--single {
+  grid-template-columns: 1fr;
+  height: auto;
+  overflow: visible;
+}
+
 @media (min-width: 1024px) {
   .tuong-performance.luxury-streaming .tp-main {
     grid-template-columns: 1fr 2fr;
+  }
+
+  .tuong-performance.luxury-streaming .tp-main.tp-main--single {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { motion } from 'framer-motion'
 import InteractiveScene from './InteractiveScene'
 import Schedule from './Schedule'
-import LiveStream from './LiveStream'
 import Events from './Events'
+import LivestreamList from './Livestream/LivestreamList'
 import { useShows } from '../hooks/useShows'
 import './TuongPerformance.css'
 
@@ -13,7 +13,7 @@ import './TuongPerformance.css'
 const TABS = [
   { id: 'watch', label: 'Vở diễn' },
   { id: 'schedule', label: 'Lịch diễn' },
-  { id: 'livestream', label: 'Live Stream', path: '/livestreams' },
+  { id: 'livestream', label: 'Live Stream' },
   { id: 'events', label: 'Sự Kiện' }
 ]
 
@@ -483,11 +483,14 @@ function TuongPerformance({ setActiveSection }) {
         </motion.div>
       )}
       {activeTab === 'livestream' && (
-        <div className="tp-other-tab">
-          {/* LiveStream hiện tại là demo giả lập.
-              Trang /livestreams mới dùng Supabase + WebRTC cho theater & viewer. */}
-          <LiveStream />
-        </div>
+        <motion.main
+          className="tp-main tp-main--single"
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <LivestreamList embedded />
+        </motion.main>
       )}
       {activeTab === 'events' && (
         <div className="tp-other-tab">
