@@ -23,26 +23,26 @@ export default function VersionHistoryModal({ hallId, isOpen, onClose, onRestore
       setVersions(data);
     } catch (error) {
       console.error('Failed to load versions:', error);
-      toast.error('Failed to load version history');
+      toast.error('Không thể tải lịch sử phiên bản');
     } finally {
       setLoading(false);
     }
   };
   
   const handleRestore = async (versionNumber) => {
-    if (!confirm(`Restore version ${versionNumber}? Current layout will be saved as a new version.`)) {
+    if (!confirm(`Khôi phục phiên bản ${versionNumber}? Bố trí hiện tại sẽ được lưu như một phiên bản mới.`)) {
       return;
     }
     
     try {
       setRestoring(versionNumber);
       await restoreLayoutVersion(hallId, versionNumber);
-      toast.success('Version restored successfully');
+      toast.success('Đã khôi phục phiên bản thành công');
       onRestore();
       onClose();
     } catch (error) {
       console.error('Failed to restore version:', error);
-      toast.error('Failed to restore version');
+      toast.error('Không thể khôi phục phiên bản');
     } finally {
       setRestoring(null);
     }

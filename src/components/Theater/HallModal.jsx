@@ -63,6 +63,17 @@ const HallModal = ({ isOpen, onClose, onSave, hall, floors, theaterId, venueId }
     }
   }, [hall, floors, isOpen])
 
+  // Auto-calculate capacity when rows or seats per row changes
+  useEffect(() => {
+    const rows = parseInt(formData.total_rows) || 0
+    const seatsPerRow = parseInt(formData.seats_per_row) || 0
+    const calculatedCapacity = rows * seatsPerRow
+    
+    if (calculatedCapacity > 0 && calculatedCapacity !== parseInt(formData.capacity)) {
+      setFormData(prev => ({ ...prev, capacity: calculatedCapacity.toString() }))
+    }
+  }, [formData.total_rows, formData.seats_per_row])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -169,25 +180,12 @@ const HallModal = ({ isOpen, onClose, onSave, hall, floors, theaterId, venueId }
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-slate-300 mb-2 font-medium">
-                    Sức Chứa <span className="text-red-500">*</span>
+                    Số Hàng Ghế <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
                     required
-                    min="0"
-                    value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                    className="w-full px-4 py-2 bg-background-dark border border-slate-600 rounded-lg text-slate-100 focus:border-primary focus:outline-none"
-                    placeholder="500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-300 mb-2 font-medium">
-                    Số Hàng Ghế
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
+                    min="1"
                     value={formData.total_rows}
                     onChange={(e) => setFormData({ ...formData, total_rows: e.target.value })}
                     className="w-full px-4 py-2 bg-background-dark border border-slate-600 rounded-lg text-slate-100 focus:border-primary focus:outline-none"
@@ -196,16 +194,32 @@ const HallModal = ({ isOpen, onClose, onSave, hall, floors, theaterId, venueId }
                 </div>
                 <div>
                   <label className="block text-slate-300 mb-2 font-medium">
-                    Ghế Mỗi Hàng
+                    Ghế Mỗi Hàng <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
-                    min="0"
+                    required
+                    min="1"
                     value={formData.seats_per_row}
                     onChange={(e) => setFormData({ ...formData, seats_per_row: e.target.value })}
                     className="w-full px-4 py-2 bg-background-dark border border-slate-600 rounded-lg text-slate-100 focus:border-primary focus:outline-none"
                     placeholder="25"
                   />
+                </div>
+                <div>
+                  <label className="block text-slate-300 mb-2 font-medium">
+                    Sức Chứa (Tự động)
+                  </label>
+                  <input
+                    type="number"
+                    readOnly
+                    value={formData.capacity}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-100 cursor-not-allowed"
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    = Số hàng × Ghế mỗi hàng
+                  </p>
                 </div>
               </div>
             </div>

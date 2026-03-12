@@ -776,3 +776,72 @@ CREATE TABLE public.venues (
   CONSTRAINT venues_pkey PRIMARY KEY (id),
   CONSTRAINT venues_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id)
 );
+CREATE TABLE public.vu_dai_loan_the_champions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  key text NOT NULL UNIQUE,
+  name text NOT NULL,
+  tribe_id uuid NOT NULL,
+  class_id uuid NOT NULL,
+  cost integer NOT NULL CHECK (cost >= 1 AND cost <= 5),
+  skill_name text,
+  skill_description text,
+  base_hp numeric NOT NULL DEFAULT 100,
+  base_attack numeric NOT NULL DEFAULT 10,
+  base_armor numeric NOT NULL DEFAULT 5,
+  base_magic_resist numeric NOT NULL DEFAULT 5,
+  default_mask_color USER-DEFINED NOT NULL DEFAULT 'red'::vu_dai_loan_the_mask_color,
+  image_url text,
+  sort_order integer NOT NULL DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT vu_dai_loan_the_champions_pkey PRIMARY KEY (id),
+  CONSTRAINT vu_dai_loan_the_champions_tribe_id_fkey FOREIGN KEY (tribe_id) REFERENCES public.vu_dai_loan_the_tribes(id),
+  CONSTRAINT vu_dai_loan_the_champions_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.vu_dai_loan_the_classes(id)
+);
+CREATE TABLE public.vu_dai_loan_the_classes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  key text NOT NULL UNIQUE,
+  name text NOT NULL,
+  role text,
+  sort_order integer NOT NULL DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT vu_dai_loan_the_classes_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.vu_dai_loan_the_match_players (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  match_id uuid NOT NULL,
+  user_id uuid,
+  is_bot boolean NOT NULL DEFAULT false,
+  placement integer,
+  hp integer NOT NULL DEFAULT 100,
+  gold integer NOT NULL DEFAULT 0,
+  level integer NOT NULL DEFAULT 1,
+  board_state jsonb DEFAULT '[]'::jsonb,
+  bench_state jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT vu_dai_loan_the_match_players_pkey PRIMARY KEY (id),
+  CONSTRAINT vu_dai_loan_the_match_players_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.vu_dai_loan_the_matches(id),
+  CONSTRAINT vu_dai_loan_the_match_players_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.vu_dai_loan_the_matches (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  status USER-DEFINED NOT NULL DEFAULT 'lobby'::vu_dai_loan_the_match_status,
+  winner_user_id uuid,
+  settings jsonb DEFAULT '{"max_rounds": 30, "trong_chau_fill_per_round": 15}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT vu_dai_loan_the_matches_pkey PRIMARY KEY (id),
+  CONSTRAINT vu_dai_loan_the_matches_winner_user_id_fkey FOREIGN KEY (winner_user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.vu_dai_loan_the_tribes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  key text NOT NULL UNIQUE,
+  name text NOT NULL,
+  theme text,
+  mechanic_description text,
+  color_hex text NOT NULL DEFAULT '#8B4513'::text,
+  music_url text,
+  sort_order integer NOT NULL DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT vu_dai_loan_the_tribes_pkey PRIMARY KEY (id)
+);

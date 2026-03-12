@@ -708,14 +708,20 @@ const VenueDetailSimple = () => {
 
   const handleSaveHall = async (hallData, hallId) => {
     try {
+      let savedHall
       if (hallId) {
-        await updateHall(hallId, hallData)
+        savedHall = await updateHall(hallId, hallData)
       } else {
-        await createHall(hallData)
+        savedHall = await createHall(hallData)
       }
       setIsHallModalOpen(false)
       setEditingHall(null)
       await loadVenueData()
+      
+      // If creating new hall, navigate to seat editor
+      if (!hallId && savedHall?.id) {
+        navigate(`/theater/halls/${savedHall.id}/seat-editor`)
+      }
     } catch (error) {
       console.error('Error saving hall:', error)
       alert('Lỗi khi lưu khán phòng: ' + error.message)

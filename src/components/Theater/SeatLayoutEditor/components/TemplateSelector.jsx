@@ -18,8 +18,8 @@ import { SeatType } from '@/types/seat.types';
 const templates = [
   {
     id: 'classic-theater',
-    name: 'Classic Theater',
-    description: 'Traditional theater layout with center aisle',
+    name: 'Rạp hát cổ điển',
+    description: 'Bố trí rạp hát truyền thống với lối đi giữa',
     rows: 12,
     cols: 20,
     generate: () => {
@@ -39,8 +39,8 @@ const templates = [
   },
   {
     id: 'modern-cinema',
-    name: 'Modern Cinema',
-    description: 'Cinema layout with couple seats in back',
+    name: 'Rạp chiếu phim hiện đại',
+    description: 'Bố trí rạp chiếu phim với ghế đôi ở hàng sau',
     rows: 10,
     cols: 16,
     generate: () => {
@@ -60,8 +60,8 @@ const templates = [
   },
   {
     id: 'small-venue',
-    name: 'Small Venue',
-    description: 'Intimate venue with mixed seating',
+    name: 'Địa điểm nhỏ',
+    description: 'Không gian thân mật với chỗ ngồi hỗn hợp',
     rows: 8,
     cols: 12,
     generate: () => {
@@ -83,8 +83,8 @@ const templates = [
   },
   {
     id: 'amphitheater',
-    name: 'Amphitheater',
-    description: 'Curved seating arrangement',
+    name: 'Nhà hát vòng cung',
+    description: 'Bố trí ghế ngồi cong',
     rows: 15,
     cols: 24,
     generate: () => {
@@ -107,8 +107,8 @@ const templates = [
   },
   {
     id: 'accessible-venue',
-    name: 'Accessible Venue',
-    description: 'Layout optimized for accessibility',
+    name: 'Địa điểm tiếp cận',
+    description: 'Bố trí tối ưu cho khả năng tiếp cận',
     rows: 10,
     cols: 18,
     generate: () => {
@@ -131,8 +131,8 @@ const templates = [
   },
   {
     id: 'empty',
-    name: 'Empty Layout',
-    description: 'Start from scratch',
+    name: 'Bố trí trống',
+    description: 'Bắt đầu từ đầu',
     rows: 10,
     cols: 15,
     generate: () => []
@@ -168,14 +168,14 @@ export default function TemplateSelector() {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Layout className="w-4 h-4 mr-2" />
-          Templates
+          Mẫu có sẵn
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Layout Templates</DialogTitle>
+          <DialogTitle>Mẫu bố trí</DialogTitle>
           <DialogDescription>
-            Choose a pre-made template to get started quickly
+            Chọn một mẫu có sẵn để bắt đầu nhanh chóng
           </DialogDescription>
         </DialogHeader>
         
@@ -207,7 +207,7 @@ export default function TemplateSelector() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm text-muted-foreground">
-                    {template.rows} rows × {template.cols} columns
+                    {template.rows} hàng × {template.cols} cột
                   </div>
                 </CardContent>
               </Card>

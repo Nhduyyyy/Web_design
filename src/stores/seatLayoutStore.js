@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { generateSeatId, generateLabel } from '../components/Theater/SeatLayoutEditor/utils/seatNumbering';
+import { generateSeatId, generateLabel, generateSequentialLabel } from '../components/Theater/SeatLayoutEditor/utils/seatNumbering';
 
 const MAX_HISTORY = 50;
 
@@ -60,8 +60,24 @@ export const useSeatLayoutStore = create(
     ...initialState,
 
     // Layout actions
-    setRows: (rows) => set({ rows }),
-    setCols: (cols) => set({ cols }),
+    setRows: (rows) => set((state) => {
+      state.rows = rows;
+      // Remove seats outside new bounds
+      state.seats = state.seats.filter(seat => seat.row < rows);
+      state.selectedCells = state.selectedCells.filter(id => 
+        state.seats.some(seat => seat.id === id)
+      );
+      get().pushHistory();
+    }),
+    setCols: (cols) => set((state) => {
+      state.cols = cols;
+      // Remove seats outside new bounds
+      state.seats = state.seats.filter(seat => seat.col < cols);
+      state.selectedCells = state.selectedCells.filter(id => 
+        state.seats.some(seat => seat.id === id)
+      );
+      get().pushHistory();
+    }),
     setCellSize: (cellSize) => set({ cellSize }),
     setShowGrid: (showGrid) => set({ showGrid }),
     setLabelType: (labelType) => set({ labelType }),
@@ -73,11 +89,53 @@ export const useSeatLayoutStore = create(
         s => s.row === seat.row && s.col === seat.col
       );
       if (!exists) {
+        // Add seat with temporary label first
         state.seats.push({
           id: seat.id || generateSeatId(),
           ...seat,
-          label: seat.label || generateLabel(seat.row, seat.col, state.labelType)
+          label: 'temp' // Temporary label, will be regenerated
         });
+        
+        // Regenerate all labels immediately within the same state update
+        // Only count actual seats (not stage or aisle) for labeling
+        const actualSeats = state.seats.filter(s => s.type !== 'stage' && s.type !== 'aisle');
+        const occupiedRows = [...new Set(actualSeats.map(seat => seat.row))].sort((a, b) => a - b);
+        const rowMapping = {};
+        occupiedRows.forEach((gridRow, index) => {
+          rowMapping[gridRow] = index;
+        });
+        
+        const seatsByRow = {};
+        actualSeats.forEach(seat => {
+          if (!seatsByRow[seat.row]) {
+            seatsByRow[seat.row] = [];
+          }
+          seatsByRow[seat.row].push(seat);
+        });
+        
+        Object.keys(seatsByRow).forEach(gridRow => {
+          const gridRowNum = parseInt(gridRow);
+          const displayRow = rowMapping[gridRowNum];
+          const seatsInRow = seatsByRow[gridRow].sort((a, b) => a.col - b.col);
+          
+          seatsInRow.forEach((seat, index) => {
+            if (state.labelType === 'letters') {
+              seat.label = `${String.fromCharCode(65 + displayRow)}${index + 1}`;
+            } else {
+              seat.label = `${displayRow + 1}-${index + 1}`;
+            }
+          });
+        });
+        
+        // Set labels for non-seat items
+        state.seats.forEach(seat => {
+          if (seat.type === 'stage') {
+            seat.label = 'SÂN KHẤU';
+          } else if (seat.type === 'aisle') {
+            seat.label = 'LỐI ĐI';
+          }
+        });
+        
         get().pushHistory();
       }
     }),
@@ -85,6 +143,47 @@ export const useSeatLayoutStore = create(
     removeSeat: (seatId) => set((state) => {
       state.seats = state.seats.filter(s => s.id !== seatId);
       state.selectedCells = state.selectedCells.filter(id => id !== seatId);
+      
+      // Regenerate all labels immediately within the same state update
+      // Only count actual seats (not stage or aisle) for labeling
+      const actualSeats = state.seats.filter(s => s.type !== 'stage' && s.type !== 'aisle');
+      const occupiedRows = [...new Set(actualSeats.map(seat => seat.row))].sort((a, b) => a - b);
+      const rowMapping = {};
+      occupiedRows.forEach((gridRow, index) => {
+        rowMapping[gridRow] = index;
+      });
+      
+      const seatsByRow = {};
+      actualSeats.forEach(seat => {
+        if (!seatsByRow[seat.row]) {
+          seatsByRow[seat.row] = [];
+        }
+        seatsByRow[seat.row].push(seat);
+      });
+      
+      Object.keys(seatsByRow).forEach(gridRow => {
+        const gridRowNum = parseInt(gridRow);
+        const displayRow = rowMapping[gridRowNum];
+        const seatsInRow = seatsByRow[gridRow].sort((a, b) => a.col - b.col);
+        
+        seatsInRow.forEach((seat, index) => {
+          if (state.labelType === 'letters') {
+            seat.label = `${String.fromCharCode(65 + displayRow)}${index + 1}`;
+          } else {
+            seat.label = `${displayRow + 1}-${index + 1}`;
+          }
+        });
+      });
+      
+      // Set labels for non-seat items
+      state.seats.forEach(seat => {
+        if (seat.type === 'stage') {
+          seat.label = 'SÂN KHẤU';
+        } else if (seat.type === 'aisle') {
+          seat.label = 'LỐI ĐI';
+        }
+      });
+      
       get().pushHistory();
     }),
 
@@ -106,7 +205,47 @@ export const useSeatLayoutStore = create(
         if (!occupied) {
           seat.row = newRow;
           seat.col = newCol;
-          seat.label = generateLabel(newRow, newCol, state.labelType);
+          
+          // Regenerate all labels immediately within the same state update
+          // Only count actual seats (not stage or aisle) for labeling
+          const actualSeats = state.seats.filter(s => s.type !== 'stage' && s.type !== 'aisle');
+          const occupiedRows = [...new Set(actualSeats.map(seat => seat.row))].sort((a, b) => a - b);
+          const rowMapping = {};
+          occupiedRows.forEach((gridRow, index) => {
+            rowMapping[gridRow] = index;
+          });
+          
+          const seatsByRow = {};
+          actualSeats.forEach(seat => {
+            if (!seatsByRow[seat.row]) {
+              seatsByRow[seat.row] = [];
+            }
+            seatsByRow[seat.row].push(seat);
+          });
+          
+          Object.keys(seatsByRow).forEach(gridRow => {
+            const gridRowNum = parseInt(gridRow);
+            const displayRow = rowMapping[gridRowNum];
+            const seatsInRow = seatsByRow[gridRow].sort((a, b) => a.col - b.col);
+            
+            seatsInRow.forEach((seat, index) => {
+              if (state.labelType === 'letters') {
+                seat.label = `${String.fromCharCode(65 + displayRow)}${index + 1}`;
+              } else {
+                seat.label = `${displayRow + 1}-${index + 1}`;
+              }
+            });
+          });
+          
+          // Set labels for non-seat items
+          state.seats.forEach(seat => {
+            if (seat.type === 'stage') {
+              seat.label = 'SÂN KHẤU';
+            } else if (seat.type === 'aisle') {
+              seat.label = 'LỐI ĐI';
+            }
+          });
+          
           get().pushHistory();
         }
       }
@@ -119,6 +258,74 @@ export const useSeatLayoutStore = create(
     }),
 
     loadSeats: (seats) => set({ seats }),
+
+    // Helper function to regenerate labels for a specific row
+    regenerateRowLabels: (row) => set((state) => {
+      // Get all unique rows that have seats, sorted by row number
+      const occupiedRows = [...new Set(state.seats.map(seat => seat.row))].sort((a, b) => a - b);
+      
+      // Find display row for the given grid row
+      const displayRow = occupiedRows.indexOf(row);
+      if (displayRow === -1) return; // Row not found
+      
+      const seatsInRow = state.seats
+        .filter(seat => seat.row === row)
+        .sort((a, b) => a.col - b.col); // Sort by column position
+      
+      seatsInRow.forEach((seat, index) => {
+        if (state.labelType === 'letters') {
+          seat.label = `${String.fromCharCode(65 + displayRow)}${index + 1}`;
+        } else {
+          seat.label = `${displayRow + 1}-${index + 1}`;
+        }
+      });
+    }),
+
+    // Regenerate all labels
+    regenerateAllLabels: () => set((state) => {
+      // Only count actual seats (not stage or aisle) for labeling
+      const actualSeats = state.seats.filter(s => s.type !== 'stage' && s.type !== 'aisle');
+      const occupiedRows = [...new Set(actualSeats.map(seat => seat.row))].sort((a, b) => a - b);
+      
+      // Create mapping from grid row to display row (A, B, C...)
+      const rowMapping = {};
+      occupiedRows.forEach((gridRow, index) => {
+        rowMapping[gridRow] = index;
+      });
+      
+      // Group actual seats by grid row
+      const seatsByRow = {};
+      actualSeats.forEach(seat => {
+        if (!seatsByRow[seat.row]) {
+          seatsByRow[seat.row] = [];
+        }
+        seatsByRow[seat.row].push(seat);
+      });
+      
+      // Regenerate labels for each row
+      Object.keys(seatsByRow).forEach(gridRow => {
+        const gridRowNum = parseInt(gridRow);
+        const displayRow = rowMapping[gridRowNum];
+        const seatsInRow = seatsByRow[gridRow].sort((a, b) => a.col - b.col);
+        
+        seatsInRow.forEach((seat, index) => {
+          if (state.labelType === 'letters') {
+            seat.label = `${String.fromCharCode(65 + displayRow)}${index + 1}`;
+          } else {
+            seat.label = `${displayRow + 1}-${index + 1}`;
+          }
+        });
+      });
+      
+      // Set labels for non-seat items
+      state.seats.forEach(seat => {
+        if (seat.type === 'stage') {
+          seat.label = 'SÂN KHẤU';
+        } else if (seat.type === 'aisle') {
+          seat.label = 'LỐI ĐI';
+        }
+      });
+    }),
 
     // Selection actions
     selectCell: (seatId) => set((state) => {
@@ -271,13 +478,29 @@ export const useSeatLayoutStore = create(
     
     updateConfig: (updates) => set((state) => {
       Object.assign(state.config, updates);
-      // Sync with top-level state
-      if (updates.rows !== undefined) state.rows = updates.rows;
-      if (updates.cols !== undefined) state.cols = updates.cols;
+      
+      // Sync with top-level state and clean up seats if needed
+      if (updates.rows !== undefined) {
+        state.rows = updates.rows;
+        // Remove seats outside new bounds
+        state.seats = state.seats.filter(seat => seat.row < updates.rows);
+      }
+      if (updates.cols !== undefined) {
+        state.cols = updates.cols;
+        // Remove seats outside new bounds
+        state.seats = state.seats.filter(seat => seat.col < updates.cols);
+      }
       if (updates.cellSize !== undefined) state.cellSize = updates.cellSize;
       if (updates.showGrid !== undefined) state.showGrid = updates.showGrid;
       if (updates.labelType !== undefined) state.labelType = updates.labelType;
+      
+      // Clean up selected cells that no longer exist
+      state.selectedCells = state.selectedCells.filter(id => 
+        state.seats.some(seat => seat.id === id)
+      );
+      
       state.isDirty = true;
+      get().pushHistory();
     }),
 
     // Zone actions
