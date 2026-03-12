@@ -293,6 +293,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  align-items: stretch;
 }
 
 .schedule-card {
@@ -302,10 +303,23 @@
   flex-direction: column;
   gap: 1.5rem;
   overflow: hidden;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: none;
+  box-sizing: border-box;
 }
 
 .schedule-card.canceled {
   opacity: 0.7;
+}
+
+/* Defensive override for any global "square card" utility styles */
+.schedule-page article.schedule-card {
+  inline-size: 100%;
+  max-inline-size: none;
+  block-size: auto;
+  max-block-size: none;
 }
 
 @media (min-width: 768px) {
@@ -404,12 +418,15 @@
   line-height: 1.6;
   margin: 0 0 1.5rem 0;
   font-size: 0.9375rem;
+  white-space: normal;
+  overflow: visible;
 }
 
 .schedule-card-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .schedule-card-actions .schedule-btn .material-symbols-outlined {
@@ -430,12 +447,27 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  align-items: stretch;
 }
 
 .schedule-widget {
   border-radius: 1rem;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: none;
+  box-sizing: border-box;
+}
+
+/* Defensive override for any global "square block" utility styles */
+.schedule-page .schedule-sidebar .schedule-widget,
+.schedule-page .schedule-sidebar .schedule-widget-history {
+  inline-size: 100%;
+  max-inline-size: none;
+  block-size: auto;
+  max-block-size: none;
 }
 
 .schedule-widget-header-red {

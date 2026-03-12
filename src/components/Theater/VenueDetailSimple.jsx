@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Eye, Edit2, Trash2, Clock, Users, RefreshCw } from 'lucide-react'
+import { useShows } from '../../hooks/useShows'
+import { uploadTheaterAsset, validateImageFile } from '../../utils/storageHelpers'
 import { getVenueById, getTheaterById } from '../../services/theaterService'
 import { 
   getFloorsByTheater, 
@@ -40,8 +43,22 @@ const VenueDetailSimple = () => {
   const [editingFloor, setEditingFloor] = useState(null)
   const [editingHall, setEditingHall] = useState(null)
 
+  // Show modal states (for creating/editing shows from this venue)
+  const [selectedShow, setSelectedShow] = useState(null)
+  const [showFormOpen, setShowFormOpen] = useState(false)
+  const [showFormLoading, setShowFormLoading] = useState(false)
+
   // Tabs: overview, halls, plays, schedule, staff
   const [activeTab, setActiveTab] = useState('overview')
+
+  // Shows data from 'shows' table (used in TabPlays)
+  const {
+    shows,
+    loading: showsLoading,
+    error: showsError,
+    createShow,
+    updateShow,
+  } = useShows()
 
   useEffect(() => {
     loadVenueData()
@@ -93,6 +110,504 @@ const VenueDetailSimple = () => {
       case 'maintenance': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
       case 'inactive': return 'bg-red-500/20 text-red-400 border-red-500/30'
       default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+    }
+  }
+
+  const ShowCard = ({ show, onEdit, onDelete, onView }) => {
+    return (
+      <motion.div
+        whileHover={{ y: -4 }}
+        className="flex flex-col rounded-2xl overflow-hidden border border-border-gold/40 bg-surface-dark shadow-[0_0_30px_rgba(0,0,0,0.55)] transition-transform duration-300 hover:shadow-[0_0_40px_rgba(212,175,55,0.18)]"
+      >
+        <div className="relative h-48 bg-background-dark">
+          {show.thumbnail_url ? (
+            <img
+              src={show.thumbnail_url}
+              alt={show.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-primary/60 text-4xl">
+              🎭
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 space-y-2">
+          <h3 className="font-bold text-lg text-slate-50 line-clamp-1">
+            {show.title}
+          </h3>
+
+          {show.description && (
+            <p className="text-sm text-slate-400 line-clamp-2">
+              {show.description}
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+            {show.duration && (
+              <span className="flex items-center gap-1">
+                <Clock size={12} /> {show.duration} phút
+              </span>
+            )}
+            {show.characters && show.characters.length > 0 && (
+              <span className="flex items-center gap-1">
+                <Users size={12} /> {show.characters.length} nhân vật
+              </span>
+            )}
+          </div>
+
+          {show.tags && show.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {show.tags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 rounded-full text-xs border border-amber-500/40 bg-amber-100/10 text-amber-200"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="mt-auto flex gap-2 mx-4 mb-2 pt-2 border-t border-border-gold/30">
+          <button
+            onClick={() => onView(show)}
+            className="flex-1 flex items-center justify-center gap-1 rounded-lg border border-border-gold/40 bg-background-dark/60 py-1.5 text-sm text-slate-100 hover:bg-background-dark"
+          >
+            <Eye size={14} /> Xem
+          </button>
+          <button
+            onClick={() => onEdit(show)}
+            className="flex-1 flex items-center justify-center gap-1 rounded-lg border border-border-gold/40 bg-background-dark/60 py-1.5 text-sm text-primary hover:bg-background-dark"
+          >
+            <Edit2 size={14} /> Sửa
+          </button>
+          <button
+            onClick={() => onDelete(show)}
+            className="flex-1 flex items-center justify-center gap-1 rounded-lg border border-red-500/50 bg-red-500/10 py-1.5 text-sm text-red-300 hover:bg-red-500/20"
+          >
+            <Trash2 size={14} /> Xóa
+          </button>
+        </div>
+      </motion.div>
+    )
+  }
+
+  const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
+    const [form, setForm] = useState({
+      title: initialData?.title || '',
+      description: initialData?.description || '',
+      synopsis: initialData?.synopsis || '',
+      duration: initialData?.duration || undefined,
+      thumbnail_url: initialData?.thumbnail_url || '',
+      cover_image_url: initialData?.cover_image_url || '',
+      trailer_url: initialData?.trailer_url || '',
+      tags: initialData?.tags || [],
+      characters: initialData?.characters || [],
+    })
+
+    const [tagInput, setTagInput] = useState('')
+    const [charInput, setCharInput] = useState('')
+    const [errors, setErrors] = useState({})
+    const [thumbnailFile, setThumbnailFile] = useState(null)
+    const [coverFile, setCoverFile] = useState(null)
+
+    const validate = () => {
+      const newErrors = {}
+      if (!form.title.trim()) newErrors.title = 'Tên vở diễn không được để trống'
+      if (form.duration && form.duration <= 0) {
+        newErrors.duration = 'Thời lượng phải lớn hơn 0'
+      }
+      setErrors(newErrors)
+      return Object.keys(newErrors).length === 0
+    }
+
+    const handleThumbnailFileChange = (e) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+
+      const validationMsg = validateImageFile(file)
+      if (validationMsg) {
+        setErrors((prev) => ({ ...prev, thumbnail_url: validationMsg }))
+        return
+      }
+
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next.thumbnail_url
+        return next
+      })
+      setThumbnailFile(file)
+    }
+
+    const handleCoverFileChange = (e) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+
+      const validationMsg = validateImageFile(file)
+      if (validationMsg) {
+        setErrors((prev) => ({ ...prev, cover_image_url: validationMsg }))
+        return
+      }
+
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next.cover_image_url
+        return next
+      })
+      setCoverFile(file)
+    }
+
+    const handleSubmit = async (e) => {
+      e.preventDefault()
+      if (!validate()) return
+
+      try {
+        const storageTheaterId = initialData?.theater_id || 'theater-shows'
+        const payload = { ...form }
+
+        if (thumbnailFile) {
+          const validationMsg = validateImageFile(thumbnailFile)
+          if (validationMsg) {
+            setErrors((prev) => ({ ...prev, thumbnail_url: validationMsg }))
+            return
+          }
+
+          const uploadedThumbnailUrl = await uploadTheaterAsset(
+            storageTheaterId,
+            thumbnailFile,
+            'events',
+            initialData?.id,
+          )
+
+          if (!uploadedThumbnailUrl) {
+            setErrors((prev) => ({
+              ...prev,
+              thumbnail_url: 'Không thể upload ảnh thumbnail. Vui lòng thử lại.',
+            }))
+            return
+          }
+
+          payload.thumbnail_url = uploadedThumbnailUrl
+        }
+
+        if (coverFile) {
+          const validationMsg = validateImageFile(coverFile)
+          if (validationMsg) {
+            setErrors((prev) => ({ ...prev, cover_image_url: validationMsg }))
+            return
+          }
+
+          const uploadedCoverUrl = await uploadTheaterAsset(
+            storageTheaterId,
+            coverFile,
+            'events',
+            initialData?.id,
+          )
+
+          if (!uploadedCoverUrl) {
+            setErrors((prev) => ({
+              ...prev,
+              cover_image_url: 'Không thể upload ảnh bìa. Vui lòng thử lại.',
+            }))
+            return
+          }
+
+          payload.cover_image_url = uploadedCoverUrl
+        }
+
+        await onSubmit(payload)
+        setThumbnailFile(null)
+        setCoverFile(null)
+      } catch (err) {
+        console.error('Error submitting show form:', err)
+        setErrors((prev) => ({
+          ...prev,
+          general: err.message || 'Không thể lưu vở diễn',
+        }))
+      }
+    }
+
+    const addTag = () => {
+      const val = tagInput.trim()
+      if (val && !(form.tags || []).includes(val)) {
+        setForm((f) => ({ ...f, tags: [...(f.tags || []), val] }))
+      }
+      setTagInput('')
+    }
+
+    const removeTag = (tag) => {
+      setForm((f) => ({ ...f, tags: (f.tags || []).filter((t) => t !== tag) }))
+    }
+
+    const addCharacter = () => {
+      const val = charInput.trim()
+      if (val && !(form.characters || []).includes(val)) {
+        setForm((f) => ({ ...f, characters: [...(f.characters || []), val] }))
+      }
+      setCharInput('')
+    }
+
+    const removeCharacter = (char) => {
+      setForm((f) => ({ ...f, characters: (f.characters || []).filter((c) => c !== char) }))
+    }
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tên vở diễn <span className="text-red-500">*</span>
+          </label>
+          <input
+            value={form.title}
+            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+            placeholder="VD: Trưng Nữ Vương"
+          />
+          {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả ngắn</label>
+          <textarea
+            value={form.description || ''}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            rows={2}
+            className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none resize-none"
+            placeholder="Mô tả hiển thị ở card vở diễn..."
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tóm tắt nội dung</label>
+          <textarea
+            value={form.synopsis || ''}
+            onChange={(e) => setForm((f) => ({ ...f, synopsis: e.target.value }))}
+            rows={4}
+            className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none resize-none"
+            placeholder="Tóm tắt toàn bộ nội dung vở diễn..."
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Thời lượng (phút)</label>
+          <input
+            type="number"
+            min={1}
+            value={form.duration || ''}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                duration: e.target.value ? Number(e.target.value) : undefined,
+              }))
+            }
+            className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+            placeholder="VD: 120"
+          />
+          {errors.duration && <p className="text-red-500 text-xs mt-1">{errors.duration}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Ảnh thumbnail vở diễn
+          </label>
+          <div className="space-y-2">
+            {form.thumbnail_url && (
+              <div className="flex items-center gap-3">
+                <div className="h-14 w-24 overflow-hidden rounded-md border border-border-gold/60 bg-black/40">
+                  <img
+                    src={form.thumbnail_url}
+                    alt="Thumbnail hiện tại"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <p className="flex-1 text-xs text-slate-400 break-all">
+                  Ảnh hiện tại sẽ được thay thế nếu bạn upload ảnh mới.
+                </p>
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleThumbnailFileChange}
+              className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-background-dark hover:file:bg-primary/90"
+            />
+            <p className="mt-1 text-[11px] text-slate-500">
+              Hỗ trợ JPG, PNG, WebP. Tối đa 50MB.
+            </p>
+            {errors.thumbnail_url && (
+              <p className="mt-1 text-xs text-red-400">{errors.thumbnail_url}</p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Ảnh bìa chi tiết
+          </label>
+          <div className="space-y-2">
+            {form.cover_image_url && (
+              <div className="flex items-center gap-3">
+                <div className="h-14 w-24 overflow-hidden rounded-md border border-border-gold/60 bg-black/40">
+                  <img
+                    src={form.cover_image_url}
+                    alt="Ảnh bìa hiện tại"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <p className="flex-1 text-xs text-slate-400 break-all">
+                  Ảnh hiện tại sẽ được thay thế nếu bạn upload ảnh mới.
+                </p>
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleCoverFileChange}
+              className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-background-dark hover:file:bg-primary/90"
+            />
+            <p className="mt-1 text-[11px] text-slate-500">
+              Hỗ trợ JPG, PNG, WebP. Tối đa 50MB.
+            </p>
+            {errors.cover_image_url && (
+              <p className="mt-1 text-xs text-red-400">
+                {errors.cover_image_url}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            URL Trailer
+          </label>
+          <input
+            value={form.trailer_url || ''}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, trailer_url: e.target.value }))
+            }
+            className="w-full border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+            placeholder="https://..."
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+          <div className="flex gap-2 mb-2">
+            <input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addTag()
+                }
+              }}
+              className="flex-1 border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+              placeholder="Nhập tag rồi Enter..."
+            />
+            <button
+              type="button"
+              onClick={addTag}
+              className="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200"
+            >
+              + Thêm
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {(form.tags || []).map((tag) => (
+              <span
+                key={tag}
+                className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => removeTag(tag)}
+                  className="hover:text-red-500"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Nhân vật</label>
+          <div className="flex gap-2 mb-2">
+            <input
+              value={charInput}
+              onChange={(e) => setCharInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addCharacter()
+                }
+              }}
+              className="flex-1 border-border-gold bg-background-dark rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 outline-none"
+              placeholder="Tên nhân vật rồi Enter..."
+            />
+            <button
+              type="button"
+              onClick={addCharacter}
+              className="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200"
+            >
+              + Thêm
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {(form.characters || []).map((char) => (
+              <span
+                key={char}
+                className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs"
+              >
+                {char}
+                <button
+                  type="button"
+                  onClick={() => removeCharacter(char)}
+                  className="hover:text-red-500"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-md border border-border-gold px-4 py-2 text-sm font-medium text-slate-200 hover:bg-background-dark"
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-background-dark hover:bg-primary/90 disabled:opacity-70"
+          >
+            {loading ? 'Đang lưu...' : initialData ? 'Cập nhật' : 'Tạo mới'}
+          </button>
+        </div>
+      </form>
+    )
+  }
+
+  const handleShowFormSubmit = async (data) => {
+    setShowFormLoading(true)
+    try {
+      if (selectedShow) {
+        await updateShow(selectedShow.id, data)
+      } else {
+        await createShow(data)
+      }
+      setShowFormOpen(false)
+      setSelectedShow(null)
+    } finally {
+      setShowFormLoading(false)
     }
   }
 
@@ -472,61 +987,52 @@ const VenueDetailSimple = () => {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold text-slate-100">Kho Vở Diễn</h3>
-        <button className="px-4 py-2 bg-primary text-black font-bold rounded-lg hover:brightness-110">
+        <button
+          onClick={() => {
+            setSelectedShow(null)
+            setShowFormOpen(true)
+          }}
+          className="px-4 py-2 bg-primary text-black font-bold rounded-lg hover:brightness-110"
+        >
           + Thêm Vở Diễn Mới
         </button>
       </div>
 
-      {plays.length === 0 ? (
-        <div className="text-center py-20 px-6">
-          <span className="material-symbols-outlined text-6xl text-slate-600 mb-4 block">theater_comedy</span>
-          <h3 className="text-xl font-bold text-slate-300 mb-2">Chưa có vở diễn nào</h3>
-          <p className="text-slate-500 mb-6">Thêm vở diễn đầu tiên để bắt đầu quản lý lịch biểu diễn</p>
-          <button className="px-6 py-2 bg-primary text-black font-bold rounded-lg hover:brightness-110">
-            + Thêm Vở Diễn
-          </button>
+      {showsLoading && (
+        <div className="flex justify-center py-20 text-primary items-center gap-2">
+          <RefreshCw className="animate-spin" size={18} /> <span>Đang tải danh sách vở diễn...</span>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {plays.map(play => (
-            <div key={play.id} className="flex flex-row bg-surface-dark border border-border-gold/50 rounded-xl overflow-hidden hover:border-primary transition-all">
-              <div className="w-1/3 bg-slate-800 flex items-center justify-center border-r border-slate-700">
-                {play.poster_url ? (
-                  <img src={play.poster_url} alt={play.title} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="material-symbols-outlined text-5xl text-slate-600">theater_comedy</span>
-                )}
-              </div>
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-lg font-bold text-primary leading-tight">{play.title}</h4>
-                    <span className="px-2 py-1 bg-accent-red/20 text-accent-red text-xs font-bold rounded border border-accent-red/30 whitespace-nowrap ml-2">
-                      {play.genre}
-                    </span>
-                  </div>
-                  {play.author && (
-                    <p className="text-slate-400 text-sm mb-1">Tác giả: <span className="text-slate-200">{play.author}</span></p>
-                  )}
-                  {play.director && (
-                    <p className="text-slate-400 text-sm mb-3">Đạo diễn: <span className="text-slate-200">{play.director}</span></p>
-                  )}
-                  {play.description && (
-                    <p className="text-slate-500 text-sm line-clamp-2">{play.description}</p>
-                  )}
-                </div>
-                <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-700/50">
-                  {play.duration && (
-                    <span className="text-slate-400 text-sm flex items-center gap-1">
-                      <span className="material-symbols-outlined text-base">schedule</span>
-                      {play.duration} Phút
-                    </span>
-                  )}
-                  <button className="text-primary text-sm hover:underline font-bold">Chỉnh sửa</button>
-                </div>
-              </div>
-            </div>
+      )}
+
+      {showsError && !showsLoading && (
+        <div className="text-center py-10 text-red-400">
+          {showsError}
+        </div>
+      )}
+
+      {!showsLoading && !showsError && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {shows.map((show) => (
+            <ShowCard
+              key={show.id}
+              show={show}
+              onEdit={(s) => {
+                setSelectedShow(s)
+                setShowFormOpen(true)
+              }}
+              onDelete={() => {
+                // Có thể gắn deleteShow sau nếu cần
+              }}
+              onView={() => {
+                // Có thể gắn modal chi tiết sau nếu cần
+              }}
+            />
           ))}
+          {shows.length === 0 && (
+            <div className="col-span-full text-center py-20 text-slate-500">
+              Chưa có vở diễn nào. Hãy tạo vở diễn đầu tiên!
+            </div>
+          )}
         </div>
       )}
     </motion.div>
@@ -724,6 +1230,25 @@ const VenueDetailSimple = () => {
         theaterId={venue?.theater_id}
         venueId={hallId}
       />
+
+      {showFormOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-black rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+            <h2 className="text-xl font-bold mb-5">
+              {selectedShow ? 'Chỉnh sửa vở diễn' : 'Tạo vở diễn mới'}
+            </h2>
+            <ShowForm
+              initialData={selectedShow || undefined}
+              onSubmit={handleShowFormSubmit}
+              onCancel={() => {
+                setShowFormOpen(false)
+                setSelectedShow(null)
+              }}
+              loading={showFormLoading}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Debug Panel - Only in development */}
       {import.meta.env.DEV && <DebugPanel venueId={hallId} />}

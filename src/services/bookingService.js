@@ -17,13 +17,17 @@ export const generateBookingCode = () => {
  */
 export const createBooking = async (bookingData) => {
   const bookingCode = generateBookingCode()
+  const timeoutMinutes = bookingData?.payment_timeout_minutes ?? 15
+  const paymentExpiresAt = new Date(Date.now() + timeoutMinutes * 60 * 1000).toISOString()
 
   const { data, error } = await supabase
     .from('bookings')
     .insert({
       ...bookingData,
       booking_code: bookingCode,
-      status: 'pending'
+      status: 'pending',
+      payment_timeout_minutes: timeoutMinutes,
+      payment_expires_at: paymentExpiresAt,
     })
     .select()
     .single()
