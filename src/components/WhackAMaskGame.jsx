@@ -4,6 +4,7 @@ import Phaser from 'phaser'
 import Leaderboard from './Leaderboard'
 import Shop from './Shop'
 import Quests from './Quests'
+import Inventory from './Inventory'
 import TuongRainEffect from './TuongRainEffect'
 import { getPlayerStats, saveGameResult, initializePlayerStats } from '../services/gameService'
 import { updateQuestProgress } from '../services/questService'
@@ -334,6 +335,7 @@ const WhackAMaskGame = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [showShop, setShowShop] = useState(false)
   const [showQuests, setShowQuests] = useState(false)
+  const [showInventory, setShowInventory] = useState(false)
   const [score, setScore] = useState(0)
   const [totalCoins, setTotalCoins] = useState(0)
   const [currentRank, setCurrentRank] = useState('Newbie')
@@ -491,18 +493,28 @@ const WhackAMaskGame = () => {
     setShowLeaderboard(true)
     setShowShop(false)
     setShowQuests(false)
+    setShowInventory(false)
   }
 
   const handleViewShop = () => {
     setShowShop(true)
     setShowLeaderboard(false)
     setShowQuests(false)
+    setShowInventory(false)
   }
 
   const handleViewQuests = () => {
     setShowQuests(true)
     setShowLeaderboard(false)
     setShowShop(false)
+    setShowInventory(false)
+  }
+
+  const handleViewInventory = () => {
+    setShowInventory(true)
+    setShowLeaderboard(false)
+    setShowShop(false)
+    setShowQuests(false)
   }
 
   const handleBackToIntro = () => {
@@ -510,6 +522,7 @@ const WhackAMaskGame = () => {
     setShowLeaderboard(false)
     setShowShop(false)
     setShowQuests(false)
+    setShowInventory(false)
     setGameOver(false)
     setScore(0)
     
@@ -598,7 +611,7 @@ const WhackAMaskGame = () => {
             </div>
             
             <nav className="whack-intro-nav">
-              <a className={`whack-intro-nav-link ${!isPlaying && !showLeaderboard && !showShop && !showQuests ? 'active' : ''}`} href="#" onClick={() => {setIsPlaying(false); setShowLeaderboard(false); setShowShop(false); setShowQuests(false)}}>
+              <a className={`whack-intro-nav-link ${!isPlaying && !showLeaderboard && !showShop && !showQuests && !showInventory ? 'active' : ''}`} href="#" onClick={() => {setIsPlaying(false); setShowLeaderboard(false); setShowShop(false); setShowQuests(false); setShowInventory(false)}}>
                 <span className="material-symbols-outlined">home</span>
                 <span>Trang Chủ</span>
               </a>
@@ -614,6 +627,10 @@ const WhackAMaskGame = () => {
                 <span className="material-symbols-outlined">task_alt</span>
                 <span>Nhiệm Vụ</span>
               </a>
+              <a className={`whack-intro-nav-link ${showInventory ? 'active' : ''}`} href="#" onClick={handleViewInventory}>
+                <span className="material-symbols-outlined">inventory</span>
+                <span>Kho Vật Phẩm</span>
+              </a>
             </nav>
 
             <div className="whack-intro-reward-card">
@@ -624,7 +641,7 @@ const WhackAMaskGame = () => {
               <p className="whack-intro-reward-text">
                 Nhận cuộn giấy hàng ngày để mở khóa mặt nạ hiếm.
               </p>
-              <button className="whack-intro-reward-btn">Nhận Thưởng</button>
+              <button type="button" className="whack-intro-reward-btn" onClick={handleViewQuests}>Nhận Thưởng</button>
             </div>
           </aside>
 
@@ -648,6 +665,8 @@ const WhackAMaskGame = () => {
               <Shop />
             ) : showQuests ? (
               <Quests />
+            ) : showInventory ? (
+              <Inventory />
             ) : !isPlaying ? (
               <div className="whack-intro-content">
                 <div className="whack-intro-hero-mask">
