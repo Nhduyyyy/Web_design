@@ -33,9 +33,9 @@ const parseArrayInput = (value) =>
 
 const serializeArrayInput = (arr) => (Array.isArray(arr) ? arr.join(', ') : '')
 
-const EventFormModal = ({ theaterId, event, onSubmit, onClose }) => {
+const EventFormModal = ({ theaterId, event, defaultVenueId, onSubmit, onClose }) => {
   const isEdit = !!event
-  const [form, setForm] = useState(EMPTY_FORM)
+  const [form, setForm] = useState(() => ({ ...EMPTY_FORM, ...(defaultVenueId ? { venue_id: defaultVenueId } : {}) }))
   const [venues, setVenues] = useState([])
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -73,9 +73,9 @@ const EventFormModal = ({ theaterId, event, onSubmit, onClose }) => {
         status: event.status || 'draft',
       })
     } else {
-      setForm(EMPTY_FORM)
+      setForm({ ...EMPTY_FORM, ...(defaultVenueId ? { venue_id: defaultVenueId } : {}) })
     }
-  }, [event])
+  }, [event, defaultVenueId])
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))

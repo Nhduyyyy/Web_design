@@ -44,48 +44,6 @@ const TheaterHeader = ({ theater }) => {
           >
             Thông tin Nhà hát
           </NavLink>
-
-          <NavLink
-            to="/theater/schedules"
-            className={({ isActive }) =>
-              isActive
-                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
-                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
-            }
-          >
-            Lịch diễn
-          </NavLink>
-          <NavLink
-            to="/theater/shows" 
-            className={({ isActive }) =>
-              isActive
-                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
-                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
-            }
-          >
-            Vở diễn
-          </NavLink>
-          <NavLink
-            to="/theater/events" 
-            className={({ isActive }) =>
-              isActive
-                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
-                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
-            }
-          >
-            Sự kiện
-          </NavLink>
-
-          <NavLink
-            to="/theater/livestreams"
-            className={({ isActive }) =>
-              isActive
-                ? "text-primary text-sm font-medium border-b-2 border-primary pb-1"
-                : "text-slate-400 hover:text-primary text-sm font-medium transition-colors"
-            }
-          >
-            Phát trực tiếp
-          </NavLink>
         </nav>
       </div>
 

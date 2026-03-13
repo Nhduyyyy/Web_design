@@ -79,7 +79,35 @@ export const getBookingByCode = async (bookingCode) => {
 }
 
 /**
+ * Lấy seat_label (và fallback row_number, seat_number) từ bảng seats theo danh sách id.
+ * Trả về Map(id -> { seat_label?, row_number?, seat_number? }).
+ */
+export const getSeatLabelsByIds = async (seatIds) => {
+  if (!seatIds || seatIds.length === 0) return new Map()
+  const unique = [...new Set(seatIds)]
+  const { data, error } = await supabase
+    .from('seats')
+    .select('id, seat_label, row_number, seat_number')
+    .in('id', unique)
+  if (error) throw error
+  const map = new Map()
+  ;(data || []).forEach((row) => {
+    map.set(row.id, {
+      seat_label: row.seat_label,
+      row_number: row.row_number,
+      seat_number: row.seat_number
+    })
+  })
+  return map
+}
+
+/**
  * Get bookings by user
+ */
+/**
+ * Lấy danh sách đặt vé theo user.
+ * Mỗi booking được gắn thêm seat_labels: string[] (từ bảng seats.seat_label, fallback row_number-seat_number).
+ * Lưu ý: Không select schedule.status để tránh PostgREST ghi đè booking.status khi join.
  */
 export const getBookingsByUser = async (userId) => {
   const { data, error } = await supabase
@@ -87,7 +115,12 @@ export const getBookingsByUser = async (userId) => {
     .select(`
       *,
       schedule:schedules(
-        *,
+        id,
+        title,
+        start_datetime,
+        end_datetime,
+        venue_id,
+        theater_id,
         venue:venues(*),
         theater:theaters(*)
       )
@@ -96,7 +129,20 @@ export const getBookingsByUser = async (userId) => {
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  return data
+  const bookings = data || []
+  const allSeatIds = [...new Set(bookings.flatMap((b) => b.seat_ids || []))]
+  const seatMap = allSeatIds.length > 0 ? await getSeatLabelsByIds(allSeatIds) : new Map()
+  const getLabel = (id) => {
+    const row = seatMap.get(id)
+    if (!row) return id
+    if (row.seat_label != null && String(row.seat_label).trim() !== '') return row.seat_label
+    if (row.row_number != null && row.seat_number != null) return `R${row.row_number}-${row.seat_number}`
+    return id
+  }
+  return bookings.map((b) => ({
+    ...b,
+    seat_labels: (b.seat_ids || []).map(getLabel)
+  }))
 }
 
 /**

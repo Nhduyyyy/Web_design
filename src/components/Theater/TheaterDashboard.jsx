@@ -274,7 +274,11 @@ const TheaterDashboard = () => {
         {/* Main Content */}
         <section className="flex-1 space-y-6">
           {/* Tabs */}
-          <div className="bg-surface-dark rounded-xl border border-border-gold overflow-hidden">
+          <div className="bg-surface-dark rounded-xl border border-border-gold overflow-hidden"
+          style={{
+            height: '90%',
+          }}
+          >
             <div className="flex border-b border-border-gold">
               <button
                 onClick={() => setActiveTab('overview')}

@@ -4,7 +4,7 @@ import { formatPrice } from '../../utils/booking'
 import { validatePayment } from '../../utils/validation'
 import { generateStaticQR } from '../../services/qrPaymentService'
 import { checkPaymentStatus, checkEventRegistrationPaymentStatus, createPaymentRecord, completeEventPayment, completeBookingPayment } from '../../services/paymentService'
-import { cancelBooking } from '../../services/bookingService'
+import { cancelBooking, getBookingById } from '../../services/bookingService'
 import './booking.css'
 
 const QR_PAYMENT_TIMEOUT = 15 * 60 * 1000 // 15 phút
@@ -50,7 +50,7 @@ export default function PaymentMethod({
   retryCount,
   onTimeout // Callback khi QR timeout
 }) {
-  const [selectedMethod, setSelectedMethod] = useState(null)
+  const [selectedMethod, setSelectedMethod] = useState('qr')
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentError, setPaymentError] = useState(null)
   const [qrRetryCount, setQrRetryCount] = useState(0)
@@ -71,6 +71,7 @@ export default function PaymentMethod({
   const [isTimeout, setIsTimeout] = useState(false)
   const timeoutTimerRef = useRef(null)
   const qrStartTimeRef = useRef(null)
+  const paymentCompletedRef = useRef(false) // Tránh race: không gọi handleQRTimeout sau khi đã hoàn tất thanh toán
 
   // Generate QR code when QR method is selected
   useEffect(() => {
@@ -142,7 +143,7 @@ export default function PaymentMethod({
   }, [paymentContext?.type, paymentContext?.eventRegistrationId, selectedMethod, qrData, paymentStatus?.success, isTimeout, total, onPayment])
 
   // Fake thanh toán thành công sau 20s cho đặt vé (booking QR)
-  const FAKE_BOOKING_PAYMENT_DELAY_MS = 20000
+  const FAKE_BOOKING_PAYMENT_DELAY_MS = 15000 // 15 giây tự động hoàn thành đặt vé
   useEffect(() => {
     if (
       paymentContext?.type === 'booking' &&
@@ -158,6 +159,7 @@ export default function PaymentMethod({
 
       fakeBookingSuccessTimeoutRef.current = setTimeout(async () => {
         try {
+          paymentCompletedRef.current = true // Đánh dấu trước khi gọi API để tránh race với countdown
           const result = await completeBookingPayment(paymentContext.bookingDbId)
           if (result.success) {
             const successStatus = {
@@ -168,9 +170,11 @@ export default function PaymentMethod({
             lastPaymentStatusRef.current = successStatus
             await onPayment('qr', total, { alreadyCompleted: true })
           } else {
+            paymentCompletedRef.current = false
             setPaymentError(result.message || 'Không thể hoàn tất thanh toán.')
           }
         } catch (error) {
+          paymentCompletedRef.current = false
           console.error('Fake booking payment error:', error)
           setPaymentError('Có lỗi khi xác nhận thanh toán. Vui lòng thử lại.')
         }
@@ -205,10 +209,11 @@ export default function PaymentMethod({
       
       // Start countdown timer
       timeoutTimerRef.current = setInterval(() => {
+        if (paymentCompletedRef.current) return // Đã thanh toán xong, không hủy booking
         const elapsed = Date.now() - qrStartTimeRef.current
         const remaining = Math.max(0, QR_PAYMENT_TIMEOUT - elapsed)
         setTimeRemaining(remaining)
-        
+
         if (remaining <= 0) {
           setIsTimeout(true)
           handleQRTimeout()
@@ -230,28 +235,38 @@ export default function PaymentMethod({
     }
   }, [selectedMethod, qrData, paymentStatus?.success, isTimeout])
   
-  // Handle QR timeout
+  // Handle QR timeout (15 phút) — chỉ hủy nếu booking chưa confirmed (tránh ghi đè sau khi đã thanh toán thành công)
   const handleQRTimeout = async () => {
     if (!bookingId) return
-    
+
+    const bookingUuid = paymentContext?.type === 'booking'
+      ? paymentContext.bookingDbId
+      : bookingDbId
+
     try {
-      // Cancel booking
-      const bookingUuid = paymentContext?.type === 'booking'
-        ? paymentContext.bookingDbId
-        : bookingDbId
-      if (bookingUuid) await cancelBooking(bookingUuid)
-      
+      if (bookingUuid) {
+        const booking = await getBookingById(bookingUuid)
+        if (booking?.status === 'confirmed') {
+          // Đã thanh toán thành công (vd. fake complete 15s), không hủy
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current)
+            pollingIntervalRef.current = null
+          }
+          return
+        }
+        await cancelBooking(bookingUuid)
+      }
+
       // Stop polling
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current)
         pollingIntervalRef.current = null
       }
-      
-      // Notify parent component
+
       if (onTimeout) {
         onTimeout()
       }
-      
+
       setPaymentError('Mã QR đã hết hạn (15 phút). Vui lòng tạo lại mã QR mới.')
     } catch (error) {
       console.error('Error canceling booking on timeout:', error)
@@ -410,7 +425,7 @@ export default function PaymentMethod({
       if (hasChanged) {
         setPaymentStatus(status)
         lastPaymentStatusRef.current = status
-        
+        if (status.success) paymentCompletedRef.current = true
         if (status.success) {
           await onPayment('qr', total, { alreadyCompleted: true })
         }
@@ -438,6 +453,7 @@ export default function PaymentMethod({
     try {
       const result = await completeEventPayment(paymentContext.eventRegistrationId)
       if (result.success) {
+        paymentCompletedRef.current = true
         const successStatus = { success: true, message: 'Thanh toán thành công!' }
         setPaymentStatus(successStatus)
         lastPaymentStatusRef.current = successStatus
@@ -484,36 +500,8 @@ export default function PaymentMethod({
       exit={{ opacity: 0, x: -20 }}
       className="step-content payment-method"
     >
-      <h2>Chọn Phương Thức Thanh Toán</h2>
-      <p className="step-description">Chọn phương thức thanh toán phù hợp với bạn</p>
-
-      <div className="payment-methods-grid">
-        {PAYMENT_METHODS.map(method => (
-          <motion.button
-            key={method.id}
-            className={`payment-method-card ${selectedMethod === method.id ? 'selected' : ''}`}
-            onClick={() => setSelectedMethod(method.id)}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            style={{ borderColor: selectedMethod === method.id ? method.color : '#e0e0e0' }}
-          >
-            <div className="payment-icon" style={{ color: method.color }}>
-              {method.icon}
-            </div>
-            <h3>{method.name}</h3>
-            <p>{method.description}</p>
-            {selectedMethod === method.id && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="selected-check"
-              >
-                ✓
-              </motion.div>
-            )}
-          </motion.button>
-        ))}
-      </div>
+      <h2>Thanh toán bằng mã QR</h2>
+      <p className="step-description">Quét mã QR bên dưới để thanh toán</p>
 
       {/* QR Code Display */}
       {selectedMethod === 'qr' && (
