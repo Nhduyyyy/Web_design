@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import { getStatusLabel } from '../../../utils/scheduleHelpers'
 
 const STATUS_COLORS = {
   draft: 'bg-slate-500/20 text-slate-400 border border-slate-500/30',
@@ -50,7 +51,7 @@ export default function ScheduleCalendar({ schedules, onEdit }) {
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-medium ${STATUS_COLORS[s.status] || 'bg-slate-500/20 text-slate-400 border border-slate-500/30'}`}
                 >
-                  {s.status}
+                  {getStatusLabel(s.status)}
                 </span>
               </li>
             ))}

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
+import { STATUS_OPTIONS, STATUS_LABELS } from '../../../utils/scheduleHelpers'
 
-const STATUS_OPTIONS = ['', 'draft', 'scheduled', 'ongoing', 'completed', 'cancelled']
+const FILTER_STATUS_OPTIONS = ['', ...STATUS_OPTIONS]
 
 export default function ScheduleFilters({ theaterId, onChange, fixedVenueId }) {
   const [venues, setVenues] = useState([])
@@ -37,9 +38,9 @@ export default function ScheduleFilters({ theaterId, onChange, fixedVenueId }) {
         onChange={(e) => update('status', e.target.value)}
       >
         <option value="">Tất cả trạng thái</option>
-        {STATUS_OPTIONS.filter(Boolean).map((s) => (
+        {STATUS_OPTIONS.map((s) => (
           <option key={s} value={s}>
-            {s}
+            {STATUS_LABELS[s]}
           </option>
         ))}
       </select>
