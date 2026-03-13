@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { uploadTheaterLogo, uploadTheaterCover, updateTheater } from '../../services/theaterService'
 
 const TheaterProfile = ({ theater, onUpdate }) => {
-  const [isEditing, setIsEditing] = useState(false)
+  const navigate = useNavigate()
   const [uploading, setUploading] = useState(false)
   // Cache-buster: sau khi upload thành công, ép trình duyệt tải lại ảnh (URL path có thể giống nhau khi upsert)
   const [logoCacheBuster, setLogoCacheBuster] = useState(null)
@@ -164,11 +165,11 @@ const TheaterProfile = ({ theater, onUpdate }) => {
           </div>
 
           <button 
-            onClick={() => setIsEditing(true)}
+            onClick={() => navigate('/theater/profile')}
             className="w-full mt-4 py-2.5 gold-gradient text-background-dark font-bold rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">edit_note</span>
-            Chỉnh sửa
+            Xem hồ sơ
           </button>
         </div>
       </div>
