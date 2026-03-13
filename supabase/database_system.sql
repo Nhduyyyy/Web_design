@@ -164,6 +164,18 @@ CREATE TABLE public.halls (
   CONSTRAINT halls_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id),
   CONSTRAINT halls_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES public.venues(id)
 );
+CREATE TABLE public.history_theater (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  theater_id uuid NOT NULL,
+  title text NOT NULL,
+  action_type text NOT NULL CHECK (action_type = ANY (ARRAY['add'::text, 'edit'::text, 'delete'::text])),
+  entity_type text NOT NULL CHECK (entity_type = ANY (ARRAY['venue'::text, 'theater'::text, 'logo'::text, 'cover'::text, 'schedule'::text, 'play'::text, 'performance'::text, 'event'::text, 'livestream'::text])),
+  update_time timestamp with time zone NOT NULL DEFAULT now(),
+  update_by uuid,
+  CONSTRAINT history_theater_pkey PRIMARY KEY (id),
+  CONSTRAINT history_theater_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id),
+  CONSTRAINT history_theater_update_by_fkey FOREIGN KEY (update_by) REFERENCES auth.users(id)
+);
 CREATE TABLE public.livestream_comments (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   livestream_id uuid NOT NULL,
@@ -333,7 +345,7 @@ CREATE TABLE public.organizations (
 CREATE TABLE public.payments (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   transaction_id text NOT NULL UNIQUE,
-  booking_id uuid NOT NULL,
+  booking_id uuid,
   user_id uuid NOT NULL,
   amount integer NOT NULL,
   payment_method USER-DEFINED NOT NULL,
@@ -350,9 +362,11 @@ CREATE TABLE public.payments (
   reference_number text,
   expires_at timestamp with time zone,
   qr_code_url text,
+  event_registration_id uuid,
   CONSTRAINT payments_pkey PRIMARY KEY (id),
   CONSTRAINT payments_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id),
-  CONSTRAINT payments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT payments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT payments_event_registration_id_fkey FOREIGN KEY (event_registration_id) REFERENCES public.event_registrations(id)
 );
 CREATE TABLE public.performances (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -523,7 +537,6 @@ CREATE TABLE public.replays (
 CREATE TABLE public.schedules (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   theater_id uuid NOT NULL,
-  show_id uuid NOT NULL,
   venue_id uuid NOT NULL,
   title text NOT NULL,
   description text,
@@ -538,7 +551,6 @@ CREATE TABLE public.schedules (
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT schedules_pkey PRIMARY KEY (id),
   CONSTRAINT schedules_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id),
-  CONSTRAINT schedules_show_id_fkey FOREIGN KEY (show_id) REFERENCES public.shows(id),
   CONSTRAINT schedules_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES public.venues(id)
 );
 CREATE TABLE public.seat_layout_configs (
@@ -589,6 +601,19 @@ CREATE TABLE public.seat_layout_versions (
   CONSTRAINT seat_layout_versions_hall_id_fkey FOREIGN KEY (hall_id) REFERENCES public.halls(id),
   CONSTRAINT seat_layout_versions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.seat_pricing (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  theater_id uuid NOT NULL,
+  hall_id uuid,
+  seat_type text NOT NULL,
+  base_price integer NOT NULL DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT seat_pricing_pkey PRIMARY KEY (id),
+  CONSTRAINT seat_pricing_theater_id_fkey FOREIGN KEY (theater_id) REFERENCES public.theaters(id),
+  CONSTRAINT seat_pricing_hall_id_fkey FOREIGN KEY (hall_id) REFERENCES public.halls(id)
+);
 CREATE TABLE public.seat_zones (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   hall_id uuid NOT NULL,
@@ -619,6 +644,8 @@ CREATE TABLE public.seats (
   position_x numeric,
   position_y numeric,
   metadata jsonb DEFAULT '{}'::jsonb,
+  base_price integer DEFAULT 0,
+  final_price integer DEFAULT 0,
   CONSTRAINT seats_pkey PRIMARY KEY (id),
   CONSTRAINT seats_hall_id_fkey FOREIGN KEY (hall_id) REFERENCES public.halls(id),
   CONSTRAINT seats_zone_id_fkey FOREIGN KEY (zone_id) REFERENCES public.seat_zones(id)
@@ -684,7 +711,9 @@ CREATE TABLE public.shows (
   characters ARRAY,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT shows_pkey PRIMARY KEY (id)
+  venue_id uuid,
+  CONSTRAINT shows_pkey PRIMARY KEY (id),
+  CONSTRAINT shows_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES public.venues(id)
 );
 CREATE TABLE public.theaters (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

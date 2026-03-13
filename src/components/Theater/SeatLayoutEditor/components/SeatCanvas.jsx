@@ -10,7 +10,7 @@ import StageArea from './StageArea';
 import ZoomControls from './ZoomControls';
 import SeatPriceList from './SeatPriceList';
 
-export default function SeatCanvas() {
+export default function SeatCanvas({ hall }) {
   const canvasRef = useRef(null);
   const [isPainting, setIsPainting] = useState(false);
   
@@ -157,7 +157,10 @@ export default function SeatCanvas() {
           </div>
         </motion.div>
         
-        <SeatPriceList />
+        <SeatPriceList 
+          theaterId={hall?.theater_id} 
+          hallId={hall?.id} 
+        />
         <ZoomControls />
       </DndContext>
     </div>
