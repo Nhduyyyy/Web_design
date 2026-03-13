@@ -3,7 +3,7 @@ import MetricCard from './MetricCard'
 import RevenueChart from './RevenueChart'
 import TopTheaters from './TopTheaters'
 import RecentActivities from './RecentActivities'
-import { getAdminStats, getTopTheaters, getRecentActivities, getRevenueData } from '../../services/adminService'
+import { getAdminStats, getTopTheaters, getRecentActivities } from '../../services/adminService'
 
 function DashboardOverview() {
   const [metrics, setMetrics] = useState({
@@ -17,7 +17,6 @@ function DashboardOverview() {
   })
   const [topTheaters, setTopTheaters] = useState([])
   const [recentActivities, setRecentActivities] = useState([])
-  const [revenueData, setRevenueData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -34,12 +33,10 @@ function DashboardOverview() {
       const results = await Promise.allSettled([
         getAdminStats(),
         getTopTheaters(4),
-        getRecentActivities(10),
-        getRevenueData(6)
+        getRecentActivities(10)
       ])
 
-      // Extract successful results or use defaults
-      const [statsResult, theatersResult, activitiesResult, revenueResult] = results
+      const [statsResult, theatersResult, activitiesResult] = results
 
       setMetrics(statsResult.status === 'fulfilled' ? statsResult.value : {
         totalUsers: 0,
@@ -53,7 +50,6 @@ function DashboardOverview() {
 
       setTopTheaters(theatersResult.status === 'fulfilled' ? theatersResult.value : [])
       setRecentActivities(activitiesResult.status === 'fulfilled' ? activitiesResult.value : [])
-      setRevenueData(revenueResult.status === 'fulfilled' ? revenueResult.value : [])
 
       // Only show error if all requests failed
       const allFailed = results.every(r => r.status === 'rejected')
@@ -133,7 +129,7 @@ function DashboardOverview() {
       </div>
 
       <div className="charts-section">
-        <RevenueChart data={revenueData} />
+        <RevenueChart />
         <TopTheaters theaters={topTheaters} />
       </div>
 

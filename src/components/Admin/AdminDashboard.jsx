@@ -26,7 +26,7 @@ function AdminDashboard() {
         <div className="admin-content">
           {activeView === 'dashboard' && <DashboardOverview />}
           {activeView === 'users' && <UserManagement />}
-          {activeView === 'theaters' && <TheaterManagement />}
+          {/* {activeView === 'theaters' && <TheaterManagement />} */}
           {activeView === 'organizations' && <OrganizationManagement />}
           {activeView === 'schedule' && <ScheduleManagement />}
           {activeView === 'livestream' && <LivestreamManagement />}
