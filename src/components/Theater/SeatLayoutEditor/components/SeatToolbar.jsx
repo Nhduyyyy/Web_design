@@ -15,7 +15,9 @@ import {
   Info,
   MapPin,
   Tag,
-  Palette
+  Palette,
+  User,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +29,7 @@ import {
 import { useSeatLayoutStore } from '@/stores/seatLayoutStore';
 import { ToolType } from '@/types/seat.types';
 
-export default function SeatToolbar() {
+export default function SeatToolbar({ bookedSeatIds = [], bookingDetails = {} }) {
   const { selectedTool, setSelectedTool, selectedCells, seats } = useSeatLayoutStore();
   const [isToolsExpanded, setIsToolsExpanded] = useState(true);
   const [isSeatInfoExpanded, setIsSeatInfoExpanded] = useState(true);
@@ -36,6 +38,14 @@ export default function SeatToolbar() {
   const selectedSeat = selectedCells && selectedCells.length === 1 && seats
     ? seats.find(seat => seat.id === selectedCells[0])
     : null;
+
+  // Get booking info for selected seat
+  const selectedSeatBookingInfo = selectedSeat ? (() => {
+    const seatIdWithoutPrefix = selectedSeat.id.startsWith('seat-') 
+      ? selectedSeat.id.substring(5) 
+      : selectedSeat.id;
+    return bookingDetails[seatIdWithoutPrefix] || null;
+  })() : null;
 
   const showSeatInfo = selectedTool === ToolType.SELECT && selectedSeat && seats && seats.length > 0;
 
@@ -301,22 +311,53 @@ export default function SeatToolbar() {
                     {/* Status */}
                     <div className="flex items-center gap-3 p-2 rounded-lg" style={{ background: '#3B0A0A' }}>
                       <div className={`w-3 h-3 rounded-full ${
-                        selectedSeat?.status === 'available' ? 'bg-green-400' :
-                        selectedSeat?.status === 'occupied' ? 'bg-red-400' :
-                        selectedSeat?.status === 'reserved' ? 'bg-yellow-400' : 'bg-gray-400'
+                        selectedSeatBookingInfo ? 'bg-red-400' : 'bg-green-400'
                       }`} />
                       <div className="flex-1">
                         <div className="text-xs font-medium" style={{ color: '#9CA3AF' }}>
                           TRẠNG THÁI
                         </div>
                         <div className="text-sm font-medium" style={{ color: '#E5E7EB' }}>
-                          {selectedSeat?.status === 'available' && 'Có sẵn'}
-                          {selectedSeat?.status === 'occupied' && 'Đã đặt'}
-                          {selectedSeat?.status === 'reserved' && 'Đã giữ chỗ'}
-                          {!selectedSeat?.status && 'Không xác định'}
+                          {selectedSeatBookingInfo ? 'Đã bán' : 'Còn trống'}
                         </div>
                       </div>
                     </div>
+
+                    {/* Booking Info - Only show if seat is booked */}
+                    {selectedSeatBookingInfo && (
+                      <>
+                        {/* Customer Name */}
+                        <div className="flex items-center gap-3 p-2 rounded-lg" style={{ background: '#3B0A0A' }}>
+                          <User className="w-4 h-4" style={{ color: '#6B8DB5' }} />
+                          <div className="flex-1">
+                            <div className="text-xs font-medium" style={{ color: '#9CA3AF' }}>
+                              NGƯỜI MUA
+                            </div>
+                            <div className="text-sm font-medium" style={{ color: '#E5E7EB' }}>
+                              {selectedSeatBookingInfo.customerName || 'Không có thông tin'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Purchase Time */}
+                        <div className="flex items-center gap-3 p-2 rounded-lg" style={{ background: '#3B0A0A' }}>
+                          <Calendar className="w-4 h-4" style={{ color: '#6B8DB5' }} />
+                          <div className="flex-1">
+                            <div className="text-xs font-medium" style={{ color: '#9CA3AF' }}>
+                              THỜI GIAN MUA
+                            </div>
+                            <div className="text-sm font-medium" style={{ color: '#E5E7EB' }}>
+                              {selectedSeatBookingInfo.confirmedAt 
+                                ? new Date(selectedSeatBookingInfo.confirmedAt).toLocaleString('vi-VN')
+                                : selectedSeatBookingInfo.bookedAt
+                                ? new Date(selectedSeatBookingInfo.bookedAt).toLocaleString('vi-VN')
+                                : 'Không có thông tin'
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   /* Empty State */

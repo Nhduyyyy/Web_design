@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Eye, EyeOff, Users, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { getConfirmedBookedSeatIdsForSchedule } from '@/services/bookingService';
+import { getDetailedBookingInfoForSchedule } from '@/services/bookingService';
 
 export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatusChange }) {
   const [isVisible, setIsVisible] = useState(true); // Mặc định hiển thị
   const [schedules, setSchedules] = useState([]);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [bookedSeatIds, setBookedSeatIds] = useState([]);
+  const [bookingDetails, setBookingDetails] = useState({}); // Map seat_id -> booking info
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -77,6 +78,7 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
   const loadBookingStatus = async (scheduleId) => {
     if (!scheduleId) {
       setBookedSeatIds([]);
+      setBookingDetails({});
       onBookingStatusChange([]);
       return;
     }
@@ -85,16 +87,17 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
       setLoading(true);
       setError(null);
       
-      console.log('Loading booking status for schedule:', scheduleId); // Debug log
-      const bookedIds = await getConfirmedBookedSeatIdsForSchedule(scheduleId);
-      console.log('Found booked seat IDs:', bookedIds); // Debug log
+      const bookingMap = await getDetailedBookingInfoForSchedule(scheduleId);
+      const seatIds = Object.keys(bookingMap);
       
-      setBookedSeatIds(bookedIds);
-      onBookingStatusChange(bookedIds);
+      setBookedSeatIds(seatIds);
+      setBookingDetails(bookingMap);
+      onBookingStatusChange(seatIds, bookingMap); // Pass both seat IDs and details
     } catch (err) {
       console.error('Error loading booking status:', err);
       setError('Không thể tải trạng thái đặt vé');
       setBookedSeatIds([]);
+      setBookingDetails({});
       onBookingStatusChange([]);
     } finally {
       setLoading(false);
@@ -102,7 +105,6 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
   };
 
   const handleScheduleChange = (scheduleId) => {
-    console.log('Schedule changed to:', scheduleId); // Debug log
     setSelectedSchedule(scheduleId);
     loadBookingStatus(scheduleId);
   };
@@ -115,6 +117,7 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
       // Hide booking status
       setSelectedSchedule(null);
       setBookedSeatIds([]);
+      setBookingDetails({});
       onBookingStatusChange([]);
     }
   };
@@ -215,29 +218,10 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
               </div>
             )}
 
-            {/* Success message */}
-            {selectedSchedule && !loading && !error && (
-              <div className="text-green-400 text-xs mb-2">
-                ✅ Đã tải trạng thái {bookedSeatIds.length} ghế đã bán
-              </div>
-            )}
-
             {/* Error State */}
             {error && (
               <div className="text-red-400 text-xs bg-red-900/20 rounded-md p-2 mb-2">
                 {error}
-              </div>
-            )}
-
-            {/* Debug: Show booked seat IDs */}
-            {selectedSchedule && bookedSeatIds.length > 0 && (
-              <div className="text-xs text-gray-400 mb-2 p-2 bg-gray-800 rounded">
-                <div className="font-semibold mb-1">Debug - Booked Seat IDs:</div>
-                <div className="max-h-20 overflow-y-auto">
-                  {bookedSeatIds.map((id, index) => (
-                    <div key={index} className="text-[10px]">{id}</div>
-                  ))}
-                </div>
               </div>
             )}
 

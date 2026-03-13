@@ -51,11 +51,6 @@ const SeatCell = forwardRef(({ seat, isBooked = false }, ref) => {
     cellSize 
   } = useSeatLayoutStore();
 
-  // Debug log
-  if (isBooked) {
-    console.log(`SeatCell ${seat.id} (${seat.label}) received isBooked = true`);
-  }
-
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: seat.id,
     disabled: selectedTool !== ToolType.SELECT
@@ -160,30 +155,13 @@ const SeatCell = forwardRef(({ seat, isBooked = false }, ref) => {
         
         {/* Booking Status Indicator - Dấu chấm tròn ở góc trên */}
         {isBooked && seat.type !== 'aisle' && (
-          <>
-            {/* Debug: Temporary large indicator */}
-            <div 
-              className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-lg pointer-events-none animate-pulse"
-              title="Ghế đã bán (confirmed)"
-              style={{ 
-                zIndex: 30,
-                fontSize: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 'bold'
-              }}
-            >
-              ●
-            </div>
-            {/* Debug text overlay */}
-            <div 
-              className="absolute top-0 left-0 bg-red-600 text-white text-[8px] px-1 rounded pointer-events-none"
-              style={{ zIndex: 25 }}
-            >
-              SOLD
-            </div>
-          </>
+          <div 
+            className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white shadow-sm pointer-events-none"
+            title="Ghế đã bán (confirmed)"
+            style={{ 
+              zIndex: 20
+            }}
+          />
         )}
       </div>
     </motion.div>

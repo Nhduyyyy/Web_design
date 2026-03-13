@@ -382,17 +382,38 @@ export const completeBookingFlow = async ({
   }
 }
 /**
- * Lấy danh sách ghế đã được đặt và CONFIRMED cho một schedule (chỉ dành cho seat editor).
+ * Lấy thông tin chi tiết booking cho seat editor (bao gồm customer info).
  * Chỉ hiển thị ghế đã thanh toán thành công, không bao gồm pending.
  */
-export const getConfirmedBookedSeatIdsForSchedule = async (scheduleId) => {
+export const getDetailedBookingInfoForSchedule = async (scheduleId) => {
   const { data, error } = await supabase
     .from('bookings')
-    .select('seat_ids')
+    .select(`
+      seat_ids,
+      customer_name,
+      customer_email,
+      created_at,
+      confirmed_at
+    `)
     .eq('schedule_id', scheduleId)
     .eq('status', 'confirmed') // Chỉ lấy booking đã confirmed
 
   if (error) throw error
-  const ids = (data || []).flatMap((b) => b.seat_ids || [])
-  return [...new Set(ids)]
+  
+  // Tạo map từ seat_id đến booking info
+  const seatBookingMap = {}
+  
+  data?.forEach(booking => {
+    const seatIds = booking.seat_ids || []
+    seatIds.forEach(seatId => {
+      seatBookingMap[seatId] = {
+        customerName: booking.customer_name,
+        customerEmail: booking.customer_email,
+        bookedAt: booking.created_at,
+        confirmedAt: booking.confirmed_at
+      }
+    })
+  })
+  
+  return seatBookingMap
 }

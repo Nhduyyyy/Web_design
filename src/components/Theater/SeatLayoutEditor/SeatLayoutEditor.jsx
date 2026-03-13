@@ -34,6 +34,8 @@ export default function SeatLayoutEditor() {
   const [saving, setSaving] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showZoneManager, setShowZoneManager] = useState(false);
+  const [bookedSeatIds, setBookedSeatIds] = useState([]); // Track booking status
+  const [bookingDetails, setBookingDetails] = useState({}); // Track booking details
   
   const { 
     isDirty,
@@ -351,12 +353,21 @@ export default function SeatLayoutEditor() {
       </motion.header>
 
       {/* Toolbar */}
-      <SeatToolbar />
+      <SeatToolbar 
+        bookedSeatIds={bookedSeatIds}
+        bookingDetails={bookingDetails}
+      />
 
       {/* Main Content */}
       <div className="seat-editor-main ml-80">
         <div className="seat-editor-canvas-container">
-          <SeatCanvas hall={hall} />
+          <SeatCanvas 
+            hall={hall} 
+            onBookingStatusChange={(seatIds, bookingMap) => {
+              setBookedSeatIds(seatIds);
+              setBookingDetails(bookingMap);
+            }}
+          />
         </div>
         <div className="seat-editor-sidebar">
           <SeatSidebar />
