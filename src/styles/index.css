@@ -24,6 +24,10 @@
   --text-primary: #f5f0e8;
   --text-secondary: rgba(245, 240, 232, 0.8);
   --text-muted: rgba(245, 240, 232, 0.6);
+  /* Game / Vũ Đài Loạn Thế */
+  --accent-red: #d33131;
+  --bg-stage: #2a1515;
+  --gold-cta: #FED955;
   /* Legacy (giữ tương thích) */
   --accent-gold: #d4af37;
   --dark-bg: #120e18;
