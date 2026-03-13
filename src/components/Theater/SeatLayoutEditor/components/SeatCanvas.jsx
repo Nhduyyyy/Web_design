@@ -8,6 +8,7 @@ import SeatGrid from './SeatGrid';
 import SeatCell from './SeatCell';
 import StageArea from './StageArea';
 import ZoomControls from './ZoomControls';
+import SeatPriceList from './SeatPriceList';
 
 export default function SeatCanvas() {
   const canvasRef = useRef(null);
@@ -156,6 +157,7 @@ export default function SeatCanvas() {
           </div>
         </motion.div>
         
+        <SeatPriceList />
         <ZoomControls />
       </DndContext>
     </div>

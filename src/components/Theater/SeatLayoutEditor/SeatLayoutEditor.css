@@ -343,3 +343,246 @@
 .history-controls {
   @apply flex items-center gap-2;
 }
+
+
+/* Seat Price List */
+.seat-price-list {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background: #2D1B1B;
+  border: 1px solid #432828;
+  border-radius: 0.5rem;
+  width: 300px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  z-index: 40;
+}
+
+.price-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  color: white;
+  border-bottom: 1px solid #432828;
+  transition: background 0.2s;
+}
+
+.price-list-header:hover {
+  background: #3D2525;
+}
+
+.expand-button {
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.expand-button:hover {
+  color: white;
+}
+
+.price-list-content {
+  overflow: hidden;
+}
+
+.price-items {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.price-item {
+  background: #1A0F0F;
+  border: 1px solid #432828;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  transition: all 0.2s;
+}
+
+.price-item:hover {
+  border-color: #5A3838;
+  background: #251515;
+}
+
+.price-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.price-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.25rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.price-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.price-item-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+}
+
+.price-item-count {
+  font-size: 0.75rem;
+  color: #9CA3AF;
+}
+
+.price-edit-button {
+  background: #432828;
+  border: none;
+  color: #9CA3AF;
+  padding: 0.375rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.price-edit-button:hover {
+  background: #5A3838;
+  color: white;
+}
+
+.price-save-button {
+  background: #50C878;
+  border: none;
+  color: white;
+  padding: 0.375rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.price-save-button:hover {
+  background: #45B368;
+}
+
+.price-item-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #F5A623;
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
+.price-editor {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.price-step-button {
+  background: #432828;
+  border: 1px solid #5A3838;
+  color: white;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.price-step-button:hover {
+  background: #5A3838;
+  border-color: #6B4848;
+  transform: scale(1.05);
+}
+
+.price-step-button:active {
+  transform: scale(0.95);
+}
+
+.price-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #1A0F0F;
+  border: 2px solid #D33131;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.price-input-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  outline: none;
+  text-align: right;
+  width: 100%;
+}
+
+.price-input-field::-webkit-inner-spin-button,
+.price-input-field::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.price-input-field[type=number] {
+  -moz-appearance: textfield;
+}
+
+.price-currency {
+  padding-right: 0.75rem;
+  color: #9CA3AF;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.price-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #D33131 0%, #B82828 100%);
+  border-top: 1px solid #432828;
+  border-radius: 0 0 0.5rem 0.5rem;
+}
+
+.price-total-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+}
+
+.price-total-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: white;
+}
