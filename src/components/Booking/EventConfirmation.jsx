@@ -51,19 +51,19 @@ export default function EventConfirmation({
             <div className="confirmation-section">
               <h3>Thông tin sự kiện</h3>
               <div className="info-grid">
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Tên sự kiện:</strong>
                   <span>{event.title}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Ngày giờ:</strong>
                   <span>{new Date(event.event_date || event.date).toLocaleString('vi-VN')}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Địa điểm:</strong>
                   <span>{event.venue?.name || event.venue_name}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Địa chỉ:</strong>
                   <span>{event.venue?.address || event.address}, {event.venue?.city || event.city}</span>
                 </div>
@@ -73,24 +73,24 @@ export default function EventConfirmation({
             <div className="confirmation-section">
               <h3>Thông tin đăng ký</h3>
               <div className="info-grid">
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Số lượng người:</strong>
                   <span>{quantity} người</span>
                 </div>
                 {event.price > 0 && (
                   <>
-                    <div className="info-item">
+                    <div className="bg-background-dark">
                       <strong>Giá mỗi người:</strong>
                       <span>{formatPrice(event.price)}</span>
                     </div>
-                    <div className="info-item">
+                    <div className="bg-background-dark">
                       <strong>Tổng tiền:</strong>
                       <span className="total-highlight">{formatPrice(total)}</span>
                     </div>
                   </>
                 )}
                 {event.price === 0 && (
-                  <div className="info-item">
+                  <div className="bg-background-dark">
                     <strong>Giá:</strong>
                     <span className="total-highlight">Miễn phí</span>
                   </div>
@@ -102,18 +102,18 @@ export default function EventConfirmation({
               <div className="confirmation-section">
                 <h3>Thông tin thanh toán</h3>
                 <div className="info-grid">
-                  <div className="info-item">
+                  <div className="bg-background-dark">
                     <strong>Phương thức:</strong>
                     <span>{paymentMethodNames[paymentMethod] || paymentMethod}</span>
                   </div>
                   {paymentResult?.transactionId && (
-                    <div className="info-item">
+                    <div className="bg-background-dark">
                       <strong>Mã giao dịch:</strong>
                       <span>{paymentResult.transactionId}</span>
                     </div>
                   )}
                   {paymentResult?.timestamp && (
-                    <div className="info-item">
+                    <div className="bg-background-dark">
                       <strong>Thời gian:</strong>
                       <span>{new Date(paymentResult.timestamp).toLocaleString('vi-VN')}</span>
                     </div>
@@ -125,20 +125,20 @@ export default function EventConfirmation({
             <div className="confirmation-section">
               <h3>Thông tin người đăng ký</h3>
               <div className="info-grid">
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Họ tên:</strong>
                   <span>{customerInfo.name}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Email:</strong>
                   <span>{customerInfo.email}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Số điện thoại:</strong>
                   <span>{customerInfo.phone}</span>
                 </div>
                 {customerInfo.notes && (
-                  <div className="info-item">
+                  <div className="bg-background-dark">
                     <strong>Ghi chú:</strong>
                     <span>{customerInfo.notes}</span>
                   </div>

@@ -304,7 +304,7 @@ export default function ProfilePage({ onClose, setActiveSection }) {
       case 'theater':
         return '🎭 Nhà hát'
       default:
-        return '👤 Người mộ điệu'
+        return '👤 Người dùng'
     }
   }
 

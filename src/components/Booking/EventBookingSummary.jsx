@@ -147,7 +147,7 @@ export default function EventBookingSummary({
               ⚠️ {errors.quantity}
             </div>
           )}
-          <div className="quantity-selection" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: '#f5f5f5', borderRadius: '8px' }}>
+          <div className="quantity-selection" style={{ display: 'flex', alignItems: 'center', backgroundColor: '#000' , justifyContent: 'space-between', gap: '1rem', padding: '1rem', background: '#f5f5f5', borderRadius: '8px' }}>
             <label htmlFor="quantity" style={{ fontWeight: 600 }}>Số lượng:</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button
@@ -185,7 +185,7 @@ export default function EventBookingSummary({
                   fontSize: '1.1rem',
                   fontWeight: 600,
                   cursor: maxAvailable <= 0 ? 'not-allowed' : 'text',
-                  background: maxAvailable <= 0 ? '#f5f5f5' : 'white',
+                  background: 'black',
                   opacity: maxAvailable <= 0 ? 0.6 : 1
                 }}
               />

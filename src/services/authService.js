@@ -161,7 +161,8 @@ export const uploadAvatar = async (userId, file) => {
 
     const fileExt = file.name.split('.').pop()
     const fileName = `${userId}-${Date.now()}.${fileExt}`
-    const filePath = fileName // Store directly in bucket root for simplicity
+    // Path phải có dạng {userId}/{fileName} để policy "upload own avatar" (folder = auth.uid()) chấp nhận
+    const filePath = `${userId}/${fileName}`
 
     console.log('Uploading avatar:', { userId, fileName, filePath, fileSize: file.size })
 
@@ -219,19 +220,20 @@ export const deleteAvatar = async (userId, avatarUrl) => {
     }
 
     // Extract file path from URL
-    // URL format: https://[project].supabase.co/storage/v1/object/public/avatars/[filename]
+    // URL format: https://[project].supabase.co/storage/v1/object/public/avatars/[path]
+    // path có thể là "userId/filename" hoặc "filename" (legacy)
     const urlParts = avatarUrl.split('/avatars/')
     if (urlParts.length < 2) {
       throw new Error('URL avatar không hợp lệ')
     }
 
-    const fileName = urlParts[1].split('?')[0] // Remove query params if any
-    console.log('Deleting avatar:', { userId, fileName })
+    const filePath = urlParts[1].split('?')[0] // Remove query params if any
+    console.log('Deleting avatar:', { userId, filePath })
 
     // Delete from storage
     const { error: deleteError } = await supabase.storage
       .from('avatars')
-      .remove([fileName])
+      .remove([filePath])
 
     if (deleteError) {
       console.error('Delete error:', deleteError)
