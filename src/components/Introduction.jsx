@@ -129,24 +129,6 @@ function Introduction() {
                 <p className="intro-description">
                   {currentType.description}
                 </p>
-                <div className="intro-buttons">
-                  <button className="intro-btn intro-btn-primary">
-                    Khám Phá Ngay
-                  </button>
-                  <button className="intro-btn intro-btn-secondary">
-                    Tìm Hiểu Thêm
-                  </button>
-                </div>
-              </div>
-
-              {/* Feature Icons */}
-              <div className="intro-features">
-                {currentType.features.map((feature, index) => (
-                  <div key={index} className="feature-item">
-                    <div className="feature-icon-box">{feature.icon}</div>
-                    <span className="feature-label">{feature.label}</span>
-                  </div>
-                ))}
               </div>
             </div>
 
