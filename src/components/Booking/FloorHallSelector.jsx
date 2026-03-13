@@ -81,7 +81,14 @@ export default function FloorHallSelector({
   if (loading) {
     return (
       <div className="floor-hall-selector loading">
-        <div className="loading-spinner">Đang tải...</div>
+        <div className="seat-loading-container" style={{ padding: '2rem' }}>
+          <div className="double-ring-spinner">
+            <div className="ring-outer"></div>
+            <div className="ring-inner"></div>
+          </div>
+          <div className="loading-text">Đang tải danh sách tầng...</div>
+          <div className="loading-subtext">Vui lòng chờ trong giây lát</div>
+        </div>
       </div>
     )
   }

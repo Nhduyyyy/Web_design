@@ -152,14 +152,14 @@ function Login() {
           <div className="flex items-center gap-3 mb-6">
             <span className="h-[2px] w-12 bg-[#d33131]" />
             <span className="text-[#d33131] font-bold tracking-[0.3em] uppercase text-sm">
-              Traditional Arts
+              Nghệ Thuật Truyền Thống
             </span>
           </div>
           <h1 className="text-6xl font-extrabold tracking-tighter text-white leading-tight">
-            The Soul of <span className="text-[#d33131]">Ancient</span>
+            Linh Hồn Của <span className="text-[#d33131]">Tuồng</span>
             <br />
             <span className="text-[#d4af37]" style={{ textShadow: '0 0 10px rgba(212, 175, 55, 0.3)' }}>
-              Legends
+              Việt Nam
             </span>
           </h1>
           <p className="mt-6 text-slate-400 text-lg leading-relaxed max-w-md">
@@ -337,34 +337,21 @@ function Login() {
               <div className="flex-grow border-t border-slate-200 dark:border-white/5" />
             </div>
 
-            {/* Social Logins */}
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                className="flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path
-                    d="M12.48 10.92v3.28h7.84c-.24 1.84-.908 3.152-1.896 4.14-1.232 1.232-3.152 2.572-6.424 2.572-5.184 0-9.22-4.184-9.22-9.356s4.036-9.356 9.22-9.356c2.8 0 4.912 1.108 6.4 2.52l2.312-2.312C18.428 1.164 15.824 0 12.48 0 6.168 0 1.056 5.112 1.056 11.424s5.112 11.424 11.424 11.424c3.424 0 6.012-1.124 8.044-3.244 2.084-2.084 2.744-4.996 2.744-7.392 0-.704-.064-1.376-.184-2.032H12.48z"
-                    fill="#EA4335"
-                  />
-                </svg>
-                <span className="text-sm font-semibold text-white">
-                  Google
-                </span>
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-                <span className="text-sm font-semibold text-white">
-                  Facebook
-                </span>
-              </button>
-            </div>
+            {/* Social Login - Google Only */}
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  d="M12.48 10.92v3.28h7.84c-.24 1.84-.908 3.152-1.896 4.14-1.232 1.232-3.152 2.572-6.424 2.572-5.184 0-9.22-4.184-9.22-9.356s4.036-9.356 9.22-9.356c2.8 0 4.912 1.108 6.4 2.52l2.312-2.312C18.428 1.164 15.824 0 12.48 0 6.168 0 1.056 5.112 1.056 11.424s5.112 11.424 11.424 11.424c3.424 0 6.012-1.124 8.044-3.244 2.084-2.084 2.744-4.996 2.744-7.392 0-.704-.064-1.376-.184-2.032H12.48z"
+                  fill="#EA4335"
+                />
+              </svg>
+              <span className="text-sm font-semibold text-white">
+                Google
+              </span>
+            </button>
           </form>
         </div>
 
