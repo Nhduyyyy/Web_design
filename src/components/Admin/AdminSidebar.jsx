@@ -6,7 +6,7 @@ function AdminSidebar({ activeView, setActiveView }) {
     { id: 'organizations', icon: 'business', label: 'Organization Registration' },
     { id: 'schedule', icon: 'calendar_month', label: 'Show Schedule' },
     { id: 'livestream', icon: 'live_tv', label: 'Livestream' },
-    { id: 'tickets', icon: 'confirmation_number', label: 'Tickets' },
+    // { id: 'tickets', icon: 'confirmation_number', label: 'Tickets' },
     { id: 'events', icon: 'event', label: 'Events' },
     { id: 'game', icon: 'sports_esports', label: 'Game Management' },
   ]

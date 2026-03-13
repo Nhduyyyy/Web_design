@@ -46,62 +46,62 @@ export default function LivestreamDetailModal({ livestream, onClose }) {
             <div className="info-section">
               <h3>Thông tin chung</h3>
               <div className="info-grid">
-                <div className="info-item">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Tiêu đề:</label>
                   <span>{livestream.title || '-'}</span>
                 </div>
-                <div className="info-item">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Trạng thái:</label>
                   <span>{getStatusBadge(livestream.status)}</span>
                 </div>
-                <div className="info-item">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Mã nhà hát:</label>
                   <span>{livestream.theater_id ?? '-'}</span>
                 </div>
-                <div className="info-item">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Mã lịch:</label>
                   <span>{livestream.schedule_id ?? '-'}</span>
                 </div>
                 {livestream.access_type != null && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Loại truy cập:</label>
                     <span>{livestream.access_type}</span>
                   </div>
                 )}
                 {livestream.price != null && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Giá (VNĐ):</label>
                     <span>{Number(livestream.price).toLocaleString('vi-VN')}</span>
                   </div>
                 )}
                 {livestream.chat_enabled != null && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Bật chat:</label>
                     <span>{livestream.chat_enabled ? 'Có' : 'Không'}</span>
                   </div>
                 )}
                 {livestream.partner_name && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Đối tác:</label>
                     <span>{livestream.partner_name}</span>
                   </div>
                 )}
-                <div className="info-item full">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Bắt đầu:</label>
                   <span>{formatDate(livestream.start_time)}</span>
                 </div>
-                <div className="info-item full">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Kết thúc:</label>
                   <span>{formatDate(livestream.end_time)}</span>
                 </div>
                 {livestream.created_at && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Ngày tạo:</label>
                     <span>{formatDate(livestream.created_at)}</span>
                   </div>
                 )}
                 {livestream.updated_at && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Cập nhật:</label>
                     <span>{formatDate(livestream.updated_at)}</span>
                   </div>
@@ -112,21 +112,21 @@ export default function LivestreamDetailModal({ livestream, onClose }) {
             <div className="info-section">
               <h3>Thống kê</h3>
               <div className="info-grid">
-                <div className="info-item">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Người xem hiện tại:</label>
                   <span>{livestream.current_viewers ?? 0}</span>
                 </div>
-                <div className="info-item">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Tổng lượt xem:</label>
                   <span>{livestream.total_views ?? 0}</span>
                 </div>
                 {livestream.peak_viewers != null && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Lượt xem cao nhất:</label>
                     <span>{livestream.peak_viewers}</span>
                   </div>
                 )}
-                <div className="info-item">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Số comment:</label>
                   <span>{commentCount}</span>
                 </div>

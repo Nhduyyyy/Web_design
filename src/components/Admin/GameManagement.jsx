@@ -337,7 +337,7 @@ function GameManagement() {
       {/* Stats Cards */}
       <div className="gm-stats-grid">
         <div className="gm-stat-card">
-          <div className="gm-stat-icon" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+          <div className="gm-stat-icon">
             <span className="material-symbols-outlined">group</span>
           </div>
           <div className="gm-stat-content">
@@ -347,7 +347,7 @@ function GameManagement() {
         </div>
 
         <div className="gm-stat-card">
-          <div className="gm-stat-icon" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}>
+          <div className="gm-stat-icon">
             <span className="material-symbols-outlined">videogame_asset</span>
           </div>
           <div className="gm-stat-content">
@@ -357,7 +357,7 @@ function GameManagement() {
         </div>
 
         <div className="gm-stat-card">
-          <div className="gm-stat-icon" style={{ background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' }}>
+          <div className="gm-stat-icon">
             <span className="material-symbols-outlined">toll</span>
           </div>
           <div className="gm-stat-content">
@@ -367,7 +367,7 @@ function GameManagement() {
         </div>
 
         <div className="gm-stat-card">
-          <div className="gm-stat-icon" style={{ background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' }}>
+          <div className="gm-stat-icon">
             <span className="material-symbols-outlined">trending_up</span>
           </div>
           <div className="gm-stat-content">
@@ -454,17 +454,6 @@ function GameManagement() {
         {/* Shop Items Tab */}
         {activeTab === 'shop' && (
           <div className="gm-shop-section">
-            <div className="gm-section-header">
-              <h2>
-                <span className="material-symbols-outlined">shopping_cart</span>
-                Shop Items Management
-              </h2>
-              <button className="gm-add-btn" onClick={handleAddItem}>
-                <span className="material-symbols-outlined">add</span>
-                Add New Item
-              </button>
-            </div>
-
             <div className="gm-table-container">
               <table className="gm-table">
                 <thead>
