@@ -11,12 +11,11 @@ import ReviewStep from './steps/ReviewStep'
 import './OrganizationRegistration.css'
 
 const STEPS = [
-  { id: 1, title: 'Loại hình', description: 'Chọn loại tổ chức' },
-  { id: 2, title: 'Thông tin cơ bản', description: 'Tên, liên hệ' },
-  { id: 3, title: 'Thông tin pháp lý', description: 'Giấy phép, thuế' },
-  { id: 4, title: 'Tài liệu', description: 'Upload giấy tờ' },
-  { id: 5, title: 'Điều khoản', description: 'Đồng ý điều khoản' },
-  { id: 6, title: 'Xác nhận', description: 'Kiểm tra và gửi' }
+  { id: 1, title: 'Thông tin cơ bản', description: 'Tên, liên hệ' },
+  { id: 2, title: 'Thông tin pháp lý', description: 'Giấy phép, thuế' },
+  { id: 3, title: 'Tài liệu', description: 'Upload giấy tờ' },
+  { id: 4, title: 'Điều khoản', description: 'Đồng ý điều khoản' },
+  { id: 5, title: 'Xác nhận', description: 'Kiểm tra và gửi' }
 ]
 
 export default function OrganizationRegistration() {
@@ -29,10 +28,10 @@ export default function OrganizationRegistration() {
 
   // Form data
   const [formData, setFormData] = useState({
-    // Step 1: Type
-    type: 'individual',
+    // Type - default to theater
+    type: 'theater',
     
-    // Step 2: Basic info
+    // Step 1: Basic info
     legal_name: '',
     display_name: '',
     description: '',
@@ -43,7 +42,7 @@ export default function OrganizationRegistration() {
     website: '',
     fanpage: '',
     
-    // Step 3: Legal info
+    // Step 2: Legal info
     tax_code: '',
     business_license_number: '',
     legal_representative_name: '',
@@ -53,10 +52,10 @@ export default function OrganizationRegistration() {
     bank_account_name: '',
     bank_branch: '',
     
-    // Step 4: Documents (handled separately)
+    // Step 3: Documents (handled separately)
     documents: [],
     
-    // Step 5: Terms
+    // Step 4: Terms
     terms_accepted: false,
     terms_version: '1.0'
   })
@@ -71,7 +70,7 @@ export default function OrganizationRegistration() {
 
     try {
       // Save draft on each step
-      if (currentStep === 1 || currentStep === 2) {
+      if (currentStep === 1) {
         if (!organizationId) {
           // Create new organization
           const org = await createOrganization({
@@ -161,7 +160,6 @@ export default function OrganizationRegistration() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-      case 2:
         return (
           <BasicInfoStep
             formData={formData}
@@ -169,14 +167,14 @@ export default function OrganizationRegistration() {
             currentStep={currentStep}
           />
         )
-      case 3:
+      case 2:
         return (
           <LegalInfoStep
             formData={formData}
             updateFormData={updateFormData}
           />
         )
-      case 4:
+      case 3:
         return (
           <DocumentsStep
             organizationId={organizationId}
@@ -184,14 +182,14 @@ export default function OrganizationRegistration() {
             updateFormData={updateFormData}
           />
         )
-      case 5:
+      case 4:
         return (
           <TermsStep
             formData={formData}
             updateFormData={updateFormData}
           />
         )
-      case 6:
+      case 5:
         return (
           <ReviewStep
             formData={formData}
@@ -206,18 +204,16 @@ export default function OrganizationRegistration() {
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return formData.type
-      case 2:
         return formData.legal_name && formData.email && formData.phone
-      case 3:
+      case 2:
         if (formData.type === 'individual') return true
         return formData.tax_code && formData.legal_representative_name
-      case 4:
+      case 3:
         // Allow skip for testing
         return true
-      case 5:
+      case 4:
         return formData.terms_accepted
-      case 6:
+      case 5:
         return true
       default:
         return false
@@ -225,8 +221,8 @@ export default function OrganizationRegistration() {
   }
 
   const handleSkipDocuments = () => {
-    if (currentStep === 4) {
-      setCurrentStep(5)
+    if (currentStep === 3) {
+      setCurrentStep(4)
     }
   }
 
