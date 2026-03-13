@@ -47,9 +47,13 @@ export function getSeatStatus(seat, selectedSeats = []) {
   return 'available'
 }
 
-// Calculate total price
+// Calculate total price with real seat prices
 export function calculateTotal(selectedSeats = []) {
-  return selectedSeats.reduce((sum, seat) => sum + (seat.price || 0), 0)
+  return selectedSeats.reduce((sum, seat) => {
+    // Use the actual price from the seat object (from database)
+    const price = seat.final_price || seat.price || 0
+    return sum + price
+  }, 0)
 }
 
 // Format price in VND

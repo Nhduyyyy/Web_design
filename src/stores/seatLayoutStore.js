@@ -623,9 +623,62 @@ export const useSeatLayoutStore = create(
         byType: {}
       };
       
-      state.seats.forEach(seat => {
+      // Count seats by type, but group adjacent stage cells
+      const stageSeats = state.seats.filter(s => s.type === 'stage');
+      const otherSeats = state.seats.filter(s => s.type !== 'stage');
+      
+      // Count non-stage seats normally
+      otherSeats.forEach(seat => {
         stats.byType[seat.type] = (stats.byType[seat.type] || 0) + 1;
       });
+      
+      // Group adjacent stage cells using flood fill algorithm
+      if (stageSeats.length > 0) {
+        const visited = new Set();
+        let stageGroupCount = 0;
+        
+        const isAdjacent = (seat1, seat2) => {
+          const rowDiff = Math.abs(seat1.row - seat2.row);
+          const colDiff = Math.abs(seat1.col - seat2.col);
+          // Adjacent if horizontally, vertically, or diagonally touching
+          return rowDiff <= 1 && colDiff <= 1 && !(rowDiff === 0 && colDiff === 0);
+        };
+        
+        const floodFill = (startSeat) => {
+          const queue = [startSeat];
+          const group = [];
+          
+          while (queue.length > 0) {
+            const current = queue.shift();
+            const key = `${current.row}-${current.col}`;
+            
+            if (visited.has(key)) continue;
+            visited.add(key);
+            group.push(current);
+            
+            // Find all adjacent stage seats
+            stageSeats.forEach(neighbor => {
+              const neighborKey = `${neighbor.row}-${neighbor.col}`;
+              if (!visited.has(neighborKey) && isAdjacent(current, neighbor)) {
+                queue.push(neighbor);
+              }
+            });
+          }
+          
+          return group;
+        };
+        
+        // Find all connected groups of stage cells
+        stageSeats.forEach(seat => {
+          const key = `${seat.row}-${seat.col}`;
+          if (!visited.has(key)) {
+            floodFill(seat);
+            stageGroupCount++;
+          }
+        });
+        
+        stats.byType['stage'] = stageGroupCount;
+      }
       
       return stats;
     },

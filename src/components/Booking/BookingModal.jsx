@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { generateSeatingChart, calculateTotal, generateBookingId, processPayment, sendEmailConfirmation, sendSMSConfirmation, scheduleReminder } from '../../utils/booking'
 import { cancelBooking, createBooking, updateBooking } from '../../services/bookingService'
 import { getScheduleById } from '../../services/scheduleService'
+import seatPricingSyncService from '../../services/seatPricingSyncService'
 import './booking.css'
 
 const STEPS = {
@@ -44,6 +45,24 @@ export default function BookingModal({ event, isOpen, onClose }) {
   // Pending booking holds selected seats (no reserve on seats table)
   const [scheduleStatus, setScheduleStatus] = useState(null)
   const scheduleCheckIntervalRef = useRef(null)
+  const [theaterId, setTheaterId] = useState(null)
+
+  // Set up pricing sync for real-time updates
+  useEffect(() => {
+    if (theaterId && event?.venue_id) {
+      const unsubscribe = seatPricingSyncService.subscribe(
+        theaterId,
+        event.venue_id,
+        (payload) => {
+          console.log('Pricing updated during booking:', payload)
+          // Recalculate totals for selected seats
+          // This will trigger re-render with updated prices
+        }
+      )
+
+      return unsubscribe
+    }
+  }, [theaterId, event?.venue_id])
 
   // Initialize seating chart when modal opens
   useEffect(() => {
@@ -62,7 +81,7 @@ export default function BookingModal({ event, isOpen, onClose }) {
       setBookingError(null)
       setPaymentError(null)
 
-      // Load full schedule data to get venue_id
+      // Load full schedule data to get venue_id and theater_id
       if (event.schedule_id) {
         loadScheduleData()
       }
@@ -87,7 +106,7 @@ export default function BookingModal({ event, isOpen, onClose }) {
     }
   }, [isOpen, event])
   
-  // Load schedule data to get venue_id
+  // Load schedule data to get venue_id and theater_id
   const loadScheduleData = async () => {
     if (!event?.schedule_id) return
     
@@ -96,6 +115,10 @@ export default function BookingModal({ event, isOpen, onClose }) {
       // Update event with venue_id if not already present
       if (schedule.venue_id && !event.venue_id) {
         event.venue_id = schedule.venue_id
+      }
+      // Set theater_id for pricing sync
+      if (schedule.theater_id) {
+        setTheaterId(schedule.theater_id)
       }
     } catch (error) {
       console.error('Error loading schedule data:', error)

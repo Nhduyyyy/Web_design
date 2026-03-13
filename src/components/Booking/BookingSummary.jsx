@@ -2,11 +2,22 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { formatPrice } from '../../utils/booking'
 import { validateName, validateEmail, validatePhone, validateSeatSelection } from '../../utils/validation'
+import { useBookingTotal } from '../../hooks/useSeatPricing'
 import './booking.css'
 
 export default function BookingSummary({ event, selectedSeats, total, customerInfo, onInfoChange, onContinue, onBack }) {
   const [formData, setFormData] = useState(customerInfo)
   const [errors, setErrors] = useState({})
+
+  // Get theater ID from event/venue for real-time pricing
+  const theaterId = event?.venue?.theater_id || event?.theater_id
+  const hallId = event?.venue_id
+  
+  // Use real-time total calculation
+  const { total: realTimeTotal, loading: totalLoading } = useBookingTotal(selectedSeats, theaterId, hallId)
+  
+  // Use real-time total if available, otherwise fall back to passed total
+  const displayTotal = totalLoading ? total : realTimeTotal
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -155,7 +166,13 @@ export default function BookingSummary({ event, selectedSeats, total, customerIn
             </div>
             <div className="total-row">
               <span>Tổng tiền:</span>
-              <span className="total-amount">{formatPrice(total)}</span>
+              <span className="total-amount">
+                {totalLoading ? (
+                  <span className="loading-price">Đang tính...</span>
+                ) : (
+                  formatPrice(displayTotal)
+                )}
+              </span>
             </div>
           </div>
         </div>

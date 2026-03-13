@@ -9,10 +9,12 @@ import {
   Sofa,
   Accessibility,
   Minus,
-  Square
+  Square,
+  Grid3x3,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
@@ -21,12 +23,12 @@ import { useSeatLayoutStore } from '@/stores/seatLayoutStore';
 import { SeatType } from '@/types/seat.types';
 
 const seatTypeInfo = {
-  [SeatType.STANDARD]: { icon: Armchair, label: 'Thường', color: 'bg-theater-standard' },
-  [SeatType.VIP]: { icon: Star, label: 'VIP', color: 'bg-theater-vip' },
-  [SeatType.COUPLE]: { icon: Sofa, label: 'Đôi', color: 'bg-theater-couple' },
-  [SeatType.WHEELCHAIR]: { icon: Accessibility, label: 'Xe lăn', color: 'bg-theater-wheelchair' },
-  [SeatType.AISLE]: { icon: Minus, label: 'Lối đi', color: 'bg-gray-400' },
-  [SeatType.STAGE]: { icon: Square, label: 'Sân khấu', color: 'bg-theater-stage' },
+  [SeatType.STANDARD]: { icon: Armchair, label: 'Thường', color: '#4A90E2' },
+  [SeatType.VIP]: { icon: Star, label: 'VIP', color: '#F5A623' },
+  [SeatType.COUPLE]: { icon: Sofa, label: 'Đôi', color: '#E91E63' },
+  [SeatType.WHEELCHAIR]: { icon: Accessibility, label: 'Xe lăn', color: '#50C878' },
+  [SeatType.AISLE]: { icon: Minus, label: 'Lối đi', color: '#6B7280' },
+  [SeatType.STAGE]: { icon: Square, label: 'Sân khấu', color: '#D33131' },
 };
 
 export default function SeatSidebar() {
@@ -46,170 +48,194 @@ export default function SeatSidebar() {
 
   return (
     <motion.div
-      className="h-full overflow-y-auto p-4"
+      className="h-full overflow-y-auto sidebar-container"
       initial={{ x: 20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ delay: 0.15 }}
     >
       <Tabs defaultValue="grid" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="grid">
-            <Settings className="w-4 h-4 mr-2" />
-            Lưới
+        <TabsList className="sidebar-tabs">
+          <TabsTrigger value="grid" className="sidebar-tab">
+            <Grid3x3 className="w-4 h-4" />
+            <span className="hidden lg:inline ml-2">Lưới</span>
           </TabsTrigger>
-          <TabsTrigger value="types">
-            <Palette className="w-4 h-4 mr-2" />
-            Loại ghế
+          <TabsTrigger value="types" className="sidebar-tab">
+            <Palette className="w-4 h-4" />
+            <span className="hidden lg:inline ml-2">Loại</span>
           </TabsTrigger>
-          <TabsTrigger value="stats">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Thống kê
+          <TabsTrigger value="stats" className="sidebar-tab">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden lg:inline ml-2">Thống kê</span>
           </TabsTrigger>
         </TabsList>
 
         {/* Grid Settings Tab */}
-        <TabsContent value="grid" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cài đặt lưới</CardTitle>
-              <CardDescription>Cấu hình lưới bố trí</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Số hàng: {rows}</Label>
+        <TabsContent value="grid" className="sidebar-content">
+          <div className="sidebar-section">
+            <h3 className="sidebar-section-title">
+              <Settings className="w-4 h-4" />
+              Cài đặt lưới
+            </h3>
+            
+            <div className="sidebar-control-group">
+              <div className="sidebar-control">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="sidebar-label">Số hàng</Label>
+                  <span className="sidebar-value">{rows}</span>
+                </div>
                 <Slider
                   value={[rows]}
                   onValueChange={([value]) => setRows(value)}
                   min={1}
                   max={40}
                   step={1}
+                  className="sidebar-slider"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Số cột: {cols}</Label>
+              <div className="sidebar-control">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="sidebar-label">Số cột</Label>
+                  <span className="sidebar-value">{cols}</span>
+                </div>
                 <Slider
                   value={[cols]}
                   onValueChange={([value]) => setCols(value)}
                   min={1}
                   max={40}
                   step={1}
+                  className="sidebar-slider"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Kích thước ô: {cellSize}px</Label>
+              <div className="sidebar-control">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="sidebar-label">Kích thước ô</Label>
+                  <span className="sidebar-value">{cellSize}px</span>
+                </div>
                 <Slider
                   value={[cellSize]}
                   onValueChange={([value]) => setCellSize(value)}
                   min={20}
                   max={80}
                   step={5}
+                  className="sidebar-slider"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label>Hiển thị đường lưới</Label>
+              <div className="sidebar-toggle">
+                <div className="flex items-center gap-2">
+                  {showGrid ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  <Label className="sidebar-label">Hiển thị lưới</Label>
+                </div>
                 <button
                   onClick={() => setShowGrid(!showGrid)}
-                  className={`
-                    relative inline-flex h-6 w-11 items-center rounded-full
-                    transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-                    ${showGrid ? 'bg-primary' : 'bg-gray-200'}
-                  `}
+                  className={`toggle-switch ${showGrid ? 'active' : ''}`}
                 >
-                  <span
-                    className={`
-                      inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                      ${showGrid ? 'translate-x-6' : 'translate-x-1'}
-                    `}
-                  />
+                  <span className="toggle-thumb" />
                 </button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Seat Types Tab */}
-        <TabsContent value="types" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Loại ghế</CardTitle>
-              <CardDescription>Các loại ghế có sẵn và số lượng</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+        <TabsContent value="types" className="sidebar-content">
+          <div className="sidebar-section">
+            <h3 className="sidebar-section-title">
+              <Palette className="w-4 h-4" />
+              Loại ghế
+            </h3>
+            
+            <div className="seat-type-list">
               {Object.entries(seatTypeInfo).map(([type, info]) => {
                 const Icon = info.icon;
                 const count = stats.byType[type] || 0;
                 
                 return (
-                  <div key={type} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                  <div key={type} className="seat-type-item">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded ${info.color} text-white`}>
+                      <div 
+                        className="seat-type-icon"
+                        style={{ backgroundColor: info.color }}
+                      >
                         <Icon className="w-4 h-4" />
                       </div>
-                      <span className="font-medium">{info.label}</span>
+                      <span className="seat-type-label">{info.label}</span>
                     </div>
-                    <Badge variant="secondary">{count}</Badge>
+                    <Badge className="seat-type-badge">{count}</Badge>
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Statistics Tab */}
-        <TabsContent value="stats" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Thống kê</CardTitle>
-              <CardDescription>Tổng quan và số liệu bố trí</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-primary">{stats.total}</div>
-                <div className="text-sm text-muted-foreground">Tổng số ghế</div>
+        <TabsContent value="stats" className="sidebar-content">
+          <div className="sidebar-section">
+            <h3 className="sidebar-section-title">
+              <BarChart3 className="w-4 h-4" />
+              Thống kê
+            </h3>
+            
+            <div className="stats-summary">
+              <div className="stats-total">
+                <div className="stats-number">{stats.total}</div>
+                <div className="stats-label">Tổng số ghế</div>
               </div>
+            </div>
 
-              <div className="space-y-4">
-                {Object.entries(stats.byType).map(([type, count]) => {
-                  const info = seatTypeInfo[type];
-                  if (!info) return null;
-                  
-                  const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0;
-                  
-                  return (
-                    <div key={type} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{info.label}</span>
-                        <span className="text-muted-foreground">
-                          {count} ({percentage.toFixed(1)}%)
-                        </span>
+            <div className="stats-breakdown">
+              {Object.entries(stats.byType).map(([type, count]) => {
+                const info = seatTypeInfo[type];
+                if (!info || count === 0) return null;
+                
+                const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0;
+                
+                return (
+                  <div key={type} className="stats-item">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: info.color }}
+                        />
+                        <span className="stats-item-label">{info.label}</span>
                       </div>
-                      <Progress value={percentage} className="h-2" />
+                      <span className="stats-item-value">
+                        {count} <span className="text-muted-foreground">({percentage.toFixed(0)}%)</span>
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                    <Progress 
+                      value={percentage} 
+                      className="stats-progress"
+                      style={{ 
+                        '--progress-color': info.color 
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
 
-              <div className="pt-4 border-t space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Kích thước lưới</span>
-                  <span className="font-medium">{rows} × {cols}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Sức chứa</span>
-                  <span className="font-medium">{rows * cols} ô</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tỷ lệ sử dụng</span>
-                  <span className="font-medium">
-                    {((stats.total / (rows * cols)) * 100).toFixed(1)}%
-                  </span>
-                </div>
+            <div className="stats-info">
+              <div className="stats-info-item">
+                <span className="stats-info-label">Kích thước lưới</span>
+                <span className="stats-info-value">{rows} × {cols}</span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="stats-info-item">
+                <span className="stats-info-label">Sức chứa</span>
+                <span className="stats-info-value">{rows * cols} ô</span>
+              </div>
+              <div className="stats-info-item">
+                <span className="stats-info-label">Tỷ lệ sử dụng</span>
+                <span className="stats-info-value">
+                  {((stats.total / (rows * cols)) * 100).toFixed(1)}%
+                </span>
+              </div>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </motion.div>
