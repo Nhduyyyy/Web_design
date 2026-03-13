@@ -15,75 +15,7 @@ export default function BasicInfoStep({ formData, updateFormData, currentStep })
     updateFormData(testData)
   }
 
-  if (currentStep === 1) {
-    return (
-      <div className="form-step">
-        <h2>Chọn loại hình tổ chức</h2>
-        <p className="step-description">
-          Vui lòng chọn loại hình phù hợp với tổ chức của bạn
-        </p>
-
-        <div className="organization-types">
-          <label className={`type-card ${formData.type === 'individual' ? 'selected' : ''}`}>
-            <input
-              type="radio"
-              name="type"
-              value="individual"
-              checked={formData.type === 'individual'}
-              onChange={(e) => updateFormData({ type: e.target.value })}
-            />
-            <div className="type-icon">👤</div>
-            <h3>Cá nhân</h3>
-            <p>Tổ chức workshop, lớp học nhỏ</p>
-            <ul className="type-features">
-              <li>✓ Không cần giấy phép kinh doanh</li>
-              <li>✓ Tối đa 5 sự kiện/tháng</li>
-              <li>✓ Giá vé tối đa 500,000đ</li>
-            </ul>
-          </label>
-
-          <label className={`type-card ${formData.type === 'enterprise' ? 'selected' : ''}`}>
-            <input
-              type="radio"
-              name="type"
-              value="enterprise"
-              checked={formData.type === 'enterprise'}
-              onChange={(e) => updateFormData({ type: e.target.value })}
-            />
-            <div className="type-icon">🏢</div>
-            <h3>Doanh nghiệp</h3>
-            <p>Công ty tổ chức sự kiện</p>
-            <ul className="type-features">
-              <li>✓ Cần giấy phép kinh doanh</li>
-              <li>✓ Tối đa 20 sự kiện/tháng</li>
-              <li>✓ Giá vé tối đa 2,000,000đ</li>
-            </ul>
-          </label>
-
-          <label className={`type-card ${formData.type === 'theater' ? 'selected' : ''}`}>
-            <input
-              type="radio"
-              name="type"
-              value="theater"
-              checked={formData.type === 'theater'}
-              onChange={(e) => updateFormData({ type: e.target.value })}
-            />
-            <div className="type-icon">🎭</div>
-            <h3>Nhà hát</h3>
-            <p>Nhà hát chính thức, đơn vị nghệ thuật</p>
-            <ul className="type-features">
-              <li>✓ Cần giấy phép đầy đủ</li>
-              <li>✓ Không giới hạn sự kiện</li>
-              <li>✓ Không giới hạn giá vé</li>
-              <li>✓ Hỗ trợ livestream</li>
-            </ul>
-          </label>
-        </div>
-      </div>
-    )
-  }
-
-  // Step 2: Basic Info
+  // Basic Info (previously Step 2, now the only step)
   return (
     <div className="form-step">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>

@@ -112,6 +112,19 @@ function Header({ activeSection, setActiveSection }) {
                     <span>Hồ sơ</span>
                   </button>
                   
+                  {!isAdmin && !isTheater && (
+                    <button 
+                      className="dropdown-item"
+                      onClick={() => {
+                        setShowUserMenu(false)
+                        navigate('/organization/register')
+                      }}
+                    >
+                      <span className="material-symbols-outlined">theater_comedy</span>
+                      <span>Đăng ký nhà hát</span>
+                    </button>
+                  )}
+                  
                   {isAdmin && (
                     <button 
                       className="dropdown-item"
