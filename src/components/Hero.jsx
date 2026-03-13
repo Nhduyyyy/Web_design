@@ -151,7 +151,7 @@ function Hero() {
                 className="hero-btn hero-btn-secondary"
                 onClick={() => navigate('/kiem-lua-phaser')}
               >
-                KIẾM LÚA
+                Giải Trí
               </button>
             </div>
           </div>
