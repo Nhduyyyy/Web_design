@@ -8,7 +8,21 @@ const maskClass = (color) => {
 
 const MASK_LABELS = { red: 'Đỏ: +Sát thương', black: 'Đen: +Chống chịu', white: 'Trắng: +Hiệu ứng', blue: 'Xanh: Sát thủ' }
 
-export default function ChampionCard({ champion, star = 1, maskColor, compact = false, onClick, tribeName, classRole }) {
+export default function ChampionCard({
+  champion,
+  star = 1,
+  maskColor,
+  compact = false,
+  onClick,
+  tribeName,
+  classRole,
+  currentHp,
+  maxHp,
+  isAttacker = false,
+  isTarget = false,
+  isDead = false,
+  imageUrlOverride = null
+}) {
   const name = champion?.name ?? champion?.champion_key ?? '?'
   const cost = champion?.cost ?? 0
   const mask = maskColor ?? champion?.default_mask_color ?? 'red'
@@ -16,13 +30,13 @@ export default function ChampionCard({ champion, star = 1, maskColor, compact = 
   const title = [tribeName, classRole, MASK_LABELS[mask], skill].filter(Boolean).join(' · ')
   const championKey = champion?.key ?? champion?.champion_key
   const tribeKey = champion?.tribe_key ?? champion?.tribe?.key
-  const imageUrl = championKey ? getChampionImageUrl(championKey, tribeKey) : null
+  const imageUrl = imageUrlOverride ?? (championKey ? getChampionImageUrl(championKey, tribeKey) : null)
 
   const isHorizontal = imageUrl && compact
 
   return (
     <div
-      className={`vdlt-champ-card ${maskClass(mask)} ${imageUrl ? 'has-image' : ''} ${isHorizontal ? 'layout-horizontal' : ''}`}
+      className={`vdlt-champ-card ${maskClass(mask)} ${imageUrl ? 'has-image' : ''} ${isHorizontal ? 'layout-horizontal' : ''} ${isAttacker ? 'vdlt-champ-attacker' : ''} ${isTarget ? 'vdlt-champ-target' : ''} ${isDead ? 'vdlt-champ-dead' : ''}`}
       title={title}
       onClick={onClick}
       role="button"
@@ -40,6 +54,14 @@ export default function ChampionCard({ champion, star = 1, maskColor, compact = 
             alt=""
             className="vdlt-champ-image"
             loading="lazy"
+          />
+        </div>
+      )}
+      {typeof currentHp === 'number' && typeof maxHp === 'number' && maxHp > 0 && (
+        <div className="vdlt-hp-bar">
+          <div
+            className="vdlt-hp-bar-inner"
+            style={{ width: `${Math.max(0, Math.min(1, currentHp / maxHp)) * 100}%` }}
           />
         </div>
       )}

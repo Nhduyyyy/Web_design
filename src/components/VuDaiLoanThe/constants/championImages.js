@@ -123,3 +123,6 @@ export function getChampionImageUrl (championKey, tribeKey = null) {
   const fileNorm = file.normalize('NFD')
   return `${BASE}/${encodeURIComponent(dirNorm)}/${encodeURIComponent(fileNorm)}`
 }
+
+/** URL ảnh quái vật dùng cho vòng PvE đánh quái (1.2, 1.3, 1.4) */
+export const MONSTER_IMAGE_URL = `${BASE}/quai-vat.png`

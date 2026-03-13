@@ -3,20 +3,37 @@ import {
   STAR_MULTIPLIERS,
   CHAMPION_DAMAGE_TYPE,
   MASK_MODIFIERS,
-  unitStatsFromChampion
+  unitStatsFromChampion,
+  applyItemStatsToUnit
 } from './utils/combatResolver'
 import { getTraitBuffsForBoard, applyTraitBuffsToUnit, countTraitsOnBoard, TRIBE_BUFFS, CLASS_BUFFS } from './constants/traitBuffs'
 import { getTribeByKey } from './constants/tribes'
 import { getClassByKey } from './constants/classes'
 import { getChampionImageUrl } from './constants/championImages'
+import { getItemById } from './constants/items'
+import { applyAugmentBuffsToUnits, getActiveAugmentsForUnit } from './utils/augmentEffects'
 
 const DAMAGE_TYPE_LABELS = { physical: 'Vật lý', magic: 'Phép', true: 'Chân thật' }
+
+function formatItemStats(stats) {
+  if (!stats) return []
+  const parts = []
+  if (stats.hp_flat) parts.push(`+${stats.hp_flat} Máu`)
+  if (stats.attack_flat) parts.push(`+${stats.attack_flat} Tấn công`)
+  if (stats.attack_percent) parts.push(`+${Math.round(stats.attack_percent * 100)}% Tấn công`)
+  if (stats.armor_flat) parts.push(`+${stats.armor_flat} Giáp`)
+  if (stats.magic_resist_flat) parts.push(`+${stats.magic_resist_flat} Kháng phép`)
+  if (stats.crit_chance) parts.push(`+${Math.round(stats.crit_chance * 100)}% Tỉ lệ chí mạng`)
+  if (stats.crit_damage) parts.push(`+${Math.round(stats.crit_damage * 100)}% Sát thương chí mạng`)
+  return parts
+}
 
 export default function ChampionDetailModal({
   champion,
   unit = {},
   boardState = [],
   championsMap = {},
+  playerAugments = [],
   source,
   shopIndex,
   slot,
@@ -45,6 +62,17 @@ export default function ChampionDetailModal({
   const buffs = getTraitBuffsForBoard(boardState, championsMap)
   const currentUnit = unitStatsFromChampion(champion, star, maskColor)
   const unitWithBuffs = applyTraitBuffsToUnit(currentUnit, buffs)
+  const unitWithItems = applyItemStatsToUnit(unitWithBuffs, unit.items || [])
+  const unitForAugment = {
+    ...unitWithItems,
+    champion_key: champion.key,
+    col: typeof unit.col === 'number' ? unit.col : 2,
+    row: typeof unit.row === 'number' ? unit.row : 2
+  }
+  const [unitWithAugments] = playerAugments.length
+    ? applyAugmentBuffsToUnits([unitForAugment], boardState, championsMap, playerAugments)
+    : [unitForAugment]
+  const activeAugments = getActiveAugmentsForUnit(unitForAugment, boardState, championsMap, playerAugments)
 
   const tribeBuffs = champion.tribe_key && TRIBE_BUFFS[champion.tribe_key]
   const classBuffs = champion.class_key && CLASS_BUFFS[champion.class_key]
@@ -56,6 +84,9 @@ export default function ChampionDetailModal({
     ? [2, 4, 6].filter((t) => classCount[champion.class_key] >= t).pop()
     : null
   const hasTeamBuffs = (buffs.armor ?? 0) > 0 || (buffs.magicResist ?? 0) > 0 || (buffs.damagePercent ?? 0) > 0
+  const itemDetails = (unit.items || [])
+    .map((id) => getItemById(id))
+    .filter((it) => it && !(it.tags || []).includes('tool'))
 
   return (
     <div className="vdlt-detail-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Thông tin tướng">
@@ -85,14 +116,19 @@ export default function ChampionDetailModal({
         </header>
 
         <div className="vdlt-detail-final-row">
-          <p className="vdlt-detail-final-title">Chỉ số cuối cùng (đã cộng tất cả buff)</p>
+          <p className="vdlt-detail-final-title">
+            Chỉ số cuối cùng (sao + mặt nạ + buff tộc/hệ + đồ + lõi)
+          </p>
           <div className="vdlt-detail-final-stats">
-            <span>Máu <strong>{unitWithBuffs.current_hp}</strong></span>
-            <span>Tấn công <strong>{unitWithBuffs.attack}</strong></span>
-            <span>Giáp <strong>{unitWithBuffs.armor}</strong></span>
-            <span>Kháng phép <strong>{unitWithBuffs.magic_resist}</strong></span>
+            <span>Máu <strong>{unitWithAugments.current_hp}</strong></span>
+            <span>Tấn công <strong>{unitWithAugments.attack}</strong></span>
+            <span>Giáp <strong>{unitWithAugments.armor}</strong></span>
+            <span>Kháng phép <strong>{unitWithAugments.magic_resist}</strong></span>
+            {unitWithAugments.shield > 0 && (
+              <span className="vdlt-detail-buff-active">Khiên <strong>{unitWithAugments.shield}</strong></span>
+            )}
             <span>Loại ST <strong>{DAMAGE_TYPE_LABELS[damageType] ?? damageType}</strong></span>
-            <span>Chí mạng <strong>{(unitWithBuffs.crit_chance * 100).toFixed(0)}%</strong> ×<strong>{(unitWithBuffs.crit_damage * 100).toFixed(0)}%</strong></span>
+            <span>Chí mạng <strong>{(unitWithAugments.crit_chance * 100).toFixed(0)}%</strong> ×<strong>{(unitWithAugments.crit_damage * 100).toFixed(0)}%</strong></span>
           </div>
         </div>
 
@@ -143,8 +179,8 @@ export default function ChampionDetailModal({
               </tbody>
             </table>
           </div>
-          <p className={`vdlt-detail-current ${hasTeamBuffs ? 'vdlt-detail-buff-active' : ''}`}>
-            <strong>Chỉ số hiện tại ({star}★ + buff đội):</strong> Máu {unitWithBuffs.current_hp} · Tấn công {unitWithBuffs.attack} · Giáp {unitWithBuffs.armor} · Kháng phép {unitWithBuffs.magic_resist}
+          <p className={`vdlt-detail-current ${hasTeamBuffs || itemDetails.length || activeAugments.length ? 'vdlt-detail-buff-active' : ''}`}>
+            <strong>Chỉ số hiện tại ({star}★ + buff đội + đồ + lõi):</strong> Máu {unitWithAugments.current_hp} · Tấn công {unitWithAugments.attack} · Giáp {unitWithAugments.armor} · Kháng phép {unitWithAugments.magic_resist}
           </p>
         </section>
 
@@ -164,9 +200,9 @@ export default function ChampionDetailModal({
               <li>Sát thương chí mạng: ×{(maskMod.critDamage * 100).toFixed(0)}%</li>
             )}
           </ul>
-          {((currentUnit.crit_chance ?? 0.25) !== 0.25 || (currentUnit.crit_damage ?? 1) !== 1) && (
+          {((unitWithAugments.crit_chance ?? 0.25) !== 0.25 || (unitWithAugments.crit_damage ?? 1) !== 1) && (
             <p className="vdlt-detail-crit vdlt-detail-buff-active">
-              <strong>Bạo kích hiện tại:</strong> {(currentUnit.crit_chance * 100).toFixed(0)}% tỷ lệ, ×{(currentUnit.crit_damage * 100).toFixed(0)}% sát thương
+              <strong>Bạo kích hiện tại:</strong> {(unitWithAugments.crit_chance * 100).toFixed(0)}% tỷ lệ, ×{(unitWithAugments.crit_damage * 100).toFixed(0)}% sát thương
             </p>
           )}
         </section>
@@ -211,6 +247,52 @@ export default function ChampionDetailModal({
             <strong>Buff đội hiện tại (theo bàn cờ):</strong> +{(buffs.damagePercent ?? 0) * 100}% sát thương, +{buffs.armor ?? 0} Giáp, +{buffs.magicResist ?? 0} Kháng phép
           </p>
         </section>
+
+        {itemDetails.length > 0 && (
+          <section className="vdlt-detail-section">
+            <h3>Phase D – Vật phẩm (Đồ)</h3>
+            <ul>
+              {itemDetails.map((it, idx) => {
+                const statParts = formatItemStats(it.stats)
+                return (
+                  <li key={`${it.id}-${idx}`} className="vdlt-detail-buff-active">
+                    <strong>{it.name}</strong>
+                    {statParts.length > 0 && (
+                      <span className="vdlt-detail-item-stats">: {statParts.join(', ')}</span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        )}
+
+        {playerAugments.length > 0 && (
+          <section className="vdlt-detail-section">
+            <h3>Phase E – Lõi (Augment)</h3>
+            {activeAugments.length > 0 ? (
+              <ul>
+                {activeAugments.map(({ augment, effectText, pending, pendingReason }) => (
+                  <li key={augment.id} className={pending ? 'vdlt-detail-augment-pending' : 'vdlt-detail-buff-active'}>
+                    <strong>{augment.name}</strong>
+                    {pending && pendingReason ? (
+                      <span className="vdlt-detail-augment-pending-reason">: {effectText}. {pendingReason}</span>
+                    ) : (
+                      <span className="vdlt-detail-augment-effect">: {effectText}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="vdlt-detail-muted">Chưa có lõi nào kích hoạt cho tướng này.</p>
+            )}
+            {playerAugments.length > 0 && activeAugments.length === 0 && (
+              <p className="vdlt-detail-augment-hint">
+                Các lõi đã chọn: {playerAugments.map((a) => a.name).join(', ')}
+              </p>
+            )}
+          </section>
+        )}
 
         <footer className="vdlt-detail-footer">
           {source === 'shop' && typeof shopIndex === 'number' && slot && onBuy && (
