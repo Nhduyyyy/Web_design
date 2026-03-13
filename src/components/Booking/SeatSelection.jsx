@@ -390,8 +390,7 @@ export default function SeatSelection({
       {/* Loading state */}
       {loadingSeats && (
         <div className="loading-spinner" style={{ textAlign: 'center', padding: '2rem' }}>
-          <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
-          <p>Đang tải sơ đồ ghế...</p>
+          <div className="spinner" style={{ margin: '0 auto' }}></div>
         </div>
       )}
       
