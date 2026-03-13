@@ -112,6 +112,17 @@ function Header({ activeSection, setActiveSection }) {
                     <span>Hồ sơ</span>
                   </button>
                   
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      navigate('/kiem-lua-phaser')
+                    }}
+                  >
+                    <span className="material-symbols-outlined">sports_esports</span>
+                    <span>Giải trí</span>
+                  </button>
+                  
                   {!isAdmin && !isTheater && (
                     <button 
                       className="dropdown-item"

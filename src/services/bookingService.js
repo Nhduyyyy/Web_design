@@ -117,6 +117,7 @@ export const getBookingsByUser = async (userId) => {
       schedule:schedules(
         id,
         title,
+        description,
         start_datetime,
         end_datetime,
         venue_id,
@@ -131,7 +132,10 @@ export const getBookingsByUser = async (userId) => {
   if (error) throw error
   const bookings = data || []
   const allSeatIds = [...new Set(bookings.flatMap((b) => b.seat_ids || []))]
-  const seatMap = allSeatIds.length > 0 ? await getSeatLabelsByIds(allSeatIds) : new Map()
+  
+  // Lấy thông tin seats bao gồm hall_id
+  const seatMap = allSeatIds.length > 0 ? await getSeatDetailsWithHall(allSeatIds) : new Map()
+  
   const getLabel = (id) => {
     const row = seatMap.get(id)
     if (!row) return id
@@ -139,10 +143,47 @@ export const getBookingsByUser = async (userId) => {
     if (row.row_number != null && row.seat_number != null) return `R${row.row_number}-${row.seat_number}`
     return id
   }
-  return bookings.map((b) => ({
-    ...b,
-    seat_labels: (b.seat_ids || []).map(getLabel)
-  }))
+  
+  // Lấy hall_id từ seat đầu tiên của mỗi booking
+  return bookings.map((b) => {
+    const firstSeatId = (b.seat_ids || [])[0]
+    const firstSeat = firstSeatId ? seatMap.get(firstSeatId) : null
+    
+    return {
+      ...b,
+      seat_labels: (b.seat_ids || []).map(getLabel),
+      hall: firstSeat?.hall || null
+    }
+  })
+}
+
+/**
+ * Lấy thông tin chi tiết seats bao gồm hall
+ */
+export const getSeatDetailsWithHall = async (seatIds) => {
+  if (!seatIds || seatIds.length === 0) return new Map()
+  const unique = [...new Set(seatIds)]
+  const { data, error } = await supabase
+    .from('seats')
+    .select(`
+      id, 
+      seat_label, 
+      row_number, 
+      seat_number,
+      hall:halls(id, name)
+    `)
+    .in('id', unique)
+  if (error) throw error
+  const map = new Map()
+  ;(data || []).forEach((row) => {
+    map.set(row.id, {
+      seat_label: row.seat_label,
+      row_number: row.row_number,
+      seat_number: row.seat_number,
+      hall: row.hall
+    })
+  })
+  return map
 }
 
 /**
