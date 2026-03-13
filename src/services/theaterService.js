@@ -147,11 +147,16 @@ export const uploadTheaterLogo = async (theaterId, file) => {
   const fileName = `${theaterId}-logo.${fileExt}`
   const filePath = `${theaterId}/${fileName}`
 
-  const { error: uploadError } = await supabase.storage
+  console.log('[theaterService] Upload logo → bucket theater-assets, path:', filePath)
+  const { data: uploadData, error: uploadError } = await supabase.storage
     .from('theater-assets')
     .upload(filePath, file, { upsert: true })
 
-  if (uploadError) throw uploadError
+  if (uploadError) {
+    console.error('[theaterService] Logo storage upload lỗi:', uploadError.message)
+    throw uploadError
+  }
+  console.log('[theaterService] Logo đã lưu storage, path:', uploadData?.path)
 
   const { data: { publicUrl } } = supabase.storage
     .from('theater-assets')
@@ -164,7 +169,11 @@ export const uploadTheaterLogo = async (theaterId, file) => {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) {
+    console.error('[theaterService] Cập nhật logo_url vào bảng theaters lỗi:', error.message)
+    throw error
+  }
+  console.log('[theaterService] Logo upload hoàn tất, publicUrl:', publicUrl)
   await logActivity(theaterId, 'Cập nhật logo nhà hát', 'logo', 'edit')
   return publicUrl
 }
@@ -177,11 +186,16 @@ export const uploadTheaterCover = async (theaterId, file) => {
   const fileName = `${theaterId}-cover.${fileExt}`
   const filePath = `${theaterId}/${fileName}`
 
-  const { error: uploadError } = await supabase.storage
+  console.log('[theaterService] Upload cover → bucket theater-assets, path:', filePath)
+  const { data: uploadData, error: uploadError } = await supabase.storage
     .from('theater-assets')
     .upload(filePath, file, { upsert: true })
 
-  if (uploadError) throw uploadError
+  if (uploadError) {
+    console.error('[theaterService] Cover storage upload lỗi:', uploadError.message)
+    throw uploadError
+  }
+  console.log('[theaterService] Cover đã lưu storage, path:', uploadData?.path)
 
   const { data: { publicUrl } } = supabase.storage
     .from('theater-assets')
@@ -194,7 +208,11 @@ export const uploadTheaterCover = async (theaterId, file) => {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) {
+    console.error('[theaterService] Cập nhật cover_image_url vào bảng theaters lỗi:', error.message)
+    throw error
+  }
+  console.log('[theaterService] Cover upload hoàn tất, publicUrl:', publicUrl)
   await logActivity(theaterId, 'Cập nhật ảnh bìa nhà hát', 'cover', 'edit')
   return publicUrl
 }

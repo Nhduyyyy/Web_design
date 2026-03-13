@@ -4,6 +4,9 @@ import { uploadTheaterLogo, uploadTheaterCover, updateTheater } from '../../serv
 const TheaterProfile = ({ theater, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [uploading, setUploading] = useState(false)
+  // Cache-buster: sau khi upload thành công, ép trình duyệt tải lại ảnh (URL path có thể giống nhau khi upsert)
+  const [logoCacheBuster, setLogoCacheBuster] = useState(null)
+  const [coverCacheBuster, setCoverCacheBuster] = useState(null)
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -24,12 +27,15 @@ const TheaterProfile = ({ theater, onUpdate }) => {
     const file = e.target.files?.[0]
     if (!file) return
 
+    console.log('[TheaterProfile] Logo upload bắt đầu:', { theaterId: theater.id, fileName: file.name, size: file.size })
     try {
       setUploading(true)
       const logoUrl = await uploadTheaterLogo(theater.id, file)
+      console.log('[TheaterProfile] Logo upload thành công:', logoUrl)
+      setLogoCacheBuster(Date.now())
       onUpdate({ ...theater, logo_url: logoUrl })
     } catch (error) {
-      console.error('Error uploading logo:', error)
+      console.error('[TheaterProfile] Logo upload thất bại:', error?.message || error)
       alert('Failed to upload logo')
     } finally {
       setUploading(false)
@@ -40,12 +46,15 @@ const TheaterProfile = ({ theater, onUpdate }) => {
     const file = e.target.files?.[0]
     if (!file) return
 
+    console.log('[TheaterProfile] Cover upload bắt đầu:', { theaterId: theater.id, fileName: file.name, size: file.size })
     try {
       setUploading(true)
       const coverUrl = await uploadTheaterCover(theater.id, file)
+      console.log('[TheaterProfile] Cover upload thành công:', coverUrl)
+      setCoverCacheBuster(Date.now())
       onUpdate({ ...theater, cover_image_url: coverUrl })
     } catch (error) {
-      console.error('Error uploading cover:', error)
+      console.error('[TheaterProfile] Cover upload thất bại:', error?.message || error)
       alert('Failed to upload cover image')
     } finally {
       setUploading(false)
@@ -54,11 +63,13 @@ const TheaterProfile = ({ theater, onUpdate }) => {
 
   return (
     <div className="bg-surface-dark rounded-xl border border-border-gold overflow-hidden red-accent-glow">
-      {/* Cover Photo Section */}
+      {/* Cover: hiển thị khi theater.cover_image_url có giá trị; cache-buster để ảnh mới upload hiện ngay */}
       <div 
         className="h-32 bg-accent-red/20 relative group cursor-pointer"
         style={{
-          backgroundImage: theater.cover_image_url ? `url(${theater.cover_image_url})` : 'none',
+          backgroundImage: theater.cover_image_url
+            ? `url(${theater.cover_image_url}${coverCacheBuster ? `?t=${coverCacheBuster}` : ''})`
+            : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
@@ -82,13 +93,13 @@ const TheaterProfile = ({ theater, onUpdate }) => {
       </div>
 
       <div className="px-6 pb-6 relative">
-        {/* Logo Upload */}
+        {/* Logo: hiển thị khi theater.logo_url có giá trị; cache-buster để ảnh mới upload hiện ngay */}
         <div className="absolute top-[-105px] left-6 h-24 w-24 rounded-xl border-4 border-surface-dark bg-background-dark overflow-hidden group">
           {theater.logo_url ? (
             <img 
               alt="Theater Logo" 
               className="h-full w-full object-cover" 
-              src={theater.logo_url}
+              src={`${theater.logo_url}${logoCacheBuster ? `?t=${logoCacheBuster}` : ''}`}
             />
           ) : (
             <div className="h-full w-full bg-primary/20 flex items-center justify-center text-primary text-2xl font-bold">
