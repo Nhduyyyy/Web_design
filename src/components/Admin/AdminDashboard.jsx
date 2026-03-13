@@ -4,6 +4,11 @@ import AdminSidebar from './AdminSidebar'
 import AdminHeader from './AdminHeader'
 import DashboardOverview from './DashboardOverview'
 import OrganizationManagement from './OrganizationManagement'
+import UserManagement from './UserManagement'
+import TheaterManagement from './TheaterManagement'
+import ScheduleManagement from './ScheduleManagement'
+import LivestreamManagement from './LivestreamManagement'
+import EventManagement from './EventManagement'
 import GameManagement from './GameManagement'
 import './AdminDashboard.css'
 
@@ -20,13 +25,13 @@ function AdminDashboard() {
         
         <div className="admin-content">
           {activeView === 'dashboard' && <DashboardOverview />}
-          {activeView === 'users' && <div className="coming-soon">User Management - Coming Soon</div>}
-          {activeView === 'theaters' && <div className="coming-soon">Theater Management - Coming Soon</div>}
+          {activeView === 'users' && <UserManagement />}
+          {activeView === 'theaters' && <TheaterManagement />}
           {activeView === 'organizations' && <OrganizationManagement />}
-          {activeView === 'schedule' && <div className="coming-soon">Show Schedule - Coming Soon</div>}
-          {activeView === 'livestream' && <div className="coming-soon">Livestream - Coming Soon</div>}
+          {activeView === 'schedule' && <ScheduleManagement />}
+          {activeView === 'livestream' && <LivestreamManagement />}
           {activeView === 'tickets' && <div className="coming-soon">Tickets - Coming Soon</div>}
-          {activeView === 'events' && <div className="coming-soon">Events - Coming Soon</div>}
+          {activeView === 'events' && <EventManagement />}
           {activeView === 'game' && <GameManagement />}
           {activeView === 'reports' && <div className="coming-soon">Reports - Coming Soon</div>}
           {activeView === 'settings' && <div className="coming-soon">Settings - Coming Soon</div>}

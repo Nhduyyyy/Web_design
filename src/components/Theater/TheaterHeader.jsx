@@ -130,12 +130,12 @@ const TheaterHeader = ({ theater }) => {
                 <p className="text-sm font-medium text-slate-200">{user?.email}</p>
                 <p className="text-xs text-slate-400">Quản lý Nhà hát</p>
               </div>
-              <Link 
+              {/* <Link 
                 to="/theater/settings" 
                 className="block px-4 py-2 text-sm text-slate-300 hover:bg-background-dark hover:text-primary transition-colors"
               >
                 Cài đặt
-              </Link>
+              </Link> */}
               <button 
                 onClick={handleSignOut}
                 className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-background-dark transition-colors"

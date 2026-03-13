@@ -1187,7 +1187,8 @@ const VenueDetailSimple = () => {
               { id: 'halls', label: 'Tầng & Khán Phòng', icon: 'weekend' },
               { id: 'plays', label: 'Vở Diễn', icon: 'masks' },
               { id: 'schedule', label: 'Lịch Biểu Diễn', icon: 'event_note' },
-              { id: 'staff', label: 'Đoàn & Đạo Cụ', icon: 'group_work' }
+              { id: 'livestreams', label: 'Live Streams', icon: 'live_tv' },
+              { id: 'events', label: 'Sự Kiện', icon: 'event' }
             ].map(tab => (
               <button
                 key={tab.id}
