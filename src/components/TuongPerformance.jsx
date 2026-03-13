@@ -5,8 +5,13 @@ import InteractiveScene from './InteractiveScene'
 import Schedule from './Schedule'
 import Events from './Events'
 import LivestreamList from './Livestream/LivestreamList'
+import ChatPanel from './Livestream/ChatPanel'
+import ViewerCount from './Livestream/ViewerCount'
 import { useShows } from '../hooks/useShows'
+import { useViewer } from '../hooks/useViewer'
+import { getLivestreamById, subscribeLivestreamUpdates } from '../services/livestreamService'
 import './TuongPerformance.css'
+import './LiveStream.css'
 
 // Schedule uses shared `src/data/scheduleData.js` for the canonical event list
 
@@ -77,8 +82,9 @@ function Highlight({ text = '', query = '' }) {
     </span>
   )
 }
-function TuongPerformance({ setActiveSection }) {
+function TuongPerformance({ setActiveSection, initialWatchStreamId = null }) {
   const [activeTab, setActiveTab] = useState('watch')
+  const [watchStreamId, setWatchStreamId] = useState(initialWatchStreamId)
   const [selectedPerformance, setSelectedPerformance] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0) // centiseconds
@@ -111,6 +117,59 @@ function TuongPerformance({ setActiveSection }) {
   const intervalRef = useRef(null)
   const PAGE_SIZE = 5
   const [page, setPage] = useState(1)
+
+  // Livestream watch: viewer hook (phải gọi unconditionally)
+  const { remoteStream } = useViewer(watchStreamId)
+  const watchVideoRef = useRef(null)
+  const [watchStreamData, setWatchStreamData] = useState(null)
+  const [watchStreamLoading, setWatchStreamLoading] = useState(false)
+  const [watchStreamError, setWatchStreamError] = useState(null)
+
+  // Mở tab livestream và xem stream khi có initialWatchStreamId (vd. từ /livestreams/:id)
+  useEffect(() => {
+    if (initialWatchStreamId) {
+      setActiveTab('livestream')
+      setWatchStreamId(initialWatchStreamId)
+    }
+  }, [initialWatchStreamId])
+
+  // Load stream data khi đang xem (watchStreamId)
+  useEffect(() => {
+    if (!watchStreamId) {
+      setWatchStreamData(null)
+      setWatchStreamError(null)
+      return
+    }
+    let cancelled = false
+    const load = async () => {
+      setWatchStreamLoading(true)
+      setWatchStreamError(null)
+      try {
+        const data = await getLivestreamById(watchStreamId)
+        if (!cancelled) setWatchStreamData(data)
+      } catch (err) {
+        if (!cancelled) setWatchStreamError('Không tìm thấy livestream hoặc đã kết thúc.')
+      } finally {
+        if (!cancelled) setWatchStreamLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [watchStreamId])
+
+  // Realtime cập nhật stream (viewers, status...)
+  useEffect(() => {
+    if (!watchStreamId) return
+    const channel = subscribeLivestreamUpdates(watchStreamId, (payload) => {
+      if (payload?.new) setWatchStreamData((prev) => ({ ...(prev || {}), ...payload.new }))
+    })
+    return () => { if (channel) channel.unsubscribe?.() }
+  }, [watchStreamId])
+
+  // Gắn remoteStream vào video element
+  useEffect(() => {
+    if (watchVideoRef.current && remoteStream) watchVideoRef.current.srcObject = remoteStream
+  }, [remoteStream])
 
   // debounce search input (250ms)
   useEffect(() => {
@@ -530,7 +589,104 @@ function TuongPerformance({ setActiveSection }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <LivestreamList embedded />
+          {watchStreamId ? (
+            <>
+              {watchStreamLoading && (
+                <p className="text-center text-white/70 mt-10 text-sm">Đang tải livestream...</p>
+              )}
+              {watchStreamError && (
+                <div className="stream-error mt-10">{watchStreamError}</div>
+              )}
+              {!watchStreamLoading && !watchStreamError && watchStreamData && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => { setWatchStreamId(null); setWatchStreamData(null) }}
+                    className="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm"
+                  >
+                    <span className="material-symbols-outlined text-base">arrow_back</span>
+                    Quay lại danh sách
+                  </button>
+                  <div className="grid lg:grid-cols-[2fr,1fr] gap-6 items-start">
+                    <div className="space-y-4">
+                      <div className="bg-black/70 border border-white/10 rounded-2xl overflow-hidden">
+                        <div className="bg-black aspect-video relative">
+                          <video
+                            ref={watchVideoRef}
+                            autoPlay
+                            playsInline
+                            controls
+                            className="w-full h-full object-contain bg-black"
+                          />
+                          {!remoteStream && (
+                            <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm">
+                              Đang chờ tín hiệu từ nhà hát...
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="bg-black/60 border border-white/10 rounded-2xl p-4 md:p-5">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <h1 className="text-base md:text-lg font-semibold text-white leading-snug truncate">
+                                {watchStreamData.title}
+                              </h1>
+                              <p className="text-xs text-white/60 mt-1 line-clamp-2">
+                                {watchStreamData.description || 'Buổi diễn trực tiếp nghệ thuật Tuồng Việt Nam.'}
+                              </p>
+                            </div>
+                            <div className="flex items-end gap-2 shrink-0">
+                              {watchStreamData.status === 'live' && (
+                                <motion.div
+                                  initial={{ scale: 0.9, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 text-[10px] font-semibold uppercase tracking-wide"
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                  Live
+                                </motion.div>
+                              )}
+                              <ViewerCount current={watchStreamData.current_viewers || 0} />
+                            </div>
+                          </div>
+                          <div className="h-px bg-white/10" />
+                          <div className="grid sm:grid-cols-3 gap-2 text-sm text-white/80">
+                            {watchStreamData.start_time && (
+                              <p className="sm:col-span-1">
+                                <span className="text-white/50 mr-1">Bắt đầu:</span>
+                                {new Date(watchStreamData.start_time).toLocaleString('vi-VN')}
+                              </p>
+                            )}
+                            {watchStreamData.end_time && (
+                              <p className="sm:col-span-1">
+                                <span className="text-white/50 mr-1">Kết thúc dự kiến:</span>
+                                {new Date(watchStreamData.end_time).toLocaleString('vi-VN')}
+                              </p>
+                            )}
+                            {watchStreamData.price > 0 && (
+                              <p className="sm:col-span-1">
+                                <span className="text-white/50 mr-1">Giá vé:</span>
+                                {watchStreamData.price.toLocaleString('vi-VN')}₫
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <ChatPanel
+                      streamId={watchStreamId}
+                      chatEnabled={watchStreamData.chat_enabled ?? true}
+                      theaterOwnerId={watchStreamData.theater?.owner_id ?? null}
+                      theaterName={watchStreamData.theater?.name ?? ''}
+                    />
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <LivestreamList embedded onWatch={(stream) => setWatchStreamId(stream.id)} />
+          )}
         </motion.main>
       )}
       {activeTab === 'events' && (

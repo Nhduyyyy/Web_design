@@ -52,11 +52,7 @@ const TheaterStats = ({ theater, venueCount }) => {
   }
 
   return (
-    <div className="bg-surface-dark rounded-xl border border-border-gold p-6"
-    style={{
-      height: '41%',
-    }}
-    >
+    <div className="bg-surface-dark rounded-xl border border-border-gold p-6">
       <h3 className="text-slate-100 font-semibold mb-4 flex items-center gap-2">
         <span className="material-symbols-outlined text-primary">analytics</span>
         Thống kê nhanh

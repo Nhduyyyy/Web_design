@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Header from './components/Header'
 import CameraExperience from './components/CameraExperience'
@@ -28,10 +28,19 @@ function getItemType(item) {
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
   const [selectedItem, setSelectedItem] = useState(null)
   const [activeSection, setActiveSection] = useState(
     () => searchParams.get('section') || 'experience'
   )
+
+  // Mở section "watch" khi vào từ /livestreams/:id (redirect gửi state livestreamId)
+  useEffect(() => {
+    if (location.state?.livestreamId && activeSection !== 'watch') {
+      setActiveSection('watch')
+      setSearchParams({ section: 'watch' }, { replace: true })
+    }
+  }, [location.state?.livestreamId])
 
   useEffect(() => {
     const next = searchParams.get('section') || 'experience'
@@ -68,7 +77,7 @@ function App() {
             className="app-section-wrap"
             {...sectionTransition}
           >
-            <TuongPerformance setActiveSection={setActiveSection} />
+            <TuongPerformance setActiveSection={setActiveSection} initialWatchStreamId={location.state?.livestreamId} />
           </motion.div>
         )}
         {activeSection === 'tryRole' && (
