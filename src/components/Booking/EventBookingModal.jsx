@@ -32,6 +32,7 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
   const [registrationCode, setRegistrationCode] = useState(null) // event_registrations.registration_code (REG...)
   const [paymentExpiresAt, setPaymentExpiresAt] = useState(null) // UI-only expiry timestamp
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
+  const [isRegistrationConfirmed, setIsRegistrationConfirmed] = useState(false) // Track if registration is confirmed
   const successTimerRef = useRef(null)
   
   // Error states
@@ -157,9 +158,12 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
         supabase.removeChannel(realtimeSubscriptionRef.current)
         realtimeSubscriptionRef.current = null
       }
-      // Cancel registration if exists and is pending
-      if (registrationId) {
+      // Only cancel registration if it hasn't been confirmed yet
+      if (registrationId && !isRegistrationConfirmed) {
+        console.log('🧹 Cleanup: Canceling pending registration', registrationId)
         cancelPendingRegistration()
+      } else if (registrationId && isRegistrationConfirmed) {
+        console.log('✅ Cleanup: Registration already confirmed, skipping cancel', registrationId)
       }
     }
   }, [isOpen, event])
@@ -544,6 +548,10 @@ export default function EventBookingModal({ event, isOpen, onClose }) {
       setPaymentResult(result)
       
       if (result.success) {
+        // Mark registration as confirmed to prevent cleanup cancellation
+        setIsRegistrationConfirmed(true)
+        console.log('✅ Event registration confirmed, marked to prevent cleanup cancel')
+        
         // Send confirmations (with error handling)
         const registration = {
           registrationId,
