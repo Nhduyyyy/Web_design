@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { formatPrice } from '../../utils/booking'
 import { validatePayment } from '../../utils/validation'
 import { generateStaticQR } from '../../services/qrPaymentService'
-import { checkPaymentStatus, checkEventRegistrationPaymentStatus, createPaymentRecord, completeEventPayment } from '../../services/paymentService'
+import { checkPaymentStatus, checkEventRegistrationPaymentStatus, createPaymentRecord, completeEventPayment, completeBookingPayment } from '../../services/paymentService'
 import { cancelBooking } from '../../services/bookingService'
 import './booking.css'
 
@@ -64,6 +64,7 @@ export default function PaymentMethod({
   const pollingIntervalRef = useRef(null)
   const lastPaymentStatusRef = useRef(null)
   const fakeSuccessTimeoutRef = useRef(null)
+  const fakeBookingSuccessTimeoutRef = useRef(null)
   
   // QR Timeout states
   const [timeRemaining, setTimeRemaining] = useState(QR_PAYMENT_TIMEOUT)
@@ -87,6 +88,10 @@ export default function PaymentMethod({
         clearTimeout(fakeSuccessTimeoutRef.current)
         fakeSuccessTimeoutRef.current = null
       }
+      if (fakeBookingSuccessTimeoutRef.current) {
+        clearTimeout(fakeBookingSuccessTimeoutRef.current)
+        fakeBookingSuccessTimeoutRef.current = null
+      }
       if (timeoutTimerRef.current) {
         clearInterval(timeoutTimerRef.current)
         timeoutTimerRef.current = null
@@ -96,7 +101,6 @@ export default function PaymentMethod({
   
   // Fake auto-complete for event QR payments after 30s (demo mode)
   useEffect(() => {
-    // Only apply to event registrations using QR, when QR is visible and not yet successful/timeout
     if (
       paymentContext?.type === 'event' &&
       selectedMethod === 'qr' &&
@@ -104,27 +108,25 @@ export default function PaymentMethod({
       !paymentStatus?.success &&
       !isTimeout
     ) {
-      // Reset any existing timer
       if (fakeSuccessTimeoutRef.current) {
         clearTimeout(fakeSuccessTimeoutRef.current)
       }
-      
+
       fakeSuccessTimeoutRef.current = setTimeout(async () => {
         try {
           if (!paymentContext?.eventRegistrationId) return
-          
           const result = await completeEventPayment(paymentContext.eventRegistrationId)
           if (result.success) {
             const successStatus = { success: true, message: 'Thanh toán thành công (giả lập sau 30 giây).' }
             setPaymentStatus(successStatus)
             lastPaymentStatusRef.current = successStatus
-            await onPayment('qr', total)
+            await onPayment('qr', total, { alreadyCompleted: true })
           }
         } catch (error) {
           console.error('Fake auto-complete payment error:', error)
         }
-      }, 30000) // 30 seconds
-      
+      }, 30000)
+
       return () => {
         if (fakeSuccessTimeoutRef.current) {
           clearTimeout(fakeSuccessTimeoutRef.current)
@@ -132,13 +134,65 @@ export default function PaymentMethod({
         }
       }
     }
-    
-    // Cleanup if conditions no longer met
+
     if (fakeSuccessTimeoutRef.current) {
       clearTimeout(fakeSuccessTimeoutRef.current)
       fakeSuccessTimeoutRef.current = null
     }
   }, [paymentContext?.type, paymentContext?.eventRegistrationId, selectedMethod, qrData, paymentStatus?.success, isTimeout, total, onPayment])
+
+  // Fake thanh toán thành công sau 20s cho đặt vé (booking QR)
+  const FAKE_BOOKING_PAYMENT_DELAY_MS = 20000
+  useEffect(() => {
+    if (
+      paymentContext?.type === 'booking' &&
+      paymentContext?.bookingDbId &&
+      selectedMethod === 'qr' &&
+      qrData &&
+      !paymentStatus?.success &&
+      !isTimeout
+    ) {
+      if (fakeBookingSuccessTimeoutRef.current) {
+        clearTimeout(fakeBookingSuccessTimeoutRef.current)
+      }
+
+      fakeBookingSuccessTimeoutRef.current = setTimeout(async () => {
+        try {
+          const result = await completeBookingPayment(paymentContext.bookingDbId)
+          if (result.success) {
+            const successStatus = {
+              success: true,
+              message: 'Thanh toán thành công (giả lập sau 20 giây).',
+            }
+            setPaymentStatus(successStatus)
+            lastPaymentStatusRef.current = successStatus
+            await onPayment('qr', total, { alreadyCompleted: true })
+          } else {
+            setPaymentError(result.message || 'Không thể hoàn tất thanh toán.')
+          }
+        } catch (error) {
+          console.error('Fake booking payment error:', error)
+          setPaymentError('Có lỗi khi xác nhận thanh toán. Vui lòng thử lại.')
+        }
+      }, FAKE_BOOKING_PAYMENT_DELAY_MS)
+
+      return () => {
+        if (fakeBookingSuccessTimeoutRef.current) {
+          clearTimeout(fakeBookingSuccessTimeoutRef.current)
+          fakeBookingSuccessTimeoutRef.current = null
+        }
+      }
+    }
+
+    if (
+      paymentContext?.type === 'booking' &&
+      fakeBookingSuccessTimeoutRef.current &&
+      (paymentStatus?.success || isTimeout)
+    ) {
+      clearTimeout(fakeBookingSuccessTimeoutRef.current)
+      fakeBookingSuccessTimeoutRef.current = null
+    }
+  }, [paymentContext?.type, paymentContext?.bookingDbId, selectedMethod, qrData, paymentStatus?.success, isTimeout, total, onPayment])
   
   // QR Timeout countdown timer
   useEffect(() => {
@@ -358,7 +412,7 @@ export default function PaymentMethod({
         lastPaymentStatusRef.current = status
         
         if (status.success) {
-          await onPayment('qr', total)
+          await onPayment('qr', total, { alreadyCompleted: true })
         }
       }
     } catch (error) {
@@ -387,7 +441,7 @@ export default function PaymentMethod({
         const successStatus = { success: true, message: 'Thanh toán thành công!' }
         setPaymentStatus(successStatus)
         lastPaymentStatusRef.current = successStatus
-        await onPayment('qr', total)
+        await onPayment('qr', total, { alreadyCompleted: true })
       } else {
         setPaymentError(result.message || 'Không thể xác nhận thanh toán. Vui lòng thử lại.')
       }

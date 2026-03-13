@@ -130,128 +130,40 @@ export const cancelSchedule = async (scheduleId) => {
 }
 
 // ============================================
-// SEAT SERVICE
+// SEAT SERVICE (theater seats are per hall, not per schedule)
 // ============================================
+// Bảng `seats` có: id, hall_id, row_number, seat_number, seat_type, status, ...
+// Ghế thuộc hall; trạng thái đã đặt theo từng lịch diễn lấy từ bảng bookings (schedule_id + seat_ids).
+// Lấy danh sách ghế theo hall: dùng getSeatsByHall(hallId) từ hallService.
+// Lấy ghế đã đặt cho một schedule: dùng getBookedSeatIdsForSchedule(scheduleId) từ bookingService.
 
 /**
- * Generate seats for schedule
+ * Reserve seats – no-op: bảng seats không có reserved_by/reserved_until.
+ * Việc "giữ ghế" thực hiện bằng tạo booking pending khi user chuyển sang bước tóm tắt.
  */
-export const generateSeats = async (scheduleId, rows = 10, seatsPerRow = 12) => {
-  const { data, error } = await supabase.rpc('generate_seats_for_schedule', {
-    p_schedule_id: scheduleId,
-    p_rows: rows,
-    p_seats_per_row: seatsPerRow
-  })
-
-  if (error) throw error
-  return data
+export const reserveSeats = async (_seatIds, _userId, _minutes = 10) => {
+  return []
 }
 
 /**
- * Get seats for schedule
+ * Release reserved seats – no-op: giải phóng ghế thực tế qua cancel booking.
  */
-export const getSeatsBySchedule = async (scheduleId) => {
-  const { data, error } = await supabase
-    .from('seats')
-    .select('*')
-    .eq('schedule_id', scheduleId)
-    .order('row_label')
-    .order('seat_number')
-
-  if (error) throw error
-  return data
+export const releaseSeats = async (_seatIds) => {
+  return []
 }
 
 /**
- * Get available seats
+ * Mark seats as occupied – no-op: trạng thái đã đặt theo booking (confirmed), không cập nhật bảng seats.
  */
-export const getAvailableSeats = async (scheduleId) => {
-  const { data, error } = await supabase
-    .from('seats')
-    .select('*')
-    .eq('schedule_id', scheduleId)
-    .eq('status', 'available')
-    .order('row_label')
-    .order('seat_number')
-
-  if (error) throw error
-  return data
+export const occupySeats = async (_seatIds) => {
+  return []
 }
 
 /**
- * Reserve seats (temporary hold)
- */
-export const reserveSeats = async (seatIds, userId, minutes = 10) => {
-  const reservedUntil = new Date(Date.now() + minutes * 60 * 1000).toISOString()
-
-  const { data, error } = await supabase
-    .from('seats')
-    .update({
-      status: 'reserved',
-      reserved_by: userId,
-      reserved_until: reservedUntil
-    })
-    .in('id', seatIds)
-    .eq('status', 'available')
-    .select()
-
-  if (error) throw error
-  return data
-}
-
-/**
- * Release reserved seats
- */
-export const releaseSeats = async (seatIds) => {
-  const { data, error } = await supabase
-    .from('seats')
-    .update({
-      status: 'available',
-      reserved_by: null,
-      reserved_until: null
-    })
-    .in('id', seatIds)
-    .select()
-
-  if (error) throw error
-  return data
-}
-
-/**
- * Mark seats as occupied
- */
-export const occupySeats = async (seatIds) => {
-  const { data, error } = await supabase
-    .from('seats')
-    .update({
-      status: 'occupied',
-      reserved_by: null,
-      reserved_until: null
-    })
-    .in('id', seatIds)
-    .select()
-
-  if (error) throw error
-  return data
-}
-
-/**
- * Cleanup expired reservations
+ * Cleanup expired reservations – có thể gọi cancel các booking pending hết hạn (xử lý ở backend/cron).
  */
 export const cleanupExpiredReservations = async () => {
-  const { data, error } = await supabase
-    .from('seats')
-    .update({
-      status: 'available',
-      reserved_by: null,
-      reserved_until: null
-    })
-    .eq('status', 'reserved')
-    .lt('reserved_until', new Date().toISOString())
-    .select()
-
-  if (error) throw error
-  return data
+  return []
 }
 
 // ============================================

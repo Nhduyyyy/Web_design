@@ -6,8 +6,7 @@ import PaymentMethod from './PaymentMethod'
 import Confirmation from './Confirmation'
 import { useAuth } from '../../contexts/AuthContext'
 import { generateSeatingChart, calculateTotal, generateBookingId, processPayment, sendEmailConfirmation, sendSMSConfirmation, scheduleReminder } from '../../utils/booking'
-import { reserveSeats, releaseSeats } from '../../services/scheduleService'
-import { cancelBooking, createBooking } from '../../services/bookingService'
+import { cancelBooking, createBooking, updateBooking } from '../../services/bookingService'
 import { getScheduleById } from '../../services/scheduleService'
 import './booking.css'
 
@@ -42,8 +41,7 @@ export default function BookingModal({ event, isOpen, onClose }) {
   const [isRetrying, setIsRetrying] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   
-  // Reservation and cleanup states
-  const [reservedSeatIds, setReservedSeatIds] = useState([])
+  // Pending booking holds selected seats (no reserve on seats table)
   const [scheduleStatus, setScheduleStatus] = useState(null)
   const scheduleCheckIntervalRef = useRef(null)
 
@@ -61,10 +59,9 @@ export default function BookingModal({ event, isOpen, onClose }) {
       setBookingId(null)
       setBookingDbId(null)
       setBookingExpiresAt(null)
-      setReservedSeatIds([])
       setBookingError(null)
       setPaymentError(null)
-      
+
       // Load full schedule data to get venue_id
       if (event.schedule_id) {
         loadScheduleData()
@@ -80,16 +77,10 @@ export default function BookingModal({ event, isOpen, onClose }) {
     }
     
     return () => {
-      // Cleanup on unmount
       if (scheduleCheckIntervalRef.current) {
         clearInterval(scheduleCheckIntervalRef.current)
         scheduleCheckIntervalRef.current = null
       }
-      // Release seats if modal closes with reserved seats
-      if (reservedSeatIds.length > 0) {
-        releaseReservedSeats()
-      }
-      // Cancel booking if exists and is pending
       if (bookingDbId) {
         cancelPendingBooking()
       }
@@ -128,19 +119,7 @@ export default function BookingModal({ event, isOpen, onClose }) {
     }
   }
   
-  // Release reserved seats
-  const releaseReservedSeats = async () => {
-    if (reservedSeatIds.length === 0) return
-    
-    try {
-      await releaseSeats(reservedSeatIds)
-      setReservedSeatIds([])
-    } catch (error) {
-      console.error('Error releasing seats:', error)
-    }
-  }
-  
-  // Cancel pending booking
+  // Cancel pending booking (giải phóng ghế vì availability theo bookings)
   const cancelPendingBooking = async () => {
     if (!bookingDbId) return
     
@@ -155,21 +134,37 @@ export default function BookingModal({ event, isOpen, onClose }) {
   }
 
   const handleSeatsSelected = async (seats) => {
-    // Reserve seats when moving to summary
-    if (seats.length > 0 && user?.id && event?.schedule_id) {
-      try {
-        const seatIds = seats.map(s => s.id || s.seat_id).filter(Boolean)
-        if (seatIds.length > 0) {
-          await reserveSeats(seatIds, user.id, 10) // Reserve for 10 minutes
-          setReservedSeatIds(seatIds)
-        }
-      } catch (error) {
-        console.error('Error reserving seats:', error)
-        setBookingError('Không thể giữ ghế. Vui lòng thử lại.')
-        return
-      }
+    if (seats.length === 0) {
+      setSelectedSeats(seats)
+      setCurrentStep(STEPS.SUMMARY)
+      return
     }
-    
+    // Giữ ghế bằng cách tạo booking pending (bảng seats không có schedule_id/reserved_by)
+    if (!user?.id || !event?.schedule_id) {
+      setSelectedSeats(seats)
+      setCurrentStep(STEPS.SUMMARY)
+      return
+    }
+    try {
+      const seatIds = seats.map(s => s.id || s.seat_id).filter(Boolean)
+      const createdBooking = await createBooking({
+        user_id: user.id,
+        schedule_id: event.schedule_id,
+        customer_name: '',
+        customer_email: '',
+        customer_phone: '',
+        seat_ids: seatIds,
+        total_amount: calculateTotal(seats),
+        payment_timeout_minutes: 15,
+      })
+      setBookingDbId(createdBooking.id)
+      setBookingId(createdBooking.booking_code)
+      setBookingExpiresAt(createdBooking.payment_expires_at || null)
+    } catch (error) {
+      console.error('Error creating booking (hold seats):', error)
+      setBookingError('Không thể giữ ghế. Vui lòng thử lại.')
+      return
+    }
     setSelectedSeats(seats)
     setCurrentStep(STEPS.SUMMARY)
   }
@@ -207,138 +202,142 @@ export default function BookingModal({ event, isOpen, onClose }) {
   }
 
   // Helper function to get user-friendly error message
+  // PGRST116 = PostgREST "0 rows" (thường từ updateBooking/select().single() khi không trả về dòng nào)
   const getErrorMessage = (error, defaultMessage) => {
     if (isNetworkError(error)) {
       return 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối và thử lại.'
     }
-    
+
     if (error?.message) {
-      // Map common error codes to user-friendly messages
       const errorMessages = {
-        'PGRST116': 'Không tìm thấy dữ liệu. Vui lòng thử lại.',
+        'PGRST116': 'Không tìm thấy đặt vé hoặc phiên hết hạn. Vui lòng quay lại bước chọn ghế và thử lại.',
         '23505': 'Dữ liệu đã tồn tại. Vui lòng thử lại.',
         '23503': 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.',
         '42501': 'Không có quyền thực hiện thao tác này.',
         'TIMEOUT': 'Yêu cầu quá thời gian. Vui lòng thử lại.'
       }
-      
+
       for (const [code, message] of Object.entries(errorMessages)) {
         if (error.message.includes(code) || error.code === code) {
           return message
         }
       }
-      
+
       return error.message
     }
-    
+
     return defaultMessage || 'Đã có lỗi xảy ra. Vui lòng thử lại.'
   }
 
   const handleSummaryContinue = async (info) => {
-    setCustomerInfo(info)
+    const customer = info ?? customerInfo
+    setCustomerInfo(customer)
     setBookingError(null)
     setRetryCount(0)
-    
-    // Check schedule status before proceeding
+
     if (scheduleStatus === 'cancelled') {
       setBookingError('Suất chiếu này đã bị hủy. Vui lòng chọn suất chiếu khác.')
       return
     }
-    
-    // Check network before proceeding
+
     if (!navigator.onLine) {
       setNetworkError(true)
       setBookingError('Không có kết nối mạng. Vui lòng kiểm tra kết nối và thử lại.')
       return
     }
-    
-    // Validate selected seats still available
+
     if (selectedSeats.length === 0) {
       setBookingError('Vui lòng chọn ít nhất 1 ghế.')
       return
     }
-    
+
+    if (!user?.id) {
+      setBookingError('Bạn cần đăng nhập để tiếp tục thanh toán.')
+      return
+    }
+
     try {
-      if (!user?.id) {
-        setBookingError('Bạn cần đăng nhập để tiếp tục thanh toán.')
-        return
+      if (bookingDbId) {
+        await updateBooking(bookingDbId, {
+          customer_name: customer.name,
+          customer_email: customer.email,
+          customer_phone: customer.phone,
+        })
+      } else {
+        const seatIds = selectedSeats.map(s => s.seat_id || s.id).filter(Boolean)
+        const createdBooking = await createBooking({
+          user_id: user.id,
+          schedule_id: event?.schedule_id,
+          customer_name: customer.name,
+          customer_email: customer.email,
+          customer_phone: customer.phone,
+          seat_ids: seatIds,
+          total_amount: calculateTotal(selectedSeats),
+          payment_timeout_minutes: 15,
+        })
+        setBookingDbId(createdBooking.id)
+        setBookingId(createdBooking.booking_code)
+        setBookingExpiresAt(createdBooking.payment_expires_at || null)
       }
-
-      const seatIds = selectedSeats.map(s => s.seat_id || s.id).filter(Boolean)
-      const createdBooking = await createBooking({
-        user_id: user.id,
-        schedule_id: event?.schedule_id,
-        customer_name: info.name,
-        customer_email: info.email,
-        customer_phone: info.phone,
-        seat_ids: seatIds,
-        total_amount: calculateTotal(selectedSeats),
-        payment_timeout_minutes: 15,
-      })
-
-      setBookingDbId(createdBooking.id)
-      setBookingId(createdBooking.booking_code)
-      setBookingExpiresAt(createdBooking.payment_expires_at || null)
       setCurrentStep(STEPS.PAYMENT)
     } catch (error) {
       console.error('Error in handleSummaryContinue:', error)
-      const errorMessage = getErrorMessage(error, 'Không thể tạo mã đặt vé. Vui lòng thử lại.')
-      setBookingError(errorMessage)
+      setBookingError(getErrorMessage(error, 'Không thể cập nhật đặt vé. Vui lòng thử lại.'))
     }
   }
   
-  // Retry booking creation
   const retryBooking = async () => {
     if (retryCount >= 3) {
       setBookingError('Đã thử lại quá nhiều lần. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.')
       return
     }
-    
     setIsRetrying(true)
     setRetryCount(prev => prev + 1)
     setBookingError(null)
-    
     try {
-      // Wait a bit before retry (exponential backoff)
       await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, retryCount), 5000)))
-      
       if (!user?.id) {
         setBookingError('Bạn cần đăng nhập để tiếp tục thanh toán.')
         return
       }
-
-      const seatIds = selectedSeats.map(s => s.seat_id || s.id).filter(Boolean)
-      const createdBooking = await createBooking({
-        user_id: user.id,
-        schedule_id: event?.schedule_id,
-        customer_name: customerInfo.name,
-        customer_email: customerInfo.email,
-        customer_phone: customerInfo.phone,
-        seat_ids: seatIds,
-        total_amount: calculateTotal(selectedSeats),
-        payment_timeout_minutes: 15,
-      })
-
-      setBookingDbId(createdBooking.id)
-      setBookingId(createdBooking.booking_code)
-      setBookingExpiresAt(createdBooking.payment_expires_at || null)
+      if (bookingDbId) {
+        await updateBooking(bookingDbId, {
+          customer_name: customerInfo.name,
+          customer_email: customerInfo.email,
+          customer_phone: customerInfo.phone,
+        })
+      } else {
+        const seatIds = selectedSeats.map(s => s.seat_id || s.id).filter(Boolean)
+        const createdBooking = await createBooking({
+          user_id: user.id,
+          schedule_id: event?.schedule_id,
+          customer_name: customerInfo.name,
+          customer_email: customerInfo.email,
+          customer_phone: customerInfo.phone,
+          seat_ids: seatIds,
+          total_amount: calculateTotal(selectedSeats),
+          payment_timeout_minutes: 15,
+        })
+        setBookingDbId(createdBooking.id)
+        setBookingId(createdBooking.booking_code)
+        setBookingExpiresAt(createdBooking.payment_expires_at || null)
+      }
       setCurrentStep(STEPS.PAYMENT)
       setRetryCount(0)
     } catch (error) {
       console.error('Retry booking failed:', error)
-      const errorMessage = getErrorMessage(error, 'Không thể tạo mã đặt vé. Vui lòng thử lại.')
-      setBookingError(errorMessage)
+      setBookingError(getErrorMessage(error, 'Không thể tạo/cập nhật mã đặt vé. Vui lòng thử lại.'))
     } finally {
       setIsRetrying(false)
     }
   }
 
-  const handlePayment = async (method, amount) => {
+  const handlePayment = async (method, amount, options = {}) => {
+    const { alreadyCompleted = false } = options
     setPaymentMethod(method)
     setPaymentError(null)
-    
-    // Check network before proceeding
-    if (!navigator.onLine) {
+
+    if (!navigator.onLine && !alreadyCompleted) {
       setNetworkError(true)
       setPaymentError('Không có kết nối mạng. Vui lòng kiểm tra kết nối và thử lại.')
       setPaymentResult({
@@ -347,13 +346,39 @@ export default function BookingModal({ event, isOpen, onClose }) {
       })
       return
     }
-    
+
+    if (alreadyCompleted) {
+      setPaymentResult({
+        success: true,
+        message: 'Thanh toán thành công!',
+        transactionId: null,
+        bookingId,
+        amount,
+        paymentMethod: method,
+        timestamp: new Date().toISOString()
+      })
+      const booking = {
+        bookingId,
+        event,
+        selectedSeats,
+        total: amount,
+        customerInfo,
+        paymentMethod: method
+      }
+      sendEmailConfirmation({ ...booking, customerEmail: customerInfo.email })
+        .catch(err => console.error('Failed to send email:', err))
+      sendSMSConfirmation({ ...booking, customerPhone: customerInfo.phone })
+        .catch(err => console.error('Failed to send SMS:', err))
+      scheduleReminder(event, booking)
+      setCurrentStep(STEPS.CONFIRMATION)
+      return
+    }
+
     try {
       const result = await processPayment(method, amount, bookingId)
       setPaymentResult(result)
-      
+
       if (result.success) {
-        // Send confirmations (with error handling)
         const booking = {
           bookingId,
           event,
@@ -362,21 +387,13 @@ export default function BookingModal({ event, isOpen, onClose }) {
           customerInfo,
           paymentMethod: method
         }
-        
-        // Send email (non-blocking, don't fail if email fails)
         sendEmailConfirmation({ ...booking, customerEmail: customerInfo.email })
           .catch(err => console.error('Failed to send email:', err))
-        
-        // Send SMS (non-blocking, don't fail if SMS fails)
         sendSMSConfirmation({ ...booking, customerPhone: customerInfo.phone })
           .catch(err => console.error('Failed to send SMS:', err))
-        
-        // Schedule reminder (non-blocking)
         scheduleReminder(event, booking)
-        
         setCurrentStep(STEPS.CONFIRMATION)
       } else {
-        // Payment failed
         setPaymentError(result.message || 'Thanh toán thất bại. Vui lòng thử lại.')
       }
     } catch (error) {
@@ -421,23 +438,24 @@ export default function BookingModal({ event, isOpen, onClose }) {
   }
 
   const handleBack = async () => {
-    if (currentStep === STEPS.PAYMENT) {
-      // Back from Payment: Clear booking if exists and show confirmation
-      if (bookingId) {
-        const confirmed = window.confirm(
-          'Bạn có chắc muốn quay lại? Đặt vé đã tạo sẽ bị hủy và ghế sẽ được giải phóng.'
-        )
-        if (!confirmed) return
-        
-        // Cancel booking
-        await cancelPendingBooking()
-        setBookingId(null)
-      }
-    } else if (currentStep === STEPS.SUMMARY) {
-      // Back from Summary: Release reserved seats
-      await releaseReservedSeats()
+    if (currentStep === STEPS.PAYMENT && bookingId) {
+      const confirmed = window.confirm(
+        'Bạn có chắc muốn quay lại? Đặt vé đã tạo sẽ bị hủy và ghế sẽ được giải phóng.'
+      )
+      if (!confirmed) return
+      await cancelPendingBooking()
+      setBookingId(null)
     }
-    
+    if (currentStep === STEPS.SUMMARY && bookingDbId) {
+      const confirmed = window.confirm(
+        'Bạn có chắc muốn quay lại chọn ghế? Đặt vé tạm sẽ bị hủy và ghế sẽ được giải phóng.'
+      )
+      if (!confirmed) return
+      await cancelPendingBooking()
+      setBookingDbId(null)
+      setBookingId(null)
+      setBookingExpiresAt(null)
+    }
     if (currentStep > STEPS.SELECT_SEATS) {
       setCurrentStep(currentStep - 1)
     }
@@ -445,29 +463,21 @@ export default function BookingModal({ event, isOpen, onClose }) {
 
   const handleClose = async () => {
     if (currentStep === STEPS.CONFIRMATION) {
-      // Already confirmed, just close
       onClose()
       return
     }
-    
-    // Show confirmation dialog
     const confirmed = window.confirm('Bạn có chắc muốn hủy đặt vé? Tất cả thông tin sẽ bị mất.')
     if (!confirmed) return
-    
-    // Cleanup: Release seats and cancel booking
-    await releaseReservedSeats()
     await cancelPendingBooking()
-    
-    // Clear all state
     setSelectedSeats([])
     setCustomerInfo({ name: '', email: '', phone: '' })
     setPaymentMethod(null)
     setPaymentResult(null)
     setBookingId(null)
-    setReservedSeatIds([])
+    setBookingDbId(null)
+    setBookingExpiresAt(null)
     setBookingError(null)
     setPaymentError(null)
-    
     onClose()
   }
   

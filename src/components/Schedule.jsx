@@ -68,6 +68,7 @@ export default function Schedule() {
           return {
             id: String(s.id),
             schedule_id: s.id,
+            venue_id: s.venue_id || venue.id,
             title: s.title || show.title || 'Lịch diễn',
             description: s.description || show.description || '',
             detail: s.description || show.synopsis || '',

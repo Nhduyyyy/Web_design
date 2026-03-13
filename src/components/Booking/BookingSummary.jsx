@@ -49,7 +49,7 @@ export default function BookingSummary({ event, selectedSeats, total, customerIn
   const handleContinue = () => {
     if (validate()) {
       onInfoChange(formData)
-      onContinue()
+      onContinue(formData)
     }
   }
 
@@ -90,8 +90,8 @@ export default function BookingSummary({ event, selectedSeats, total, customerIn
             <div className="seats-summary">
               {selectedSeats.map(seat => (
                 <div key={seat.id} className="seat-summary-item">
-                  <span className="seat-label">{seat.id}</span>
-                  <span className="seat-type">{seat.type.toUpperCase()}</span>
+                  <span className="seat-label">{seat.label ?? seat.id}</span>
+                  <span className="seat-type">{(seat.type || '').toUpperCase()}</span>
                   <span className="seat-price">{formatPrice(seat.price)}</span>
                 </div>
               ))}

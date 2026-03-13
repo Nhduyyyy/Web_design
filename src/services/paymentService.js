@@ -390,3 +390,60 @@ export const completeEventPayment = async (eventRegistrationId, paymentId = null
     }
   }
 }
+
+/**
+ * Đánh dấu thanh toán QR cho booking là thành công (dùng cho fake/demo sau 20s).
+ * Cập nhật payment → completed, sau đó confirm booking.
+ *
+ * @param {string} bookingDbId - bookings.id (uuid)
+ * @param {string|null} paymentId - payments.id (uuid); nếu null thì tìm payment pending mới nhất của booking
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+export const completeBookingPayment = async (bookingDbId, paymentId = null) => {
+  try {
+    const now = new Date().toISOString()
+
+    let targetPaymentId = paymentId
+    if (!targetPaymentId) {
+      const { data: pendingPayments, error: findError } = await supabase
+        .from('payments')
+        .select('id, status')
+        .eq('booking_id', bookingDbId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (findError) throw findError
+      if (!pendingPayments?.length) {
+        return { success: false, message: 'Không tìm thấy thanh toán đang chờ.' }
+      }
+      targetPaymentId = pendingPayments[0].id
+    }
+
+    const { error: payError } = await supabase
+      .from('payments')
+      .update({
+        status: 'completed',
+        completed_at: now,
+        updated_at: now,
+      })
+      .eq('id', targetPaymentId)
+
+    if (payError) throw payError
+
+    const { confirmBooking } = await import('./bookingService')
+    await confirmBooking(bookingDbId)
+
+    return {
+      success: true,
+      message: 'Thanh toán thành công!',
+      paymentId: targetPaymentId,
+    }
+  } catch (error) {
+    console.error('Error completing booking payment:', error)
+    return {
+      success: false,
+      message: error?.message || 'Không thể xác nhận thanh toán. Vui lòng thử lại.',
+    }
+  }
+}

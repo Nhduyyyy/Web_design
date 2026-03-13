@@ -496,17 +496,16 @@ function TuongPerformance({ setActiveSection }) {
                     <span className="material-symbols-outlined">flare</span>
                     Khám Phá Cảnh Tương Tác
                   </motion.button>
-                  <motion.a
-                    href="https://www.nhahatdal.vn/dat-ve"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <motion.button
+                    type="button"
                     className="tp-btn-red"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    onClick={() => setActiveTab('schedule')}
                   >
                     <span className="material-symbols-outlined">local_activity</span>
                     Đặt vé xem trực tiếp
-                  </motion.a>
+                  </motion.button>
                 </div>
               </div>
             )}

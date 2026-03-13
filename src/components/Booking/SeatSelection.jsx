@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { getSeatStatus, formatPrice, calculateTotal } from '../../utils/booking'
 import { validateSeatSelection } from '../../utils/validation'
 import { getSeatsByHall } from '../../services/hallService'
+import { getBookedSeatIdsForSchedule } from '../../services/bookingService'
 import FloorHallSelector from './FloorHallSelector'
 import './booking.css'
 
@@ -44,33 +45,42 @@ export default function SeatSelection({
     try {
       setLoadingSeats(true)
       setSeatError(null)
-      
-      const hallSeats = await getSeatsByHall(selectedHall)
-      
+
+      const scheduleIdToUse = scheduleId || event?.schedule_id
+      const [hallSeats, bookedSeatIds] = await Promise.all([
+        getSeatsByHall(selectedHall),
+        scheduleIdToUse ? getBookedSeatIdsForSchedule(scheduleIdToUse) : Promise.resolve([])
+      ])
+
       if (!hallSeats || hallSeats.length === 0) {
         setSeats([])
         setSeatError('Khán phòng này chưa có sơ đồ ghế')
         return
       }
-      
-      // Transform database seats to booking format with grid positions
-      // Use position_x and position_y for actual grid coordinates
-      const transformedSeats = hallSeats.map(seat => ({
-        id: seat.id,
-        seat_id: seat.id,
-        row: seat.position_y !== null ? seat.position_y : seat.row_number - 1, // Use position_y (0-based) or fallback to row_number
-        col: seat.position_x !== null ? seat.position_x : seat.seat_number - 1, // Use position_x (0-based) or fallback to seat_number
-        rowLabel: String.fromCharCode(65 + (seat.position_y !== null ? seat.position_y : seat.row_number - 1)), // A, B, C...
-        label: seat.seat_label || `${String.fromCharCode(65 + (seat.position_y !== null ? seat.position_y : seat.row_number - 1))}${(seat.position_x !== null ? seat.position_x : seat.seat_number - 1) + 1}`,
-        status: seat.status === 'booked' ? 'occupied' : 'available',
-        price: getPriceForSeatType(seat.seat_type),
-        type: seat.seat_type,
-        position_x: seat.position_x,
-        position_y: seat.position_y
-      }))
-      
+
+      const bookedSet = new Set((bookedSeatIds || []).map(String))
+
+      // Transform database seats (bảng seats: hall_id, row_number, seat_number, seat_type, seat_label, status, ...)
+      const transformedSeats = hallSeats.map(seat => {
+        const isBookedForSchedule = bookedSet.has(String(seat.id))
+        const status = isBookedForSchedule ? 'occupied' : (seat.status === 'available' || !seat.status ? 'available' : 'occupied')
+        return {
+          id: seat.id,
+          seat_id: seat.id,
+          row: seat.position_y != null ? Number(seat.position_y) : seat.row_number - 1,
+          col: seat.position_x != null ? Number(seat.position_x) : seat.seat_number - 1,
+          rowLabel: String.fromCharCode(65 + (seat.position_y != null ? Number(seat.position_y) : seat.row_number - 1)),
+          label: seat.seat_label || `${String.fromCharCode(65 + (seat.position_y != null ? Number(seat.position_y) : seat.row_number - 1))}${(seat.position_x != null ? Number(seat.position_x) : seat.seat_number - 1) + 1}`,
+          status,
+          price: getPriceForSeatType(seat.seat_type),
+          type: seat.seat_type,
+          position_x: seat.position_x,
+          position_y: seat.position_y
+        }
+      })
+
       setSeats(transformedSeats)
-      onSeatsChange([]) // Reset selected seats when changing hall
+      onSeatsChange([])
     } catch (error) {
       console.error('Error loading seats:', error)
       setSeatError('Không thể tải danh sách ghế. Vui lòng thử lại.')
@@ -92,112 +102,50 @@ export default function SeatSelection({
     return prices[type] || 250000
   }
   
-  // Real-time subscription for seat updates
+  // Real-time: lắng nghe bookings của lịch diễn này để cập nhật ghế đã đặt (bảng seats theo hall, không có schedule_id)
   useEffect(() => {
-    if (!scheduleId || !event?.schedule_id) {
-      // No scheduleId, skip real-time updates (using mock data)
-      return
-    }
-    
-    const scheduleIdToUse = scheduleId || event.schedule_id
-    
-    console.log('Setting up real-time subscription for schedule:', scheduleIdToUse)
-    
-    // Subscribe to seat updates for this schedule
+    const scheduleIdToUse = scheduleId || event?.schedule_id
+    if (!scheduleIdToUse || !selectedHall) return
+
     const channel = supabase
-      .channel(`seat-updates-${scheduleIdToUse}`)
+      .channel(`booking-updates-${scheduleIdToUse}`)
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
-          table: 'seats',
+          table: 'bookings',
           filter: `schedule_id=eq.${scheduleIdToUse}`
         },
-        (payload) => {
-          console.log('Seat update received:', payload)
-          
-          // Update seat status in real-time
-          setSeats(prevSeats => {
-            const updatedSeats = [...prevSeats]
-            const seatIndex = updatedSeats.findIndex(
-              s => s.id === payload.new.id || s.seat_id === payload.new.seat_id || 
-                   (payload.new.seat_id && s.seat_id === payload.new.seat_id)
-            )
-            
-            if (seatIndex !== -1) {
-              // Update existing seat
-              updatedSeats[seatIndex] = {
-                ...updatedSeats[seatIndex],
-                status: payload.new.status,
-                reserved_by: payload.new.reserved_by,
-                reserved_until: payload.new.reserved_until
-              }
-              
-              // Check if seat was selected by user but now occupied/reserved by someone else
-              const isSelected = selectedSeats.some(s => 
-                s.id === payload.new.id || 
-                s.seat_id === payload.new.seat_id ||
-                (payload.new.seat_id && s.seat_id === payload.new.seat_id)
-              )
-              
-              if (isSelected) {
-                if (payload.new.status === 'occupied') {
-                  // Seat occupied by someone else - remove from selected
-                  const newSelectedSeats = selectedSeats.filter(s => 
-                    s.id !== payload.new.id && 
-                    s.seat_id !== payload.new.seat_id &&
-                    !(payload.new.seat_id && s.seat_id === payload.new.seat_id)
-                  )
-                  onSeatsChange(newSelectedSeats)
-                  
-                  const seatLabel = payload.new.seat_id || payload.new.id || 'ghế này'
-                  setConflictWarning(`⚠️ Ghế ${seatLabel} đã được đặt bởi người khác. Đã tự động xóa khỏi danh sách chọn.`)
-                  setTimeout(() => setConflictWarning(null), 5000)
-                } else if (payload.new.status === 'reserved' && payload.new.reserved_by !== userId) {
-                  // Seat reserved by someone else
-                  const seatLabel = payload.new.seat_id || payload.new.id || 'ghế này'
-                  setConflictWarning(`⚠️ Ghế ${seatLabel} đang được giữ bởi người khác. Vui lòng chọn ghế khác.`)
-                  setTimeout(() => setConflictWarning(null), 5000)
-                }
-              }
-            } else if (payload.eventType === 'INSERT') {
-              // New seat added
-              updatedSeats.push({
-                id: payload.new.id,
-                seat_id: payload.new.seat_id,
-                row: payload.new.row_label,
-                number: payload.new.seat_number,
-                status: payload.new.status,
-                price: payload.new.price,
-                type: payload.new.seat_type
-              })
+        async () => {
+          try {
+            const bookedIds = await getBookedSeatIdsForSchedule(scheduleIdToUse)
+            const bookedSet = new Set(bookedIds.map(String))
+            setSeats(prev => prev.map(s => ({
+              ...s,
+              status: bookedSet.has(String(s.id)) ? 'occupied' : 'available'
+            })))
+            const newSelected = selectedSeats.filter(s => !bookedSet.has(String(s.id)))
+            if (newSelected.length < selectedSeats.length) {
+              onSeatsChange(newSelected)
+              setConflictWarning('⚠️ Một số ghế đã được đặt bởi người khác. Đã cập nhật sơ đồ.')
+              setTimeout(() => setConflictWarning(null), 5000)
             }
-            
-            return updatedSeats
-          })
+          } catch (e) {
+            console.error('Error refreshing booked seats:', e)
+          }
         }
       )
-      .subscribe((status) => {
-        console.log('Subscription status:', status)
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Real-time subscription active')
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Subscription error')
-        }
-      })
-    
+      .subscribe()
+
     subscriptionRef.current = channel
-    
-    // Cleanup subscription on unmount
     return () => {
       if (subscriptionRef.current) {
-        console.log('Cleaning up subscription')
         supabase.removeChannel(subscriptionRef.current)
         subscriptionRef.current = null
       }
     }
-  }, [scheduleId, event?.schedule_id, selectedSeats, onSeatsChange, userId])
+  }, [scheduleId, event?.schedule_id, selectedHall, selectedSeats, onSeatsChange])
 
   const handleSeatClick = (seat) => {
     // Check if seat is aisle/walkway - cannot be selected
