@@ -309,6 +309,7 @@ export default function ProfilePage({ onClose, setActiveSection }) {
   }
 
   const getStatusBadge = (status) => {
+    const normalized = status === 'canceled' ? 'cancelled' : (status || '')
     const statusMap = {
       confirmed: { text: 'Đã xác nhận', class: 'status-confirmed' },
       pending: { text: 'Chờ thanh toán', class: 'status-pending' },
@@ -317,7 +318,7 @@ export default function ProfilePage({ onClose, setActiveSection }) {
       failed: { text: 'Thất bại', class: 'status-cancelled' },
       refunded: { text: 'Đã hoàn tiền', class: 'status-cancelled' }
     }
-    const statusInfo = statusMap[status] || { text: status, class: 'status-default' }
+    const statusInfo = statusMap[normalized] || { text: status || '—', class: 'status-default' }
     return (
       <span className={`status-badge ${statusInfo.class}`}>
         {statusInfo.text}

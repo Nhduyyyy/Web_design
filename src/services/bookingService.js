@@ -81,13 +81,23 @@ export const getBookingByCode = async (bookingCode) => {
 /**
  * Get bookings by user
  */
+/**
+ * Lấy danh sách đặt vé theo user.
+ * Lưu ý: Không select schedule.status để tránh PostgREST ghi đè booking.status khi join
+ * (cả bookings và schedules đều có cột status).
+ */
 export const getBookingsByUser = async (userId) => {
   const { data, error } = await supabase
     .from('bookings')
     .select(`
       *,
       schedule:schedules(
-        *,
+        id,
+        title,
+        start_datetime,
+        end_datetime,
+        venue_id,
+        theater_id,
         venue:venues(*),
         theater:theaters(*)
       )
