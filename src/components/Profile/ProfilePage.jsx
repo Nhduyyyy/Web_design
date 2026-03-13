@@ -37,6 +37,7 @@ export default function ProfilePage({ onClose, setActiveSection }) {
   const [bookingsError, setBookingsError] = useState(null)
   const [registrationsError, setRegistrationsError] = useState(null)
   const [selectedBooking, setSelectedBooking] = useState(null)
+  const [selectedEvent, setSelectedEvent] = useState(null)
 
   // Handle share ticket
   const handleShareTicket = async (booking) => {
@@ -147,6 +148,109 @@ Cảm ơn quý khách đã ủng hộ Tuồng Việt Nam!
     } catch (error) {
       console.error('Error downloading ticket:', error)
       setError('Không thể tải vé. Vui lòng thử lại.')
+    }
+  }
+
+  // Handle share event
+  const handleShareEvent = async (event) => {
+    const shareData = {
+      title: `Sự kiện ${event.event?.title || 'Tuồng'}`,
+      text: `Tôi đã đăng ký tham gia ${event.event?.title || 'sự kiện'} vào ${
+        event.event?.event_date
+          ? new Date(event.event.event_date).toLocaleDateString('vi-VN', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            })
+          : ''
+      }. Mã đăng ký: ${event.registration_code}`,
+      url: window.location.origin + `/event/${event.event?.id || event.registration_code}`
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData)
+        setSuccess('Đã chia sẻ sự kiện thành công!')
+      } else {
+        const textToShare = `${shareData.title}\n${shareData.text}\n${shareData.url}`
+        await navigator.clipboard.writeText(textToShare)
+        setSuccess('Đã sao chép thông tin sự kiện vào clipboard!')
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Error sharing:', error)
+        setError('Không thể chia sẻ sự kiện. Vui lòng thử lại.')
+      }
+    }
+  }
+
+  // Handle download event registration
+  const handleDownloadEvent = (event) => {
+    try {
+      const eventContent = `
+ĐĂNG KÝ SỰ KIỆN TUỒNG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${event.event?.title || 'SỰ KIỆN TUỒNG'}
+${event.event?.description || ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 NGÀY TỔ CHỨC
+${event.event?.event_date
+  ? new Date(event.event.event_date).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })
+  : '—'}
+
+🕐 THỜI GIAN
+${event.event?.event_date
+  ? new Date(event.event.event_date).toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  : '—'}
+
+📍 ĐỊA ĐIỂM
+${event.event?.venue?.name || '—'}
+
+⏱️ THỜI LƯỢNG
+${event.event?.duration ? `${event.event.duration} phút` : '—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👤 NGƯỜI THAM GIA: ${event.participant_name || profile?.full_name || displayName}
+📧 EMAIL: ${event.participant_email || '—'}
+📱 SỐ ĐIỆN THOẠI: ${event.participant_phone || '—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 MÃ ĐĂNG KÝ: ${event.registration_code}
+💰 PHÍ THAM GIA: ${event.amount != null ? formatPrice(event.amount) : 'Miễn phí'}
+✅ TRẠNG THÁI: ${event.status === 'confirmed' ? 'Đã xác nhận' : event.status}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vui lòng xuất trình mã đăng ký khi tham gia sự kiện.
+Cảm ơn bạn đã quan tâm đến Tuồng Việt Nam!
+      `.trim()
+
+      const blob = new Blob([eventContent], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `su-kien-${event.registration_code}.txt`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      setSuccess('Đã tải thông tin sự kiện thành công!')
+    } catch (error) {
+      console.error('Error downloading event:', error)
+      setError('Không thể tải thông tin sự kiện. Vui lòng thử lại.')
     }
   }
 
@@ -813,10 +917,14 @@ Cảm ơn quý khách đã ủng hộ Tuồng Việt Nam!
                     {registrations.map((reg) => (
                       <motion.div
                         key={reg.id}
-                        className="profile-list-item"
+                        className="profile-list-item profile-list-item-clickable"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
+                        onClick={() => setSelectedEvent(reg)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && setSelectedEvent(reg)}
                       >
                         <div className="profile-list-item-content">
                           <div className="profile-list-item-icon event-icon">
@@ -1075,6 +1183,226 @@ Cảm ơn quý khách đã ủng hộ Tuồng Việt Nam!
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                       </svg>
                       Chia sẻ vé
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Decorative bottom border */}
+              <div className="ticket-modal-border"></div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal chi tiết sự kiện */}
+      <AnimatePresence mode="wait">
+        {selectedEvent && (
+          <motion.div
+            className="ticket-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            onClick={() => setSelectedEvent(null)}
+          >
+            <motion.div
+              className="ticket-modal"
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 40 }}
+              transition={{ 
+                duration: 0.4, 
+                ease: [0.34, 1.56, 0.64, 1],
+                opacity: { duration: 0.3 }
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                type="button"
+                className="ticket-modal-close"
+                onClick={() => setSelectedEvent(null)}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+
+              {/* Special badge */}
+              {selectedEvent.status === 'confirmed' && (
+                <div className="ticket-special-badge">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  SỰ KIỆN ĐẶC BIỆT
+                </div>
+              )}
+
+              <div className="ticket-modal-content">
+                {/* Left side - Main info with background */}
+                <div className="ticket-main-section">
+                  {/* Background image overlay */}
+                  <div className="ticket-bg-overlay"></div>
+                  
+                  {/* Content */}
+                  <div className="ticket-main-content">
+                    <h2 className="ticket-title">
+                      {selectedEvent.event?.title || 'SỰ KIỆN TUỒNG'}
+                    </h2>
+                    <p className="ticket-subtitle">
+                      {selectedEvent.event?.description || 'Sự kiện văn hóa Tuồng Việt Nam'}
+                    </p>
+
+                    <div className="ticket-info-grid">
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                          </svg>
+                          NGÀY TỔ CHỨC
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedEvent.event?.event_date
+                            ? new Date(selectedEvent.event.event_date).toLocaleDateString('vi-VN', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                              })
+                            : '—'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                          </svg>
+                          THỜI GIAN
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedEvent.event?.event_date
+                            ? new Date(selectedEvent.event.event_date).toLocaleTimeString('vi-VN', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : '—'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                          </svg>
+                          ĐỊA ĐIỂM
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedEvent.event?.venue?.name || '—'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                          </svg>
+                          THỜI LƯỢNG
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedEvent.event?.duration ? `${selectedEvent.event.duration} phút` : '—'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Event details */}
+                    <div className="ticket-details-grid">
+                      <div className="ticket-detail-card">
+                        <div className="ticket-detail-label">LOẠI SỰ KIỆN</div>
+                        <div className="ticket-detail-value ticket-vip">
+                          {selectedEvent.event?.type === 'workshop' ? 'Workshop' : 
+                           selectedEvent.event?.type === 'performance' ? 'Biểu diễn' :
+                           selectedEvent.event?.type === 'tour' ? 'Tour' : 'Sự kiện'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-detail-card">
+                        <div className="ticket-detail-label">SỐ LƯỢNG</div>
+                        <div className="ticket-detail-value">
+                          {selectedEvent.event?.current_participants || 0} / {selectedEvent.event?.max_participants || 0}
+                        </div>
+                      </div>
+
+                      <div className="ticket-detail-card">
+                        <div className="ticket-detail-label">NGƯỜI THAM GIA</div>
+                        <div className="ticket-detail-value">
+                          {selectedEvent.participant_name || profile?.full_name || displayName}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right side - QR Code */}
+                <div className="ticket-qr-section">
+                  <div className="ticket-qr-header">MÃ ĐĂNG KÝ</div>
+                  
+                  <div className="ticket-qr-container">
+                    <div className="ticket-qr-frame">
+                      <QRCodeCanvas
+                        value={JSON.stringify({
+                          code: selectedEvent.registration_code,
+                          event: selectedEvent.event?.title,
+                          date: selectedEvent.event?.event_date,
+                          participant: selectedEvent.participant_name,
+                          venue: selectedEvent.event?.venue?.name,
+                          amount: selectedEvent.amount
+                        })}
+                        size={160}
+                        level="H"
+                        className="ticket-qr-code"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="ticket-qr-note">
+                    VUI LÒNG XUẤT TRÌNH KHI THAM GIA
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="ticket-actions">
+                    <button 
+                      className="ticket-btn ticket-btn-download"
+                      onClick={() => handleDownloadEvent(selectedEvent)}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                      Tải thông tin
+                    </button>
+                    
+                    <button 
+                      className="ticket-btn ticket-btn-share"
+                      onClick={() => handleShareEvent(selectedEvent)}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="18" cy="5" r="3"/>
+                        <circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                      </svg>
+                      Chia sẻ
                     </button>
                   </div>
                 </div>
