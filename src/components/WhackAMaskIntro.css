@@ -24,7 +24,30 @@
   justify-content: space-between;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid rgba(211, 49, 49, 0.2);
-  background: #2a1515;
+  background: linear-gradient(135deg, #2a1515 0%, #1a0f0f 100%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.whack-intro-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 .whack-intro-logo {
@@ -32,23 +55,90 @@
   align-items: center;
   gap: 1rem;
   color: #d33131;
+  position: relative;
+  z-index: 1;
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .whack-intro-logo .material-symbols-outlined {
-  font-size: 2rem;
+  font-size: 2.5rem;
+  color: #d4af37;
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+  }
+  50% {
+    transform: scale(1.1) rotate(5deg);
+    filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.8));
+  }
 }
 
 .whack-intro-logo h2 {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #ffffff;
+  background: linear-gradient(135deg, #ffffff 0%, #d4af37 50%, #ffffff 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin: 0;
+  text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
+  animation: gradientShift 3s ease infinite;
+  letter-spacing: 0.05em;
+  position: relative;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.whack-intro-logo h2::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #d4af37, transparent);
+  animation: underlineGlow 2s ease-in-out infinite;
+}
+
+@keyframes underlineGlow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scaleX(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
 }
 
 .whack-intro-nav-buttons {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  position: relative;
+  z-index: 1;
 }
 
 /* Coin Display in Header */
@@ -58,28 +148,68 @@
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.4rem 0.6rem;
-  background: rgba(44, 24, 16, 0.8);
+  background: linear-gradient(135deg, rgba(44, 24, 16, 0.9) 0%, rgba(34, 18, 12, 0.9) 100%);
   border: 2px solid rgba(212, 175, 55, 0.4);
   border-radius: 3rem;
   transition: all 0.3s ease;
   margin-right: 0.5rem;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2), inset 0 1px 3px rgba(212, 175, 55, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.whack-intro-coin-display-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+  animation: coinGlow 3s ease-in-out infinite;
+}
+
+@keyframes coinGlow {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(10px, 10px) scale(1.1);
+    opacity: 1;
+  }
 }
 
 .whack-intro-coin-display-header:hover {
-  background: rgba(44, 24, 16, 0.95);
-  border-color: rgba(212, 175, 55, 0.6);
-}
-
-.whack-intro-coin-left {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  background: linear-gradient(135deg, rgba(44, 24, 16, 1) 0%, rgba(34, 18, 12, 1) 100%);
+  border-color: rgba(212, 175, 55, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4), inset 0 1px 3px rgba(212, 175, 55, 0.2);
 }
 
 .whack-intro-coin-icon {
   font-size: 1.5rem;
   color: #d4af37;
   font-weight: 600;
+  animation: coinSpin 4s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+}
+
+@keyframes coinSpin {
+  0%, 100% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(180deg);
+  }
+}
+
+.whack-intro-coin-left {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+  z-index: 1;
 }
 
 .whack-intro-coin-amount-wrapper {
@@ -93,6 +223,17 @@
   font-weight: 900;
   color: #ffffff;
   letter-spacing: 0.02em;
+  text-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+  animation: numberPulse 2s ease-in-out infinite;
+}
+
+@keyframes numberPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 .whack-intro-coin-label {
@@ -100,6 +241,7 @@
   font-weight: 700;
   color: #d4af37;
   text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(212, 175, 55, 0.3);
 }
 
 .whack-intro-coin-add-btn {
@@ -108,23 +250,43 @@
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  background: #d33131;
+  background: linear-gradient(135deg, #d33131 0%, #a82525 100%);
   border: none;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(211, 49, 49, 0.4);
+  box-shadow: 0 2px 8px rgba(211, 49, 49, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.whack-intro-coin-add-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.whack-intro-coin-add-btn:hover::before {
+  width: 100%;
+  height: 100%;
 }
 
 .whack-intro-coin-add-btn:hover {
-  background: #e63939;
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(211, 49, 49, 0.6);
+  background: linear-gradient(135deg, #e63939 0%, #c92d2d 100%);
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 4px 12px rgba(211, 49, 49, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .whack-intro-coin-add-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.95) rotate(90deg);
 }
 
 .whack-intro-coin-add-btn .material-symbols-outlined {
@@ -140,16 +302,53 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.5rem;
-  background: rgba(211, 49, 49, 0.1);
+  background: linear-gradient(135deg, rgba(211, 49, 49, 0.15) 0%, rgba(211, 49, 49, 0.05) 100%);
   color: #d33131;
-  border: none;
+  border: 1px solid rgba(211, 49, 49, 0.3);
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.whack-intro-icon-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 0.5rem;
+  background: rgba(211, 49, 49, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+}
+
+.whack-intro-icon-btn:hover::before {
+  width: 100%;
+  height: 100%;
 }
 
 .whack-intro-icon-btn:hover {
-  background: rgba(211, 49, 49, 0.2);
-  transform: scale(1.05);
+  background: linear-gradient(135deg, rgba(211, 49, 49, 0.25) 0%, rgba(211, 49, 49, 0.15) 100%);
+  border-color: rgba(211, 49, 49, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(211, 49, 49, 0.3);
+}
+
+.whack-intro-icon-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(211, 49, 49, 0.2);
+}
+
+.whack-intro-icon-btn .material-symbols-outlined {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.whack-intro-icon-btn:hover .material-symbols-outlined {
+  transform: scale(1.1);
 }
 
 /* Main Layout */

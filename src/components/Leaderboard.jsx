@@ -144,7 +144,7 @@ const Leaderboard = () => {
           <div className="podium-info gold-info">
             <p className="podium-title">{displayData[0]?.title || 'Vô Địch'}</p>
             <p className="podium-name">{displayData[0]?.name || 'Người Chơi 1'}</p>
-            <p className="podium-score">{(displayData[0]?.score || 0).toLocaleString()} điểm</p>
+            <p className="podium-score">{(displayData[0]?.score || 0).toLocaleString()} coin</p>
           </div>
         </div>
 
@@ -184,7 +184,7 @@ const Leaderboard = () => {
             </div>
             <div className="current-user-right">
               <p className="current-user-score">{currentUser.score.toLocaleString()}</p>
-              <p className="current-user-score-label">Điểm Cao Nhất</p>
+              <p className="current-user-score-label">Coin Cao Nhất</p>
             </div>
           </div>
         </div>

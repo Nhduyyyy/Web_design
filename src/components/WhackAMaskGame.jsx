@@ -398,10 +398,28 @@ const WhackAMaskGame = () => {
       }
     }
 
+    // Debug: Log profile data
+    console.log('👤 Profile data:', profile)
+    console.log('🖼️ Avatar URL:', profile.avatar_url)
+
+    // Get avatar URL - handle both full URLs and storage paths
+    let avatarUrl = '/masks/bao_công__tuồng_nam_bộ_-removebg-preview.png'
+    if (profile.avatar_url) {
+      // If it's already a full URL (starts with http), use it directly
+      if (profile.avatar_url.startsWith('http')) {
+        avatarUrl = profile.avatar_url
+      } else {
+        // Otherwise, it might be a storage path - use it as is
+        avatarUrl = profile.avatar_url
+      }
+    }
+
+    console.log('✅ Final avatar URL:', avatarUrl)
+
     return {
       name: profile.full_name || profile.email?.split('@')[0] || 'Player',
       rank: currentRank,
-      avatar: profile.avatar_url || '/masks/bao_công__tuồng_nam_bộ_-removebg-preview.png'
+      avatar: avatarUrl
     }
   }
 
@@ -614,8 +632,8 @@ const WhackAMaskGame = () => {
       <div className="whack-intro-container">
         <header className="whack-intro-header">
           <div className="whack-intro-logo">
-            <span className="material-symbols-outlined">theater_comedy</span>
-            <h2>Whack-a-Mask</h2>
+            <span className="material-symbols-outlined">celebration</span>
+            <h2>Giải Trí</h2>
           </div>
           <div className="whack-intro-nav-buttons">
             {/* Coin Display in Header */}
@@ -667,8 +685,8 @@ const WhackAMaskGame = () => {
             
             <nav className="whack-intro-nav">
               <a className={`whack-intro-nav-link ${!isPlaying && !showLeaderboard && !showShop && !showQuests && !showInventory ? 'active' : ''}`} href="#" onClick={() => {setIsPlaying(false); setShowLeaderboard(false); setShowShop(false); setShowQuests(false); setShowInventory(false)}}>
-                <span className="material-symbols-outlined">home</span>
-                <span>Trang Chủ</span>
+                <span className="material-symbols-outlined">mouse</span>
+                <span>Đập Chuột</span>
               </a>
               <a className={`whack-intro-nav-link ${showLeaderboard ? 'active' : ''}`} href="#" onClick={handleViewScores}>
                 <span className="material-symbols-outlined">leaderboard</span>
