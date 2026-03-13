@@ -16,6 +16,7 @@ export const getTheaterEvents = async (theaterId, filters = {}) => {
 
   if (filters.type) query = query.eq('type', filters.type)
   if (filters.status) query = query.eq('status', filters.status)
+  if (filters.venue_id) query = query.eq('venue_id', filters.venue_id)
   if (filters.search) query = query.ilike('title', `%${filters.search}%`)
   if (filters.dateFrom) query = query.gte('event_date', filters.dateFrom)
   if (filters.dateTo) query = query.lte('event_date', filters.dateTo)

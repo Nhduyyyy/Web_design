@@ -21,7 +21,7 @@ import {
 import { getPlaysByTheater, getPerformancesByTheater, getTodayPerformances } from '../../services/playService'
 import FloorModal from './FloorModal'
 import HallModal from './HallModal'
-import DebugPanel from './DebugPanel'
+// import DebugPanel from './DebugPanel'
 import { useSchedules } from '../../hooks/useSchedules'
 import ScheduleList from './schedules/ScheduleList'
 import ScheduleCalendar from './schedules/ScheduleCalendar'
@@ -34,7 +34,16 @@ import {
   endLivestream,
   createLivestream
 } from '../../services/livestreamService'
+import { useTheaterEvents } from '../../hooks/useTheaterEvents'
+import EventFilters from './events/EventFilters'
+import EventList from './events/EventList'
+import EventFormModal from './events/EventFormModal'
+import EventDetailModal from './events/EventDetailModal'
+import EventDeleteConfirm from './events/EventDeleteConfirm'
 import './VenueDetail.css'
+
+const VIEW_MODES_EVENTS = { GRID: 'grid', LIST: 'list' }
+const VIEW_MODES_PLAYS = { GRID: 'grid', LIST: 'list' }
 
 const LIVESTREAM_STATUS_LABELS = {
   scheduled: { label: 'Đã lên lịch', className: 'bg-yellow-500/15 text-yellow-300' },
@@ -70,6 +79,7 @@ const VenueDetailSimple = () => {
   const [selectedShow, setSelectedShow] = useState(null)
   const [showFormOpen, setShowFormOpen] = useState(false)
   const [showFormLoading, setShowFormLoading] = useState(false)
+  const [playViewMode, setPlayViewMode] = useState(VIEW_MODES_PLAYS.GRID)
 
   // Tabs: overview, halls, plays, schedule, staff
   const [activeTab, setActiveTab] = useState('overview')
@@ -132,6 +142,59 @@ const VenueDetailSimple = () => {
     }
   }, [activeTab, venue?.theater_id, loadLivestreams])
 
+  // Events tab (theater events, filter by venue when in VenueDetail)
+  const {
+    events: venueEvents,
+    loading: eventsLoading,
+    error: eventsError,
+    filters: eventFilters,
+    setFilters: setEventFilters,
+    createEvent,
+    updateEvent,
+    deleteEvent,
+    updateStatus,
+  } = useTheaterEvents(venue?.theater_id)
+
+  useEffect(() => {
+    if (activeTab === 'events' && hallId) {
+      setEventFilters((prev) => ({ ...prev, venue_id: hallId }))
+    }
+  }, [activeTab, hallId])
+
+  const [eventViewMode, setEventViewMode] = useState(VIEW_MODES_EVENTS.GRID)
+  const [eventFormOpen, setEventFormOpen] = useState(false)
+  const [eventDetailEvent, setEventDetailEvent] = useState(null)
+  const [eventEditingEvent, setEventEditingEvent] = useState(null)
+  const [eventDeletingEvent, setEventDeletingEvent] = useState(null)
+
+  const eventStats = useMemo(() => {
+    if (!venueEvents?.length) {
+      return { total: 0, scheduled: 0, ongoing: 0, completed: 0, upcoming7Days: 0, currentMonthParticipants: 0 }
+    }
+    const now = new Date()
+    const sevenDaysLater = new Date()
+    sevenDaysLater.setDate(now.getDate() + 7)
+    let upcoming7Days = 0
+    let currentMonthParticipants = 0
+    const total = venueEvents.length
+    const scheduled = venueEvents.filter((e) => e.status === 'scheduled').length
+    const ongoing = venueEvents.filter((e) => e.status === 'ongoing').length
+    const completed = venueEvents.filter((e) => e.status === 'completed').length
+    for (const e of venueEvents) {
+      if (e.status === 'scheduled' && e.event_date) {
+        const d = new Date(e.event_date)
+        if (d >= now && d <= sevenDaysLater) upcoming7Days += 1
+      }
+      if (e.created_at) {
+        const d = new Date(e.created_at)
+        if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+          currentMonthParticipants += e.current_participants || 0
+        }
+      }
+    }
+    return { total, scheduled, ongoing, completed, upcoming7Days, currentMonthParticipants }
+  }, [venueEvents])
+
   // Shows data from 'shows' table (used in TabPlays)
   const venueShowFilters = useMemo(
     () => ({ venue_id: hallId }),
@@ -145,6 +208,21 @@ const VenueDetailSimple = () => {
     createShow,
     updateShow,
   } = useShows(venueShowFilters)
+
+  const playStats = useMemo(() => {
+    if (!shows?.length) {
+      return { total: 0, totalDuration: 0, totalTags: 0, totalCharacters: 0 }
+    }
+    const totalDuration = shows.reduce((sum, s) => sum + (Number(s.duration) || 0), 0)
+    const totalTags = shows.reduce((sum, s) => sum + (Array.isArray(s.tags) ? s.tags.length : 0), 0)
+    const totalCharacters = shows.reduce((sum, s) => sum + (Array.isArray(s.characters) ? s.characters.length : 0), 0)
+    return {
+      total: shows.length,
+      totalDuration,
+      totalTags,
+      totalCharacters,
+    }
+  }, [shows])
 
   useEffect(() => {
     loadVenueData()
@@ -1075,57 +1153,156 @@ const VenueDetailSimple = () => {
   }
 
   const TabPlays = () => (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-slate-100">Kho Vở Diễn</h3>
-        <button
-          onClick={() => {
-            setSelectedShow(null)
-            setShowFormOpen(true)
-          }}
-          className="px-4 py-2 bg-primary text-black font-bold rounded-lg hover:brightness-110"
-        >
-          + Thêm Vở Diễn Mới
-        </button>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 className="text-2xl font-bold text-slate-100">
+            🎭 Quản lý Vở diễn
+          </h3>
+          <p className="text-sm text-slate-400 mt-1">
+            Tạo, chỉnh sửa và quản lý kho vở diễn gắn với địa điểm này.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="inline-flex rounded-lg border border-border-gold/50 bg-surface-dark p-1">
+            <button
+              type="button"
+              onClick={() => setPlayViewMode(VIEW_MODES_PLAYS.GRID)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                playViewMode === VIEW_MODES_PLAYS.GRID
+                  ? 'bg-primary text-background-dark'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Lưới
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlayViewMode(VIEW_MODES_PLAYS.LIST)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                playViewMode === VIEW_MODES_PLAYS.LIST
+                  ? 'bg-primary text-background-dark'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Danh sách
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedShow(null)
+              setShowFormOpen(true)
+            }}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-background-dark hover:brightness-110 transition-all"
+          >
+            + Tạo vở diễn mới
+          </button>
+        </div>
       </div>
 
-      {showsLoading && (
-        <div className="flex justify-center py-20 text-primary items-center gap-2">
-          <RefreshCw className="animate-spin" size={18} /> <span>Đang tải danh sách vở diễn...</span>
+      <section className="grid gap-4 md:grid-cols-4">
+        <div className="rounded-xl border border-border-gold/50 bg-surface-dark/80 p-4">
+          <p className="text-xs text-slate-400">📋 Tổng vở diễn</p>
+          <p className="mt-2 text-2xl font-bold text-slate-50">{playStats.total}</p>
         </div>
-      )}
-
-      {showsError && !showsLoading && (
-        <div className="text-center py-10 text-red-400">
-          {showsError}
+        <div className="rounded-xl border border-border-gold/50 bg-surface-dark/80 p-4">
+          <p className="text-xs text-slate-400">⏱️ Tổng thời lượng</p>
+          <p className="mt-2 text-2xl font-bold text-slate-50">
+            {playStats.totalDuration}
+            <span className="ml-1 text-base font-normal text-slate-400">phút</span>
+          </p>
         </div>
-      )}
+        <div className="rounded-xl border border-border-gold/50 bg-surface-dark/80 p-4">
+          <p className="text-xs text-slate-400">🏷️ Số tags</p>
+          <p className="mt-2 text-2xl font-bold text-slate-50">{playStats.totalTags}</p>
+        </div>
+        <div className="rounded-xl border border-border-gold/50 bg-surface-dark/80 p-4">
+          <p className="text-xs text-slate-400">👤 Số nhân vật</p>
+          <p className="mt-2 text-2xl font-bold text-slate-50">{playStats.totalCharacters}</p>
+        </div>
+      </section>
 
-      {!showsLoading && !showsError && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {shows.map((show) => (
-            <ShowCard
-              key={show.id}
-              show={show}
-              onEdit={(s) => {
-                setSelectedShow(s)
-                setShowFormOpen(true)
-              }}
-              onDelete={() => {
-                // Có thể gắn deleteShow sau nếu cần
-              }}
-              onView={() => {
-                // Có thể gắn modal chi tiết sau nếu cần
-              }}
-            />
-          ))}
-          {shows.length === 0 && (
-            <div className="col-span-full text-center py-20 text-slate-500">
-              Chưa có vở diễn nào cho địa điểm này. Hãy tạo vở diễn đầu tiên!
+      <section className="rounded-xl border border-border-gold/50 bg-surface-dark/80 p-4">
+        {showsLoading && (
+          <p className="py-8 text-center text-sm text-slate-400 flex items-center justify-center gap-2">
+            <RefreshCw className="animate-spin" size={18} />
+            Đang tải danh sách vở diễn...
+          </p>
+        )}
+        {showsError && !showsLoading && (
+          <p className="mb-4 text-sm text-red-400">
+            Lỗi khi tải vở diễn: <span className="font-mono">{showsError}</span>
+          </p>
+        )}
+        {!showsLoading && !showsError && (
+          playViewMode === VIEW_MODES_PLAYS.GRID ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {shows.map((show) => (
+                <ShowCard
+                  key={show.id}
+                  show={show}
+                  onEdit={(s) => {
+                    setSelectedShow(s)
+                    setShowFormOpen(true)
+                  }}
+                  onDelete={() => {}}
+                  onView={() => {}}
+                />
+              ))}
+              {shows.length === 0 && (
+                <div className="col-span-full flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border-gold/70 bg-background-dark/60 px-6 py-10 text-center">
+                  <span className="material-symbols-outlined text-4xl text-slate-600">masks</span>
+                  <p className="text-sm font-semibold text-slate-100">Chưa có vở diễn nào</p>
+                  <p className="text-xs text-slate-400">Hãy tạo vở diễn đầu tiên cho địa điểm này.</p>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedShow(null); setShowFormOpen(true) }}
+                    className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-background-dark hover:brightness-110"
+                  >
+                    + Tạo vở diễn mới
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          ) : (
+            <div className="divide-y divide-slate-800/80">
+              {shows.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                  <span className="material-symbols-outlined text-4xl text-slate-600">masks</span>
+                  <p className="text-sm font-semibold text-slate-100">Chưa có vở diễn nào</p>
+                  <p className="text-xs text-slate-400">Hãy tạo vở diễn đầu tiên cho địa điểm này.</p>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedShow(null); setShowFormOpen(true) }}
+                    className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-background-dark hover:brightness-110"
+                  >
+                    + Tạo vở diễn mới
+                  </button>
+                </div>
+              ) : (
+                shows.map((show) => (
+                  <div key={show.id} className="py-3 first:pt-0 last:pb-0">
+                    <ShowCard
+                      show={show}
+                      onEdit={(s) => {
+                        setSelectedShow(s)
+                        setShowFormOpen(true)
+                      }}
+                      onDelete={() => {}}
+                      onView={() => {}}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          )
+        )}
+      </section>
     </motion.div>
   )
 
@@ -1520,6 +1697,157 @@ const VenueDetailSimple = () => {
     </motion.div>
   )
 
+  const handleEventCreateClick = () => {
+    setEventEditingEvent(null)
+    setEventFormOpen(true)
+  }
+
+  const handleEventEdit = (event) => {
+    setEventEditingEvent(event)
+    setEventFormOpen(true)
+  }
+
+  const handleEventView = (event) => {
+    setEventDetailEvent(event)
+  }
+
+  const handleEventToggleStatus = async (event) => {
+    try {
+      if (event.status === 'draft') {
+        await updateStatus(event.id, 'scheduled')
+      } else if (event.status === 'scheduled') {
+        await updateStatus(event.id, 'cancelled')
+      }
+    } catch (err) {
+      console.error('Error updating event status', err)
+    }
+  }
+
+  const handleEventDeleteRequest = (event) => {
+    setEventDeletingEvent(event)
+  }
+
+  const handleEventDeleteConfirm = async (eventToDelete) => {
+    try {
+      await deleteEvent(eventToDelete.id)
+      setEventDeletingEvent(null)
+    } catch (err) {
+      console.error('Error deleting event', err)
+    }
+  }
+
+  const handleEventFormSubmit = async (payload) => {
+    if (eventEditingEvent) {
+      await updateEvent(eventEditingEvent.id, payload)
+    } else {
+      await createEvent(payload)
+    }
+    setEventFormOpen(false)
+  }
+
+  const TabEvents = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 className="text-2xl font-bold text-slate-100">
+            🎭 Quản lý sự kiện
+          </h3>
+          <p className="text-sm text-slate-400 mt-1">
+            Tạo, chỉnh sửa và theo dõi các workshop, tour và buổi gặp gỡ nghệ sĩ của nhà hát.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="inline-flex rounded-lg border border-border-gold/50 bg-surface-dark p-1">
+            <button
+              type="button"
+              onClick={() => setEventViewMode(VIEW_MODES_EVENTS.GRID)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                eventViewMode === VIEW_MODES_EVENTS.GRID
+                  ? 'bg-primary text-background-dark'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Lưới
+            </button>
+            <button
+              type="button"
+              onClick={() => setEventViewMode(VIEW_MODES_EVENTS.LIST)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                eventViewMode === VIEW_MODES_EVENTS.LIST
+                  ? 'bg-primary text-background-dark'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Danh sách
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={handleEventCreateClick}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-background-dark hover:brightness-110 transition-all"
+          >
+            + Tạo sự kiện mới
+          </button>
+        </div>
+      </div>
+
+      <section className="grid gap-4 md:grid-cols-4">
+        <div className="rounded-xl border border-border-gold/50 bg-surface-dark/80 p-4">
+          <p className="text-xs text-slate-400">📋 Tổng sự kiện</p>
+          <p className="mt-2 text-2xl font-bold text-slate-50">{eventStats.total}</p>
+        </div>
+        <div className="rounded-xl border border-emerald-500/50 bg-emerald-500/5 p-4">
+          <p className="text-xs text-emerald-200">📅 Đã lên lịch</p>
+          <p className="mt-2 text-2xl font-bold text-emerald-100">{eventStats.scheduled}</p>
+        </div>
+        <div className="rounded-xl border border-sky-500/50 bg-sky-500/5 p-4">
+          <p className="text-xs text-sky-200">📅 Sắp diễn (7 ngày)</p>
+          <p className="mt-2 text-2xl font-bold text-sky-100">{eventStats.upcoming7Days}</p>
+        </div>
+        <div className="rounded-xl border border-amber-500/50 bg-amber-500/5 p-4">
+          <p className="text-xs text-amber-200">👥 Người đăng ký (tháng)</p>
+          <p className="mt-2 text-2xl font-bold text-amber-100">{eventStats.currentMonthParticipants}</p>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-border-gold/50 bg-surface-dark/80 p-4">
+        <EventFilters
+          theaterId={venue?.theater_id}
+          filters={eventFilters}
+          onChange={(next) => setEventFilters((prev) => ({ ...prev, ...next }))}
+          fixedVenueId={hallId}
+        />
+      </section>
+
+      <section className="rounded-xl border border-border-gold/50 bg-surface-dark/80 p-4">
+        {eventsLoading && (
+          <p className="py-8 text-center text-sm text-slate-400">
+            Đang tải danh sách sự kiện...
+          </p>
+        )}
+        {eventsError && !eventsLoading && (
+          <p className="mb-4 text-sm text-red-400">
+            Lỗi khi tải sự kiện: <span className="font-mono">{eventsError}</span>
+          </p>
+        )}
+        {!eventsLoading && (
+          <EventList
+            events={venueEvents}
+            viewMode={eventViewMode}
+            onView={handleEventView}
+            onEdit={handleEventEdit}
+            onToggleStatus={handleEventToggleStatus}
+            onDelete={handleEventDeleteRequest}
+          />
+        )}
+      </section>
+    </motion.div>
+  )
+
   const TabStaff = () => (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20 px-6">
       <span className="material-symbols-outlined text-6xl text-primary/50 mb-4 block">groups</span>
@@ -1560,10 +1888,10 @@ const VenueDetailSimple = () => {
               </span>
             </div>
           </div>
-          <button className="px-5 py-2.5 bg-surface-dark border border-slate-600 hover:border-primary text-white rounded-lg transition-all flex items-center gap-2 shadow-lg z-20">
+          {/* <button className="px-5 py-2.5 bg-surface-dark border border-slate-600 hover:border-primary text-white rounded-lg transition-all flex items-center gap-2 shadow-lg z-20">
             <span className="material-symbols-outlined text-sm">edit</span>
             Chỉnh sửa Venue
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -1603,6 +1931,7 @@ const VenueDetailSimple = () => {
           {activeTab === 'plays' && <TabPlays key="plays" />}
           {activeTab === 'schedule' && <TabSchedule key="schedule" />}
           {activeTab === 'livestreams' && <TabLivestreams key="livestreams" />}
+          {activeTab === 'events' && <TabEvents key="events" />}
           {activeTab === 'staff' && <TabStaff key="staff" />}
         </AnimatePresence>
       </div>
@@ -1779,8 +2108,35 @@ const VenueDetailSimple = () => {
         </div>
       )}
 
+      {eventFormOpen && (
+        <EventFormModal
+          theaterId={venue?.theater_id}
+          event={eventEditingEvent}
+          defaultVenueId={hallId}
+          onSubmit={handleEventFormSubmit}
+          onClose={() => setEventFormOpen(false)}
+        />
+      )}
+      {eventDetailEvent && (
+        <EventDetailModal
+          event={eventDetailEvent}
+          onClose={() => setEventDetailEvent(null)}
+        />
+      )}
+      {eventDeletingEvent && (
+        <EventDeleteConfirm
+          event={eventDeletingEvent}
+          onConfirm={handleEventDeleteConfirm}
+          onCancel={() => setEventDeletingEvent(null)}
+        />
+      )}
+
+      {/* <footer className="mb-0 border-t border-border-gold p-6 text-center bg-surface-dark">
+        <p className="text-slate-500 text-sm">© 2024 Tuồng Platform Vietnam. All Rights Reserved.</p>
+      </footer> */}
+
       {/* Debug Panel - Only in development */}
-      {import.meta.env.DEV && <DebugPanel venueId={hallId} />}
+      {/* {import.meta.env.DEV && <DebugPanel venueId={hallId} />} */}
     </div>
   )
 }
