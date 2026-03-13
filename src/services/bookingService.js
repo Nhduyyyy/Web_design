@@ -200,24 +200,50 @@ export const updateBooking = async (bookingId, updates) => {
  * Confirm booking
  */
 export const confirmBooking = async (bookingId) => {
-  const booking = await getBookingById(bookingId)
+  try {
+    console.log('🔄 Confirming booking:', bookingId)
+    
+    // Get booking first to verify it exists
+    const booking = await getBookingById(bookingId)
+    console.log('📦 Booking data:', booking)
+    
+    if (!booking) {
+      throw new Error('Booking not found')
+    }
+    
+    if (booking.status === 'confirmed') {
+      console.log('ℹ️ Booking already confirmed')
+      return booking
+    }
 
-  // Trạng thái ghế đã đặt theo bảng bookings (seats không cập nhật status theo schedule)
-  await occupySeats(booking.seat_ids || [])
+    // Trạng thái ghế đã đặt theo bảng bookings (seats không cập nhật status theo schedule)
+    if (booking.seat_ids && booking.seat_ids.length > 0) {
+      await occupySeats(booking.seat_ids)
+      console.log('✅ Seats occupied:', booking.seat_ids)
+    }
 
-  // Update booking status
-  const { data, error } = await supabase
-    .from('bookings')
-    .update({
-      status: 'confirmed',
-      confirmed_at: new Date().toISOString()
-    })
-    .eq('id', bookingId)
-    .select()
-    .single()
+    // Update booking status
+    const { data, error } = await supabase
+      .from('bookings')
+      .update({
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString()
+      })
+      .eq('id', bookingId)
+      .select()
+      .single()
 
-  if (error) throw error
-  return data
+    if (error) {
+      console.error('❌ Error updating booking status:', error)
+      throw error
+    }
+    
+    console.log('✅ Booking confirmed successfully:', data)
+    return data
+  } catch (error) {
+    console.error('❌ Error in confirmBooking:', error)
+    throw error
+  }
 }
 
 /**
