@@ -5,6 +5,7 @@ import { getSeatStatus, formatPrice, calculateTotal } from '../../utils/booking'
 import { validateSeatSelection } from '../../utils/validation'
 import { getSeatsByHall } from '../../services/hallService'
 import { getBookedSeatIdsForSchedule } from '../../services/bookingService'
+import { getSeatPricingByType, calculateSeatPricesForHall } from '../../services/seatPricingService'
 import FloorHallSelector from './FloorHallSelector'
 import './booking.css'
 
@@ -28,6 +29,8 @@ export default function SeatSelection({
   const [selectedFloor, setSelectedFloor] = useState(null)
   const [selectedHall, setSelectedHall] = useState(null)
   const [loadingSeats, setLoadingSeats] = useState(false)
+  const [seatPricing, setSeatPricing] = useState({})
+  const [theaterId, setTheaterId] = useState(null)
   
   // Update seats when seatingChart prop changes
   useEffect(() => {
@@ -58,29 +61,66 @@ export default function SeatSelection({
         return
       }
 
-      const bookedSet = new Set((bookedSeatIds || []).map(String))
+      // Get hall details to find theater_id
+      const { data: hallData } = await supabase
+        .from('halls')
+        .select('theater_id')
+        .eq('id', selectedHall)
+        .single()
 
-      // Transform database seats (bảng seats: hall_id, row_number, seat_number, seat_type, seat_label, status, ...)
-      const transformedSeats = hallSeats.map(seat => {
-        const isBookedForSchedule = bookedSet.has(String(seat.id))
-        const status = isBookedForSchedule ? 'occupied' : (seat.status === 'available' || !seat.status ? 'available' : 'occupied')
-        return {
-          id: seat.id,
-          seat_id: seat.id,
-          row: seat.position_y != null ? Number(seat.position_y) : seat.row_number - 1,
-          col: seat.position_x != null ? Number(seat.position_x) : seat.seat_number - 1,
-          rowLabel: String.fromCharCode(65 + (seat.position_y != null ? Number(seat.position_y) : seat.row_number - 1)),
-          label: seat.seat_label || `${String.fromCharCode(65 + (seat.position_y != null ? Number(seat.position_y) : seat.row_number - 1))}${(seat.position_x != null ? Number(seat.position_x) : seat.seat_number - 1) + 1}`,
-          status,
-          price: getPriceForSeatType(seat.seat_type),
-          type: seat.seat_type,
-          position_x: seat.position_x,
-          position_y: seat.position_y
+      if (hallData?.theater_id) {
+        setTheaterId(hallData.theater_id)
+        
+        // Load seat pricing and calculate prices for all seats
+        const [pricing, seatPricesResult] = await Promise.all([
+          getSeatPricingByType(hallData.theater_id, selectedHall),
+          calculateSeatPricesForHall(selectedHall, hallData.theater_id)
+        ])
+        
+        setSeatPricing(pricing)
+
+        // Create a map of seat prices for quick lookup
+        const seatPriceMap = new Map()
+        if (seatPricesResult.success) {
+          seatPricesResult.seatPrices.forEach(sp => {
+            seatPriceMap.set(sp.seat_id, sp.final_price)
+          })
         }
-      })
 
-      setSeats(transformedSeats)
-      onSeatsChange([])
+        const bookedSet = new Set((bookedSeatIds || []).map(String))
+
+        // Transform database seats with calculated pricing
+        const transformedSeats = hallSeats.map(seat => {
+          const isBookedForSchedule = bookedSet.has(String(seat.id))
+          const status = isBookedForSchedule ? 'occupied' : (seat.status === 'available' || !seat.status ? 'available' : 'occupied')
+          
+          // Use calculated price from seatPriceMap, fallback to database or default
+          let price = seatPriceMap.get(seat.id) || seat.final_price || seat.base_price
+          if (!price && pricing[seat.seat_type]) {
+            price = pricing[seat.seat_type]
+          }
+          if (!price) {
+            price = getPriceForSeatType(seat.seat_type) // Fallback to default
+          }
+          
+          return {
+            id: seat.id,
+            seat_id: seat.id,
+            row: seat.position_y != null ? Number(seat.position_y) : seat.row_number - 1,
+            col: seat.position_x != null ? Number(seat.position_x) : seat.seat_number - 1,
+            rowLabel: String.fromCharCode(65 + (seat.position_y != null ? Number(seat.position_y) : seat.row_number - 1)),
+            label: seat.seat_label || `${String.fromCharCode(65 + (seat.position_y != null ? Number(seat.position_y) : seat.row_number - 1))}${(seat.position_x != null ? Number(seat.position_x) : seat.seat_number - 1) + 1}`,
+            status,
+            price,
+            type: seat.seat_type,
+            position_x: seat.position_x,
+            position_y: seat.position_y
+          }
+        })
+
+        setSeats(transformedSeats)
+        onSeatsChange([])
+      }
     } catch (error) {
       console.error('Error loading seats:', error)
       setSeatError('Không thể tải danh sách ghế. Vui lòng thử lại.')
@@ -291,12 +331,30 @@ export default function SeatSelection({
     return { rows: processedRows, maxCols: maxCol + 1 } // +1 because col is 0-based
   }, [seats])
 
-  const seatTypeInfo = {
-    standard: { label: 'Ghế thường', color: '#808080', price: '250,000₫' },
-    vip: { label: 'Ghế VIP', color: '#FFD700', price: '500,000₫' },
-    couple: { label: 'Ghế đôi', color: '#FF69B4', price: '600,000₫' },
-    wheelchair: { label: 'Ghế xe lăn', color: '#00CED1', price: '250,000₫' }
-  }
+  const seatTypeInfo = useMemo(() => {
+    return {
+      standard: { 
+        label: 'Ghế thường', 
+        color: '#808080', 
+        price: formatPrice(seatPricing.standard || 250000)
+      },
+      vip: { 
+        label: 'Ghế VIP', 
+        color: '#FFD700', 
+        price: formatPrice(seatPricing.vip || 500000)
+      },
+      couple: { 
+        label: 'Ghế đôi', 
+        color: '#FF69B4', 
+        price: formatPrice(seatPricing.couple || 600000)
+      },
+      wheelchair: { 
+        label: 'Ghế xe lăn', 
+        color: '#00CED1', 
+        price: formatPrice(seatPricing.wheelchair || 250000)
+      }
+    }
+  }, [seatPricing])
 
   return (
     <motion.div

@@ -1448,3 +1448,48 @@
     gap: 1rem;
   }
 }
+/* Real-time pricing updates */
+.loading-price {
+  color: #666;
+  font-style: italic;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.price-updated {
+  animation: highlight 0.5s ease-in-out;
+}
+
+@keyframes highlight {
+  0% { background-color: transparent; }
+  50% { background-color: #fff3cd; }
+  100% { background-color: transparent; }
+}
+
+/* Seat pricing synchronization indicators */
+.seat-price-sync {
+  position: relative;
+}
+
+.seat-price-sync::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  background: #28a745;
+  border-radius: 50%;
+  opacity: 0;
+  animation: sync-indicator 2s ease-in-out;
+}
+
+@keyframes sync-indicator {
+  0% { opacity: 0; transform: scale(0); }
+  50% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0); }
+}

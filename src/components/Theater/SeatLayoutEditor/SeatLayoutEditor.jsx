@@ -34,6 +34,8 @@ export default function SeatLayoutEditor() {
   const [saving, setSaving] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showZoneManager, setShowZoneManager] = useState(false);
+  const [bookedSeatIds, setBookedSeatIds] = useState([]); // Track booking status
+  const [bookingDetails, setBookingDetails] = useState({}); // Track booking details
   
   const { 
     isDirty,
@@ -78,9 +80,13 @@ export default function SeatLayoutEditor() {
   const loadHall = async () => {
     try {
       setLoading(true);
+      console.log('🏛️ Loading hall with ID:', hallId);
       
       // Load hall details
       const hallData = await getHallById(hallId);
+      console.log('🎭 Hall data loaded:', hallData);
+      console.log('🏢 Theater ID from hall:', hallData?.theater_id);
+      
       setHall(hallData);
       
       // Load complete seat layout with config and zones
@@ -324,7 +330,12 @@ export default function SeatLayoutEditor() {
               size="sm"
               onClick={handleSave}
               disabled={saving}
-              className="relative"
+              className="relative save-button"
+              style={{ 
+                backgroundColor: '#D33131',
+                borderColor: '#D33131',
+                color: 'white'
+              }}
             >
               {saving ? (
                 <>
@@ -346,12 +357,21 @@ export default function SeatLayoutEditor() {
       </motion.header>
 
       {/* Toolbar */}
-      <SeatToolbar />
+      <SeatToolbar 
+        bookedSeatIds={bookedSeatIds}
+        bookingDetails={bookingDetails}
+      />
 
       {/* Main Content */}
       <div className="seat-editor-main ml-80">
         <div className="seat-editor-canvas-container">
-          <SeatCanvas />
+          <SeatCanvas 
+            hall={hall} 
+            onBookingStatusChange={(seatIds, bookingMap) => {
+              setBookedSeatIds(seatIds);
+              setBookingDetails(bookingMap);
+            }}
+          />
         </div>
         <div className="seat-editor-sidebar">
           <SeatSidebar />

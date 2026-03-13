@@ -39,7 +39,7 @@ const seatBackgrounds = {
   [SeatType.STAGE]: 'bg-red-700',
 };
 
-const SeatCell = forwardRef(({ seat }, ref) => {
+const SeatCell = forwardRef(({ seat, isBooked = false }, ref) => {
   const { 
     selectedCells,
     selectedTool,
@@ -111,6 +111,7 @@ const SeatCell = forwardRef(({ seat }, ref) => {
         alignItems: 'center',
         justifyContent: 'center',
         transform: `rotate(${seat.rotation}deg)`,
+        position: 'absolute', // Đảm bảo positioning không bị override
       }}
       initial={{ scale: 0, opacity: 0, rotate: -180 }}
       animate={{ 
@@ -144,11 +145,23 @@ const SeatCell = forwardRef(({ seat }, ref) => {
              width: cellSize - 8, 
              height: cellSize - 8,
              maxWidth: '100%',
-             maxHeight: '100%'
+             maxHeight: '100%',
+             position: 'relative' // Chỉ relative cho inner div
            }}>
         <Icon className="w-4 h-4 flex-shrink-0 drop-shadow-sm" />
         {seat.type !== 'aisle' && (
           <span className="text-[10px] font-bold leading-none drop-shadow-sm">{seat.label}</span>
+        )}
+        
+        {/* Booking Status Indicator - Dấu chấm tròn ở góc trên */}
+        {isBooked && seat.type !== 'aisle' && (
+          <div 
+            className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white shadow-sm pointer-events-none"
+            title="Ghế đã bán (confirmed)"
+            style={{ 
+              zIndex: 20
+            }}
+          />
         )}
       </div>
     </motion.div>
@@ -166,6 +179,7 @@ export default memo(SeatCell, (prevProps, nextProps) => {
     prevProps.seat.rotation === nextProps.seat.rotation &&
     prevProps.seat.label === nextProps.seat.label &&
     prevProps.seat.row === nextProps.seat.row &&
-    prevProps.seat.col === nextProps.seat.col
+    prevProps.seat.col === nextProps.seat.col &&
+    prevProps.isBooked === nextProps.isBooked
   );
 });
