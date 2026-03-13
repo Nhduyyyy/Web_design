@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { v4 as uuidv4 } from 'uuid'
 import { Eye, Edit2, Trash2, Clock, Users, RefreshCw } from 'lucide-react'
 import { useShows } from '../../hooks/useShows'
 import { uploadTheaterAsset, validateImageFile } from '../../utils/storageHelpers'
@@ -21,7 +22,29 @@ import { getPlaysByTheater, getPerformancesByTheater, getTodayPerformances } fro
 import FloorModal from './FloorModal'
 import HallModal from './HallModal'
 import DebugPanel from './DebugPanel'
+import { useSchedules } from '../../hooks/useSchedules'
+import ScheduleList from './schedules/ScheduleList'
+import ScheduleCalendar from './schedules/ScheduleCalendar'
+import ScheduleFilters from './schedules/ScheduleFilters'
+import ScheduleFormModal from './schedules/ScheduleFormModal'
+import {
+  getLivestreams,
+  deleteLivestream,
+  startLivestream,
+  endLivestream,
+  createLivestream
+} from '../../services/livestreamService'
 import './VenueDetail.css'
+
+const LIVESTREAM_STATUS_LABELS = {
+  scheduled: { label: 'Đã lên lịch', className: 'bg-yellow-500/15 text-yellow-300' },
+  upcoming: { label: 'Sắp phát', className: 'bg-yellow-500/15 text-yellow-300' },
+  live: { label: 'Đang phát', className: 'bg-red-600/20 text-red-400' },
+  ended: { label: 'Đã kết thúc', className: 'bg-slate-600/20 text-slate-300' },
+  cancelled: { label: 'Đã hủy', className: 'bg-slate-700/30 text-slate-400' }
+}
+
+const SCHEDULE_VIEW_MODES = { LIST: 'list', CALENDAR: 'calendar' }
 
 const VenueDetailSimple = () => {
   const { hallId } = useParams()
@@ -50,6 +73,64 @@ const VenueDetailSimple = () => {
 
   // Tabs: overview, halls, plays, schedule, staff
   const [activeTab, setActiveTab] = useState('overview')
+
+  // Schedule tab: list/calendar view + modal (schedules table)
+  const [scheduleViewMode, setScheduleViewMode] = useState(SCHEDULE_VIEW_MODES.LIST)
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
+  const [editingSchedule, setEditingSchedule] = useState(null)
+
+  // Livestreams tab
+  const [livestreams, setLivestreams] = useState([])
+  const [livestreamsLoading, setLivestreamsLoading] = useState(false)
+  const [livestreamsError, setLivestreamsError] = useState(null)
+  const [livestreamCreateModalOpen, setLivestreamCreateModalOpen] = useState(false)
+  const [livestreamCreateSaving, setLivestreamCreateSaving] = useState(false)
+  const [livestreamCreateError, setLivestreamCreateError] = useState(null)
+  const [livestreamCreateTitle, setLivestreamCreateTitle] = useState('')
+  const [livestreamCreateDescription, setLivestreamCreateDescription] = useState('')
+  const [livestreamCreateStartTime, setLivestreamCreateStartTime] = useState('')
+  const [livestreamCreateAccessType, setLivestreamCreateAccessType] = useState('free')
+  const [livestreamCreatePrice, setLivestreamCreatePrice] = useState(0)
+
+  const {
+    schedules: venueSchedules,
+    loading: schedulesLoading,
+    error: schedulesError,
+    fetchSchedules,
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
+  } = useSchedules(venue?.theater_id)
+
+  // Chỉ lấy lịch của địa điểm hiện tại (venue)
+  useEffect(() => {
+    if (venue?.theater_id && hallId) {
+      fetchSchedules({ venue_id: hallId })
+    }
+  }, [venue?.theater_id, hallId])
+
+  // Load livestreams của theater (khi mở tab hoặc venue thay đổi)
+  const loadLivestreams = useCallback(async () => {
+    if (!venue?.theater_id) return
+    setLivestreamsLoading(true)
+    setLivestreamsError(null)
+    try {
+      const data = await getLivestreams({ theaterId: venue.theater_id })
+      setLivestreams(data || [])
+    } catch (err) {
+      console.error('Error loading livestreams', err)
+      setLivestreamsError('Không thể tải danh sách livestream. Vui lòng thử lại sau.')
+      setLivestreams([])
+    } finally {
+      setLivestreamsLoading(false)
+    }
+  }, [venue?.theater_id])
+
+  useEffect(() => {
+    if (activeTab === 'livestreams' && venue?.theater_id) {
+      loadLivestreams()
+    }
+  }, [activeTab, venue?.theater_id, loadLivestreams])
 
   // Shows data from 'shows' table (used in TabPlays)
   const venueShowFilters = useMemo(
@@ -1048,84 +1129,392 @@ const VenueDetailSimple = () => {
     </motion.div>
   )
 
+  const handleScheduleFilterChange = (newFilters) => {
+    fetchSchedules({ ...newFilters, venue_id: hallId })
+  }
+
+  const handleScheduleCreate = () => {
+    setEditingSchedule(null)
+    setScheduleModalOpen(true)
+  }
+
+  const handleScheduleEdit = (schedule) => {
+    setEditingSchedule(schedule)
+    setScheduleModalOpen(true)
+  }
+
+  const handleScheduleSubmit = async (formData) => {
+    const result = editingSchedule
+      ? await updateSchedule(editingSchedule.id, formData)
+      : await createSchedule(formData)
+    if (!result.error) {
+      setScheduleModalOpen(false)
+      setEditingSchedule(null)
+    }
+    return result
+  }
+
   const TabSchedule = () => (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-slate-100">Lịch Trình Biểu Diễn</h3>
-        <button className="px-4 py-2 bg-primary text-black font-bold rounded-lg hover:brightness-110">
-          + Lên Lịch Diễn
-        </button>
-      </div>
-
-      {schedules.length === 0 ? (
-        <div className="text-center py-20 px-6">
-          <span className="material-symbols-outlined text-6xl text-slate-600 mb-4 block">event_note</span>
-          <h3 className="text-xl font-bold text-slate-300 mb-2">Chưa có lịch diễn nào</h3>
-          <p className="text-slate-500 mb-6">Thêm lịch diễn để quản lý các buổi biểu diễn</p>
-          <button className="px-6 py-2 bg-primary text-black font-bold rounded-lg hover:brightness-110">
-            + Lên Lịch Diễn
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h3 className="text-xl font-bold text-slate-100">Lịch biểu diễn</h3>
+          <p className="text-sm text-slate-400 mt-1">
+            Tạo, chỉnh sửa và quản lý lịch diễn cho địa điểm này.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="inline-flex rounded-lg border border-border-gold/50 bg-surface-dark p-1">
+            <button
+              type="button"
+              onClick={() => setScheduleViewMode(SCHEDULE_VIEW_MODES.LIST)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                scheduleViewMode === SCHEDULE_VIEW_MODES.LIST
+                  ? 'bg-primary text-background-dark'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Danh sách
+            </button>
+            <button
+              type="button"
+              onClick={() => setScheduleViewMode(SCHEDULE_VIEW_MODES.CALENDAR)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                scheduleViewMode === SCHEDULE_VIEW_MODES.CALENDAR
+                  ? 'bg-primary text-background-dark'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Lịch
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={handleScheduleCreate}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-background-dark hover:brightness-110 transition-all"
+          >
+            + Thêm lịch diễn
           </button>
         </div>
-      ) : (
-        <div className="bg-surface-dark rounded-xl border border-border-gold/50 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-background-dark border-b border-border-gold/50">
-                <th className="p-4 text-slate-400 font-medium">Khán Phòng</th>
-                <th className="p-4 text-slate-400 font-medium">Ngày Diễn</th>
-                <th className="p-4 text-slate-400 font-medium">Giờ</th>
-                <th className="p-4 text-slate-400 font-medium">Vở Diễn</th>
-                <th className="p-4 text-slate-400 font-medium text-center">Bán Vé</th>
-                <th className="p-4 text-slate-400 font-medium text-right">Doanh Thu</th>
-                <th className="p-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {schedules.map(performance => {
-                const play = plays.find(p => p.id === performance.play_id)
-                const hall = halls.find(h => h.id === performance.hall_id)
-                const occupancyRate = performance.total_seats > 0 
-                  ? (performance.sold_seats / performance.total_seats) * 100 
-                  : 0
+      </div>
 
-                return (
-                  <tr key={performance.id} className="border-b border-slate-700/50 hover:bg-white/5 transition-colors">
-                    <td className="p-4 font-medium text-slate-200">{hall?.name || 'N/A'}</td>
-                    <td className="p-4 text-slate-300">
-                      {new Date(performance.performance_date).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="p-4 text-primary font-bold">{performance.start_time}</td>
-                    <td className="p-4 text-slate-200 max-w-[200px] truncate">{play?.title || 'N/A'}</td>
-                    <td className="p-4">
-                      <div className="flex flex-col items-center">
-                        <span className="text-sm font-bold text-slate-200">
-                          {performance.sold_seats || 0}/{performance.total_seats || 0}
-                        </span>
-                        <div className="w-full bg-slate-700 h-1.5 rounded-full mt-1 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              occupancyRate > 80 ? 'bg-green-500' : 
-                              occupancyRate > 50 ? 'bg-yellow-500' : 
-                              'bg-red-500'
-                            }`}
-                            style={{ width: `${occupancyRate}%` }}
-                          />
+      <div className="rounded-xl border border-border-gold/50 bg-surface-dark/80 p-4 mb-4">
+        <ScheduleFilters
+          theaterId={venue?.theater_id}
+          onChange={handleScheduleFilterChange}
+          fixedVenueId={hallId}
+        />
+      </div>
+
+      {schedulesLoading && (
+        <p className="py-8 text-center text-slate-400">Đang tải lịch diễn...</p>
+      )}
+      {schedulesError && (
+        <p className="mb-4 text-sm text-red-400">
+          Lỗi khi tải lịch diễn: <span className="font-mono">{schedulesError}</span>
+        </p>
+      )}
+
+      {!schedulesLoading && (
+        <div className="rounded-xl border border-border-gold/50 bg-surface-dark/80 overflow-hidden">
+          {scheduleViewMode === SCHEDULE_VIEW_MODES.LIST ? (
+            <ScheduleList
+              schedules={venueSchedules}
+              onEdit={handleScheduleEdit}
+              onDelete={deleteSchedule}
+            />
+          ) : (
+            <div className="p-4">
+              <ScheduleCalendar
+                schedules={venueSchedules}
+                onEdit={handleScheduleEdit}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {scheduleModalOpen && (
+        <ScheduleFormModal
+          theaterId={venue?.theater_id}
+          schedule={editingSchedule}
+          defaultVenueId={hallId}
+          onSubmit={handleScheduleSubmit}
+          onClose={() => {
+            setScheduleModalOpen(false)
+            setEditingSchedule(null)
+          }}
+        />
+      )}
+    </motion.div>
+  )
+
+  const handleLivestreamCreateOpen = () => {
+    setLivestreamCreateError(null)
+    setLivestreamCreateTitle('')
+    setLivestreamCreateDescription('')
+    setLivestreamCreateStartTime('')
+    setLivestreamCreateAccessType('free')
+    setLivestreamCreatePrice(0)
+    setLivestreamCreateModalOpen(true)
+  }
+
+  const handleLivestreamCreateSubmit = async (e) => {
+    e.preventDefault()
+    if (!venue?.theater_id) return
+    if (!livestreamCreateTitle.trim()) {
+      setLivestreamCreateError('Vui lòng nhập tiêu đề livestream.')
+      return
+    }
+    try {
+      setLivestreamCreateSaving(true)
+      setLivestreamCreateError(null)
+      const roomId = uuidv4()
+      const parsedPrice =
+        livestreamCreateAccessType === 'free'
+          ? 0
+          : Number.isNaN(Number(livestreamCreatePrice))
+            ? 0
+            : Number(livestreamCreatePrice)
+      const start =
+        livestreamCreateStartTime && !Number.isNaN(Date.parse(livestreamCreateStartTime))
+          ? new Date(livestreamCreateStartTime).toISOString()
+          : new Date().toISOString()
+      const created = await createLivestream({
+        theater_id: venue.theater_id,
+        title: livestreamCreateTitle.trim(),
+        description: livestreamCreateDescription.trim() || null,
+        stream_url: roomId,
+        stream_key: uuidv4(),
+        start_time: start,
+        status: 'scheduled',
+        access_type: livestreamCreateAccessType,
+        price: parsedPrice,
+        chat_enabled: true,
+        current_viewers: 0,
+        total_views: 0,
+        peak_viewers: 0
+      })
+      setLivestreamCreateModalOpen(false)
+      loadLivestreams()
+      navigate(`/theater/livestreams/${created.id}/broadcast`)
+    } catch (err) {
+      console.error('Error creating livestream', err)
+      setLivestreamCreateError(err.message || 'Không thể tạo livestream.')
+    } finally {
+      setLivestreamCreateSaving(false)
+    }
+  }
+
+  const handleLivestreamToggleLive = async (stream) => {
+    try {
+      if (stream.status === 'live') {
+        await endLivestream(stream.id)
+      } else {
+        await startLivestream(stream.id)
+      }
+      await loadLivestreams()
+    } catch (err) {
+      console.error('Error toggling live status', err)
+      alert('Không thể cập nhật trạng thái livestream.')
+    }
+  }
+
+  const handleLivestreamDelete = async (streamId) => {
+    if (!window.confirm('Bạn có chắc muốn xóa livestream này?')) return
+    try {
+      await deleteLivestream(streamId)
+      setLivestreams((prev) => prev.filter((s) => s.id !== streamId))
+    } catch (err) {
+      console.error('Error deleting livestream', err)
+      alert('Không thể xóa livestream.')
+    }
+  }
+
+  const TabLivestreams = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h3 className="text-xl md:text-2xl font-bold text-slate-50">
+            Quản lý Livestream
+          </h3>
+          <p className="text-sm text-slate-400 mt-1">
+            Tạo, quản lý và bắt đầu buổi phát trực tiếp nghệ thuật Tuồng từ Nhà hát của bạn.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleLivestreamCreateOpen}
+          className="px-4 py-2 rounded-lg bg-primary text-background-dark font-semibold text-sm hover:brightness-110 transition-all inline-flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-base">add_circle</span>
+          Thêm live mới
+        </button>
+      </header>
+
+      {livestreamsLoading && (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="text-center text-slate-400 text-sm">
+            Đang tải danh sách livestream...
+          </div>
+        </div>
+      )}
+
+      {!livestreamsLoading && livestreamsError && (
+        <div className="bg-red-900/20 border border-red-500/60 text-red-200 text-sm rounded-xl px-4 py-3">
+          {livestreamsError}
+        </div>
+      )}
+
+      {!livestreamsLoading && !livestreamsError && livestreams.length === 0 && (
+        <div className="bg-surface-dark border border-border-gold/50 rounded-xl px-6 py-10 text-center text-slate-300">
+          <div className="text-3xl mb-3">📡</div>
+          <h2 className="text-lg font-semibold mb-2">Chưa có livestream nào</h2>
+          <p className="text-sm text-slate-400 mb-4">
+            Hãy tạo buổi phát trực tiếp đầu tiên cho Nhà hát của bạn.
+          </p>
+          <button
+            type="button"
+            onClick={handleLivestreamCreateOpen}
+            className="px-4 py-2 rounded-lg bg-primary text-background-dark font-semibold text-sm hover:brightness-110 transition-all inline-flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-base">add_circle</span>
+            Tạo livestream mới
+          </button>
+        </div>
+      )}
+
+      {!livestreamsLoading && !livestreamsError && livestreams.length > 0 && (
+        <div className="bg-surface-dark border border-border-gold/50 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-border-gold/50 flex items-center justify-between">
+            <span className="text-sm text-slate-200 font-semibold">
+              Livestream của Nhà hát {venue?.name || theater?.name || ''}
+            </span>
+            <span className="text-xs text-slate-400">
+              Tổng cộng {livestreams.length} buổi phát
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-background-dark/60 text-slate-300">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium">Tiêu đề</th>
+                  <th className="px-4 py-2 text-left font-medium">Thời gian</th>
+                  <th className="px-4 py-2 text-left font-medium">Truy cập</th>
+                  <th className="px-4 py-2 text-left font-medium">Trạng thái</th>
+                  <th className="px-4 py-2 text-right font-medium">Người xem</th>
+                  <th className="px-4 py-2 text-right font-medium">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {livestreams.map((s) => {
+                  const status = LIVESTREAM_STATUS_LABELS[s.status] || LIVESTREAM_STATUS_LABELS.scheduled
+                  return (
+                    <tr
+                      key={s.id}
+                      className="border-t border-white/5 hover:bg-background-dark/60 transition-colors"
+                    >
+                      <td className="px-4 py-3 align-top">
+                        <div className="font-semibold text-slate-50 line-clamp-2">
+                          {s.title}
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right text-accent-red font-bold">
-                      {(performance.total_revenue || 0).toLocaleString('vi-VN')} đ
-                    </td>
-                    <td className="p-4 text-right">
-                      <button className="text-slate-400 hover:text-white p-2">
-                        <span className="material-symbols-outlined">more_vert</span>
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                        {s.description && (
+                          <div className="text-xs text-slate-400 mt-0.5 line-clamp-2">
+                            {s.description}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-top text-slate-300">
+                        {s.start_time ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span>
+                              {new Date(s.start_time).toLocaleDateString('vi-VN')}
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              {new Date(s.start_time).toLocaleTimeString('vi-VN', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-500">Chưa đặt</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-top text-slate-300">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs uppercase tracking-wide text-slate-400">
+                            {s.access_type || 'free'}
+                          </span>
+                          <span className="text-sm font-semibold text-amber-300">
+                            {s.price
+                              ? `${s.price.toLocaleString('vi-VN')}₫`
+                              : 'Miễn phí'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide ${status.className}`}
+                        >
+                          {status.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 align-top text-right text-slate-300">
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-sm">
+                            {s.current_viewers != null
+                              ? s.current_viewers.toLocaleString('vi-VN')
+                              : 0}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            Tổng: {s.total_views?.toLocaleString('vi-VN') || 0}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-top text-right">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/theater/livestreams/${s.id}/broadcast`)}
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/20 text-primary hover:bg-primary/30 transition-colors inline-flex items-center gap-1.5"
+                          >
+                            <span className="material-symbols-outlined text-base">radio</span>
+                            Phát sóng
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleLivestreamToggleLive(s)}
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-100 hover:bg-slate-600 transition-colors"
+                          >
+                            {s.status === 'live' ? 'Kết thúc' : 'Đánh dấu Live'}
+                          </button>
+                          <Link
+                            to={`/livestreams/${s.id}`}
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-background-dark text-slate-200 hover:bg-slate-800 transition-colors"
+                          >
+                            Xem như viewer
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleLivestreamDelete(s.id)}
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-red-900/40 text-red-300 hover:bg-red-800/60 transition-colors"
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </motion.div>
@@ -1213,6 +1602,7 @@ const VenueDetailSimple = () => {
           {activeTab === 'halls' && <TabHalls key="halls" />}
           {activeTab === 'plays' && <TabPlays key="plays" />}
           {activeTab === 'schedule' && <TabSchedule key="schedule" />}
+          {activeTab === 'livestreams' && <TabLivestreams key="livestreams" />}
           {activeTab === 'staff' && <TabStaff key="staff" />}
         </AnimatePresence>
       </div>
@@ -1257,6 +1647,134 @@ const VenueDetailSimple = () => {
               }}
               loading={showFormLoading}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Livestream create modal */}
+      {livestreamCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-surface-dark border border-border-gold/50 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="sticky top-0 bg-surface-dark border-b border-border-gold/50 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-100">
+                Tạo Livestream mới
+              </h2>
+              <button
+                type="button"
+                onClick={() => setLivestreamCreateModalOpen(false)}
+                className="text-slate-400 hover:text-slate-200"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <form onSubmit={handleLivestreamCreateSubmit} className="p-6 space-y-5">
+              {livestreamCreateError && (
+                <div className="bg-red-900/20 border border-red-500/60 text-red-200 text-sm rounded-xl px-4 py-3">
+                  {livestreamCreateError}
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-semibold text-slate-200 mb-1.5">
+                  Tiêu đề buổi livestream
+                </label>
+                <input
+                  type="text"
+                  value={livestreamCreateTitle}
+                  onChange={(e) => setLivestreamCreateTitle(e.target.value)}
+                  className="w-full rounded-lg bg-background-dark border border-border-gold/50 px-3 py-2 text-sm text-slate-100 focus:border-primary focus:outline-none"
+                  placeholder="Ví dụ: Tuồng Sơn Hậu - Đêm diễn đặc biệt"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-200 mb-1.5">
+                  Mô tả
+                </label>
+                <textarea
+                  value={livestreamCreateDescription}
+                  onChange={(e) => setLivestreamCreateDescription(e.target.value)}
+                  rows={3}
+                  className="w-full rounded-lg bg-background-dark border border-border-gold/50 px-3 py-2 text-sm text-slate-100 resize-none focus:border-primary focus:outline-none"
+                  placeholder="Giới thiệu nội dung buổi diễn, nghệ sĩ tham gia, thời lượng..."
+                />
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-200 mb-1.5">
+                    Thời gian bắt đầu (dự kiến)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={livestreamCreateStartTime}
+                    onChange={(e) => setLivestreamCreateStartTime(e.target.value)}
+                    className="w-full rounded-lg bg-background-dark border border-border-gold/50 px-3 py-2 text-sm text-slate-100 focus:border-primary focus:outline-none"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Nếu để trống, hệ thống sẽ lấy thời gian hiện tại.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-200 mb-1.5">
+                    Kiểu truy cập
+                  </label>
+                  <select
+                    value={livestreamCreateAccessType}
+                    onChange={(e) => setLivestreamCreateAccessType(e.target.value)}
+                    className="w-full rounded-lg bg-background-dark border border-border-gold/50 px-3 py-2 text-sm text-slate-100 focus:border-primary focus:outline-none"
+                  >
+                    <option value="free">Miễn phí</option>
+                    <option value="paid">Trả phí</option>
+                    <option value="subscribers_only">Chỉ cho người đăng ký</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-200 mb-1.5">
+                  Giá vé (nếu trả phí)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1000"
+                    value={livestreamCreatePrice}
+                    onChange={(e) => setLivestreamCreatePrice(e.target.value)}
+                    disabled={livestreamCreateAccessType === 'free'}
+                    className="w-full rounded-lg bg-background-dark border border-border-gold/50 px-3 py-2 text-sm text-slate-100 focus:border-primary focus:outline-none"
+                  />
+                  <span className="text-sm text-slate-400">VNĐ</span>
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Để 0 nếu miễn phí hoặc dùng chế độ có quảng cáo/đăng ký.
+                </p>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setLivestreamCreateModalOpen(false)}
+                  className="px-4 py-2 rounded-lg border border-border-gold/50 text-sm text-slate-200 hover:bg-background-dark transition-colors"
+                  disabled={livestreamCreateSaving}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={livestreamCreateSaving}
+                  className="px-5 py-2 rounded-lg bg-primary text-background-dark font-semibold text-sm hover:brightness-110 transition-all inline-flex items-center gap-2"
+                >
+                  {livestreamCreateSaving ? (
+                    <>
+                      <span className="h-4 w-4 border-2 border-background-dark/40 border-t-background-dark rounded-full animate-spin" />
+                      Đang tạo...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-base">check_circle</span>
+                      Tạo livestream
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

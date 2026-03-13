@@ -3,11 +3,11 @@ import PricingEditor from './PricingEditor'
 import { STATUS_OPTIONS, validateSchedulePayload } from '../../../utils/scheduleHelpers'
 import { getVenuesByTheater } from '../../../services/theaterService'
 
-export default function ScheduleFormModal({ theaterId, schedule, onSubmit, onClose }) {
+export default function ScheduleFormModal({ theaterId, schedule, defaultVenueId, onSubmit, onClose }) {
   const isEdit = !!schedule
 
   const [form, setForm] = useState({
-    venue_id: schedule?.venue_id || '',
+    venue_id: schedule?.venue_id || defaultVenueId || '',
     title: schedule?.title || '',
     description: schedule?.description || '',
     start_datetime: schedule?.start_datetime?.slice(0, 16) || '',
