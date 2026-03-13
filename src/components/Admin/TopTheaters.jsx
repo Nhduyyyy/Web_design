@@ -28,7 +28,7 @@ function TopTheaters({ theaters = [] }) {
             </div>
             <div className="theater-stats">
               <p className="theater-revenue">{(theater.revenue / 1000).toFixed(1)}K</p>
-              <p className={`theater-change ${theater.change.startsWith('+') ? 'positive' : 'negative'}`}>
+              <p className={`theater-change ${theater.change === '0%' ? 'neutral' : theater.change.startsWith('+') ? 'positive' : 'negative'}`}>
                 {theater.change}
               </p>
             </div>

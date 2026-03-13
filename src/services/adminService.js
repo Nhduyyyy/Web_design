@@ -73,25 +73,83 @@ export const getAdminStats = async () => {
       console.error('Revenue from bookings error:', revenueError)
     }
 
-    // Calculate growth rates (compare with last month)
-    const lastMonth = new Date()
-    lastMonth.setMonth(lastMonth.getMonth() - 1)
+    // Growth: so sánh 7 ngày qua vs 7 ngày trước đó
+    const now = new Date()
+    const last7Start = new Date(now)
+    last7Start.setDate(last7Start.getDate() - 7)
+    last7Start.setHours(0, 0, 0, 0)
+    const prev7Start = new Date(now)
+    prev7Start.setDate(prev7Start.getDate() - 14)
+    prev7Start.setHours(0, 0, 0, 0)
 
-    const { count: lastMonthUsers } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true })
-      .lt('created_at', lastMonth.toISOString())
+    const formatGrowth = (pct) => (pct > 0 ? `+${pct.toFixed(1)}%` : pct < 0 ? `${pct.toFixed(1)}%` : '0%')
 
-    const userGrowth = lastMonthUsers && totalUsers ? ((totalUsers - lastMonthUsers) / lastMonthUsers * 100).toFixed(1) : 0
+    let userGrowth = '0%'
+    try {
+      const { count: usersLast7 } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', last7Start.toISOString())
+        .lte('created_at', now.toISOString())
+      const { count: usersPrev7 } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', prev7Start.toISOString())
+        .lt('created_at', last7Start.toISOString())
+      const pct = usersPrev7 ? ((usersLast7 || 0) - (usersPrev7 || 0)) / usersPrev7 * 100 : 0
+      userGrowth = formatGrowth(pct)
+    } catch (e) {
+      console.error('User growth error:', e)
+    }
+
+    let eventGrowth = '0%'
+    try {
+      const { count: eventsLast7 } = await supabase
+        .from('events')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', last7Start.toISOString())
+        .lte('created_at', now.toISOString())
+      const { count: eventsPrev7 } = await supabase
+        .from('events')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', prev7Start.toISOString())
+        .lt('created_at', last7Start.toISOString())
+      const pct = eventsPrev7 ? ((eventsLast7 || 0) - (eventsPrev7 || 0)) / eventsPrev7 * 100 : 0
+      eventGrowth = formatGrowth(pct)
+    } catch (e) {
+      console.error('Event growth error:', e)
+    }
+
+    let revenueGrowth = '0%'
+    try {
+      const { data: revLast7 } = await supabase
+        .from('bookings')
+        .select('total_amount')
+        .eq('status', 'confirmed')
+        .gte('created_at', last7Start.toISOString())
+        .lte('created_at', now.toISOString())
+      const { data: revPrev7 } = await supabase
+        .from('bookings')
+        .select('total_amount')
+        .eq('status', 'confirmed')
+        .gte('created_at', prev7Start.toISOString())
+        .lt('created_at', last7Start.toISOString())
+      const sumLast7 = (revLast7 || []).reduce((s, b) => s + (b.total_amount || 0), 0)
+      const sumPrev7 = (revPrev7 || []).reduce((s, b) => s + (b.total_amount || 0), 0)
+      const pct = sumPrev7 ? (sumLast7 - sumPrev7) / sumPrev7 * 100 : 0
+      revenueGrowth = formatGrowth(pct)
+    } catch (e) {
+      console.error('Revenue growth error:', e)
+    }
 
     const stats = {
       totalUsers: totalUsers || 0,
       totalTheaters: totalTheaters || 0,
       activeEvents: activeEvents || 0,
       totalRevenue: totalRevenue || 0,
-      userGrowth: userGrowth > 0 ? `+${userGrowth}%` : `${userGrowth}%`,
-      eventGrowth: '+5.2%', // TODO: Calculate real growth
-      revenueGrowth: '+8.1%' // TODO: Calculate real growth
+      userGrowth,
+      eventGrowth,
+      revenueGrowth
     }
 
     console.log('✅ Final stats:', stats)
@@ -119,6 +177,16 @@ export const getTopTheaters = async (limit = 4) => {
       return []
     }
 
+    const now = new Date()
+    const last7Start = new Date(now)
+    last7Start.setDate(last7Start.getDate() - 7)
+    last7Start.setHours(0, 0, 0, 0)
+    const prev7Start = new Date(now)
+    prev7Start.setDate(prev7Start.getDate() - 14)
+    prev7Start.setHours(0, 0, 0, 0)
+
+    const formatChange = (pct) => (pct > 0 ? `+${pct.toFixed(0)}%` : pct < 0 ? `${pct.toFixed(0)}%` : '0%')
+
     // Get bookings for each theater through schedules
     const theatersWithRevenue = await Promise.all(
       theaters.map(async (theater) => {
@@ -137,27 +205,42 @@ export const getTopTheaters = async (limit = 4) => {
             logo_url: theater.logo_url,
             tickets: 0,
             revenue: 0,
-            change: '+0%'
+            change: '0%'
           }
         }
 
-        // Get confirmed bookings for these schedules
+        // Get all confirmed bookings (for total revenue/tickets) with created_at (for change %)
         const { data: bookings } = await supabase
           .from('bookings')
-          .select('total_amount')
+          .select('total_amount, created_at')
           .in('schedule_id', scheduleIds)
           .eq('status', 'confirmed')
 
-        const revenue = bookings?.reduce((sum, booking) => sum + (booking.total_amount || 0), 0) || 0
-        const ticketCount = bookings?.length || 0
+        const list = bookings || []
+        const revenue = list.reduce((sum, b) => sum + (b.total_amount || 0), 0)
+        const ticketCount = list.length
+
+        // Change %: 7 ngày qua vs 7 ngày trước đó (7–14 ngày)
+        let change = '0%'
+        const inLast14 = list.filter((b) => new Date(b.created_at) >= prev7Start)
+        const last7Sum = inLast14
+          .filter((b) => new Date(b.created_at) >= last7Start)
+          .reduce((s, b) => s + (b.total_amount || 0), 0)
+        const prev7Sum = inLast14
+          .filter((b) => new Date(b.created_at) < last7Start)
+          .reduce((s, b) => s + (b.total_amount || 0), 0)
+        if (prev7Sum) {
+          const pct = (last7Sum - prev7Sum) / prev7Sum * 100
+          change = formatChange(pct)
+        }
 
         return {
           id: theater.id,
           name: theater.name,
           logo_url: theater.logo_url,
           tickets: ticketCount,
-          revenue: revenue,
-          change: '+14%' // TODO: Calculate real change
+          revenue,
+          change
         }
       })
     )

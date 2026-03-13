@@ -103,7 +103,7 @@ function DashboardOverview() {
           title="Total Users"
           value={metrics.totalUsers.toLocaleString()}
           change={metrics.userGrowth}
-          changeType="positive"
+          changeType={metrics.userGrowth?.startsWith('-') ? 'negative' : metrics.userGrowth === '0%' ? 'neutral' : 'positive'}
         />
         <MetricCard
           icon="account_balance"
@@ -117,14 +117,14 @@ function DashboardOverview() {
           title="Active Events"
           value={metrics.activeEvents}
           change={metrics.eventGrowth}
-          changeType="positive"
+          changeType={metrics.eventGrowth?.startsWith('-') ? 'negative' : metrics.eventGrowth === '0%' ? 'neutral' : 'positive'}
         />
         <MetricCard
           icon="payments"
           title="Total Revenue"
           value={`${(metrics.totalRevenue / 1000).toFixed(0)}K VND`}
           change={metrics.revenueGrowth}
-          changeType="positive"
+          changeType={metrics.revenueGrowth?.startsWith('-') ? 'negative' : metrics.revenueGrowth === '0%' ? 'neutral' : 'positive'}
         />
       </div>
 

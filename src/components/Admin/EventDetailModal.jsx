@@ -40,68 +40,68 @@ export default function EventDetailModal({ event: evt, onClose }) {
             <div className="info-section">
               <h3>Thông tin chung</h3>
               <div className="info-grid">
-                <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Tiêu đề:</label>
                   <span>{evt.title || '-'}</span>
                 </div>
-                <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Loại sự kiện:</label>
                   <span>{getTypeLabel(evt.type)}</span>
                 </div>
-                <div className="" style={{ color: 'darkgoldenrod', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="" style={{ color: 'black', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Trạng thái:</label>
                   <span>{getStatusBadge(evt.status)}</span>
                 </div>
-                <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Nhà hát:</label>
                   <span>{evt.theater?.name ?? evt.theater_id ?? '-'}</span>
                 </div>
-                <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Rạp / Địa điểm:</label>
                   <span>{evt.venue?.name ?? evt.venue_id ?? '-'}</span>
                 </div>
-                <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Ngày diễn ra:</label>
                   <span>{formatDate(evt.event_date)}</span>
                 </div>
                 {evt.duration != null && (
-                  <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Thời lượng (phút):</label>
                     <span>{evt.duration}</span>
                   </div>
                 )}
                 {evt.max_participants != null && (
-                  <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Số người tối đa:</label>
                     <span>{evt.max_participants}</span>
                   </div>
                 )}
                 {evt.current_participants != null && (
-                  <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Đã đăng ký:</label>
                     <span>{evt.current_participants}</span>
                   </div>
                 )}
                 {evt.price != null && evt.price !== '' && (
-                  <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Giá (VNĐ):</label>
                     <span>{Number(evt.price).toLocaleString('vi-VN')}</span>
                   </div>
                 )}
                 {evt.instructor && (
-                  <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Người hướng dẫn:</label>
                     <span>{evt.instructor}</span>
                   </div>
                 )}
                 {evt.created_at && (
-                  <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Ngày tạo:</label>
                     <span>{formatDate(evt.created_at)}</span>
                   </div>
                 )}
                 {evt.updated_at && (
-                  <div className="" style={{ color: 'darkgoldenrod' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="" style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Cập nhật:</label>
                     <span>{formatDate(evt.updated_at)}</span>
                   </div>

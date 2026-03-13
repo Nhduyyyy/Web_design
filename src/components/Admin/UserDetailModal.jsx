@@ -25,38 +25,39 @@ export default function UserDetailModal({ user, onClose }) {
             <div className="info-section">
               <h3>Thông tin cá nhân</h3>
               <div className="info-grid">
-                <div className="info-item">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Họ tên:</label>
                   <span>{user.full_name || '-'}</span>
                 </div>
-                <div className="info-item">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Vai trò:</label>
                   <span>{getRoleLabel(user.role)}</span>
                 </div>
-                <div className="info-item full">
+                <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label>Email:</label>
                   <span>{user.email || '-'}</span>
                 </div>
                 {user.phone && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Điện thoại:</label>
                     <span>{user.phone}</span>
                   </div>
                 )}
                 {user.id && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Mã người dùng:</label>
                     <span className="info-id">{user.id}</span>
                   </div>
                 )}
+                <div></div>
                 {user.created_at && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Ngày tạo:</label>
                     <span>{new Date(user.created_at).toLocaleString('vi-VN')}</span>
                   </div>
                 )}
                 {user.updated_at && (
-                  <div className="info-item">
+                  <div style={{ color: 'black' , display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <label>Cập nhật:</label>
                     <span>{new Date(user.updated_at).toLocaleString('vi-VN')}</span>
                   </div>
