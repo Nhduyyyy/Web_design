@@ -80,9 +80,13 @@ export default function SeatLayoutEditor() {
   const loadHall = async () => {
     try {
       setLoading(true);
+      console.log('🏛️ Loading hall with ID:', hallId);
       
       // Load hall details
       const hallData = await getHallById(hallId);
+      console.log('🎭 Hall data loaded:', hallData);
+      console.log('🏢 Theater ID from hall:', hallData?.theater_id);
+      
       setHall(hallData);
       
       // Load complete seat layout with config and zones

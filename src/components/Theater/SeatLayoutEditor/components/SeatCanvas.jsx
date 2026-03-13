@@ -12,6 +12,10 @@ import SeatPriceList from './SeatPriceList';
 import BookingStatusOverlay from './BookingStatusOverlay';
 
 export default function SeatCanvas({ hall, onBookingStatusChange }) {
+  console.log('🎨 SeatCanvas rendered with hall:', hall);
+  console.log('🏛️ Hall theater_id:', hall?.theater_id);
+  console.log('🏢 Hall id:', hall?.id);
+  
   const canvasRef = useRef(null);
   const [isPainting, setIsPainting] = useState(false);
   const [bookedSeatIds, setBookedSeatIds] = useState([]);

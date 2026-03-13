@@ -15,8 +15,13 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
 
   // Load schedules for this hall/theater
   useEffect(() => {
+    console.log('🎭 BookingStatusOverlay useEffect triggered:', { theaterId, hallId });
+    
     if (theaterId) {
+      console.log('✅ Theater ID exists, loading schedules...');
       loadSchedules();
+    } else {
+      console.log('⚠️ No theater ID provided');
     }
   }, [theaterId, hallId]);
 
@@ -52,6 +57,37 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
 
   const loadSchedules = async () => {
     try {
+      console.log('🔍 Loading schedules for theaterId:', theaterId);
+      console.log('🏢 Hall ID:', hallId);
+      console.log('📅 Current datetime filter:', new Date().toISOString());
+      
+      // First, check venues for this theater
+      const { data: venues, error: venuesError } = await supabase
+        .from('venues')
+        .select('id, name, theater_id')
+        .eq('theater_id', theaterId);
+      
+      console.log('🏛️ Venues for theater:', venues);
+      
+      if (!venues || venues.length === 0) {
+        console.log('⚠️ No venues found for theater:', theaterId);
+        setSchedules([]);
+        return;
+      }
+      
+      // Get venue IDs
+      const venueIds = venues.map(v => v.id);
+      console.log('🎯 Venue IDs to search:', venueIds);
+      
+      // First, check if there are any schedules for these venues (without date filter)
+      const { data: allSchedules, error: allError } = await supabase
+        .from('schedules')
+        .select('id, title, start_datetime, theater_id, venue_id')
+        .eq('theater_id', theaterId)
+        .in('venue_id', venueIds);
+      
+      console.log('� All schedules for theater venues (no date filter):', allSchedules);
+      
       const { data, error } = await supabase
         .from('schedules')
         .select(`
@@ -63,14 +99,25 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
           venue:venues(name)
         `)
         .eq('theater_id', theaterId)
-        .gte('start_datetime', new Date().toISOString())
+        .in('venue_id', venueIds)
+        // .gte('start_datetime', new Date().toISOString()) // Tạm thời bỏ filter ngày
         .order('start_datetime', { ascending: true })
         .limit(10);
+
+      console.log('📅 Schedules query result (with date filter):', { data, error });
+      console.log('📊 Number of schedules found:', data?.length || 0);
+      
+      if (data && data.length > 0) {
+        console.log('✅ First schedule:', data[0]);
+      } else {
+        console.log('⚠️ No schedules found for theater venues');
+        console.log('💡 Check if schedules exist for venue IDs:', venueIds);
+      }
 
       if (error) throw error;
       setSchedules(data || []);
     } catch (err) {
-      console.error('Error loading schedules:', err);
+      console.error('❌ Error loading schedules:', err);
       setError('Không thể tải lịch diễn');
     }
   };
@@ -105,6 +152,7 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
   };
 
   const handleScheduleChange = (scheduleId) => {
+    console.log('📋 Schedule changed:', scheduleId);
     setSelectedSchedule(scheduleId);
     loadBookingStatus(scheduleId);
   };
@@ -202,11 +250,14 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
                 className="w-full bg-gray-800 text-white text-sm rounded-md px-3 py-2 border border-gray-600 focus:border-blue-400 focus:outline-none"
               >
                 <option value="">-- Chọn suất diễn --</option>
-                {schedules.map((schedule) => (
-                  <option key={schedule.id} value={schedule.id}>
-                    {schedule.title} - {formatDateTime(schedule.start_datetime)}
-                  </option>
-                ))}
+                {schedules.map((schedule) => {
+                  console.log('🎪 Rendering schedule option:', schedule);
+                  return (
+                    <option key={schedule.id} value={schedule.id}>
+                      {schedule.title} - {formatDateTime(schedule.start_datetime)}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
