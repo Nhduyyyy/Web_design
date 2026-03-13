@@ -114,13 +114,50 @@ export const getBookingsBySchedule = async (scheduleId) => {
 }
 
 /**
+ * Lấy danh sách id ghế đã được đặt (pending hoặc confirmed) cho một lịch diễn.
+ * Dùng để hiển thị ghế occupied khi chọn ghế theo bảng seats (hall_id).
+ */
+export const getBookedSeatIdsForSchedule = async (scheduleId) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('seat_ids')
+    .eq('schedule_id', scheduleId)
+    .in('status', ['pending', 'confirmed'])
+
+  if (error) throw error
+  const ids = (data || []).flatMap((b) => b.seat_ids || [])
+  return [...new Set(ids)]
+}
+
+/**
+ * Cập nhật thông tin booking (ví dụ customer khi chuyển từ chọn ghế sang thanh toán).
+ * PGRST116 xảy ra khi .single() không nhận đủ 1 dòng (0 dòng) — thường do RLS hoặc booking không tồn tại.
+ */
+export const updateBooking = async (bookingId, updates) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .update(updates)
+    .eq('id', bookingId)
+    .select()
+    .maybeSingle()
+
+  if (error) throw error
+  if (data == null) {
+    const e = new Error('Không tìm thấy đặt vé hoặc không có quyền đọc (RLS). Mã: PGRST116')
+    e.code = 'PGRST116'
+    throw e
+  }
+  return data
+}
+
+/**
  * Confirm booking
  */
 export const confirmBooking = async (bookingId) => {
   const booking = await getBookingById(bookingId)
 
-  // Mark seats as occupied
-  await occupySeats(booking.seat_ids)
+  // Trạng thái ghế đã đặt theo bảng bookings (seats không cập nhật status theo schedule)
+  await occupySeats(booking.seat_ids || [])
 
   // Update booking status
   const { data, error } = await supabase
@@ -143,8 +180,8 @@ export const confirmBooking = async (bookingId) => {
 export const cancelBooking = async (bookingId) => {
   const booking = await getBookingById(bookingId)
 
-  // Release seats
-  await releaseSeats(booking.seat_ids)
+  // Giải phóng ghế (no-op trên bảng seats; availability theo bookings)
+  await releaseSeats(booking.seat_ids || [])
 
   // Update booking status
   const { data, error } = await supabase

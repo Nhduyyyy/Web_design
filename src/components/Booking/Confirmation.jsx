@@ -42,19 +42,19 @@ export default function Confirmation({ bookingId, event, selectedSeats, total, c
             <div className="confirmation-section">
               <h3>Thông tin sự kiện</h3>
               <div className="info-grid">
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Tên sự kiện:</strong>
                   <span>{event.title}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Ngày giờ:</strong>
                   <span>{new Date(event.startDatetime).toLocaleString('vi-VN')}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Địa điểm:</strong>
                   <span>{event.venue?.name}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Địa chỉ:</strong>
                   <span>{event.venue?.address}, {event.venue?.city}</span>
                 </div>
@@ -66,8 +66,8 @@ export default function Confirmation({ bookingId, event, selectedSeats, total, c
               <div className="confirmed-seats">
                 {selectedSeats.map(seat => (
                   <div key={seat.id} className="confirmed-seat">
-                    <span className="seat-badge">{seat.id}</span>
-                    <span className="seat-type-badge">{seat.type.toUpperCase()}</span>
+                    <span className="seat-badge">{seat.label ?? seat.id}</span>
+                    <span className="seat-type-badge">{(seat.type || '').toUpperCase()}</span>
                   </div>
                 ))}
               </div>
@@ -76,23 +76,23 @@ export default function Confirmation({ bookingId, event, selectedSeats, total, c
             <div className="confirmation-section">
               <h3>Thông tin thanh toán</h3>
               <div className="info-grid">
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Số lượng vé:</strong>
                   <span>{selectedSeats.length} vé</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Tổng tiền:</strong>
                   <span className="total-highlight">{formatPrice(total)}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Phương thức:</strong>
                   <span>{paymentMethodNames[paymentMethod] || paymentMethod}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Mã giao dịch:</strong>
                   <span>{paymentResult?.transactionId}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Thời gian:</strong>
                   <span>{new Date(paymentResult?.timestamp).toLocaleString('vi-VN')}</span>
                 </div>
@@ -102,15 +102,15 @@ export default function Confirmation({ bookingId, event, selectedSeats, total, c
             <div className="confirmation-section">
               <h3>Thông tin khách hàng</h3>
               <div className="info-grid">
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Họ tên:</strong>
                   <span>{customerInfo.name}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Email:</strong>
                   <span>{customerInfo.email}</span>
                 </div>
-                <div className="info-item">
+                <div className="bg-background-dark">
                   <strong>Số điện thoại:</strong>
                   <span>{customerInfo.phone}</span>
                 </div>
