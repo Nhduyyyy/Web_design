@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase'
 import ShopItemModal from './ShopItemModal'
 import './GameManagement.css'
 
+const PAGE_SIZE = 10
+
 function GameManagement() {
   const [activeTab, setActiveTab] = useState('overview')
   const [stats, setStats] = useState({
@@ -19,6 +21,14 @@ function GameManagement() {
   const [showItemModal, setShowItemModal] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
 
+  // Pagination: page (1-based) and total count per tab
+  const [shopPage, setShopPage] = useState(1)
+  const [shopTotalCount, setShopTotalCount] = useState(0)
+  const [playersPage, setPlayersPage] = useState(1)
+  const [playersTotalCount, setPlayersTotalCount] = useState(0)
+  const [gamesPage, setGamesPage] = useState(1)
+  const [gamesTotalCount, setGamesTotalCount] = useState(0)
+
   useEffect(() => {
     loadGameData()
   }, [])
@@ -29,10 +39,13 @@ function GameManagement() {
       await Promise.all([
         loadStats(),
         loadCategories(),
-        loadShopItems(),
-        loadRecentGames(),
-        loadTopPlayers()
+        loadShopItems(1),
+        loadRecentGames(1),
+        loadTopPlayers(1)
       ])
+      setShopPage(1)
+      setPlayersPage(1)
+      setGamesPage(1)
     } catch (error) {
       console.error('Error loading game data:', error)
     } finally {
@@ -78,15 +91,20 @@ function GameManagement() {
     }
   }
 
-  const loadShopItems = async () => {
+  const loadShopItems = async (page = 1) => {
     try {
-      const { data, error } = await supabase
+      const from = (page - 1) * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
+      const { data, error, count } = await supabase
         .from('shop_items')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
+        .range(from, to)
 
       if (error) throw error
       setShopItems(data || [])
+      setShopTotalCount(count ?? 0)
+      setShopPage(page)
     } catch (error) {
       console.error('Error loading shop items:', error)
     }
@@ -106,101 +124,95 @@ function GameManagement() {
     }
   }
 
-  const loadRecentGames = async () => {
+  const loadRecentGames = async (page = 1) => {
     try {
-      // Query đơn giản trước
-      const { data, error } = await supabase
+      const from = (page - 1) * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
+      const { data, error, count } = await supabase
         .from('game_history')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          score,
+          coins_earned,
+          masks_hit,
+          total_rounds,
+          accuracy_percentage,
+          game_duration_seconds,
+          rank_at_time,
+          played_at,
+          created_at
+        `, { count: 'exact' })
         .order('played_at', { ascending: false })
-        .limit(10)
+        .range(from, to)
 
       if (error) {
-        console.error('Error loading recent games:', error)
+        console.error('[GameManagement] Lỗi khi lấy lịch sử game:', error.message, error)
         throw error
       }
 
-      // Nếu có data, lấy thêm thông tin profiles
+      setGamesTotalCount(count ?? 0)
+      setGamesPage(page)
+
       if (data && data.length > 0) {
         const userIds = [...new Set(data.map(g => g.user_id))]
-        
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, full_name, email')
           .in('id', userIds)
 
-        // Merge data
         const enrichedData = data.map(game => ({
           ...game,
           player: profiles?.find(p => p.id === game.user_id)
         }))
-
         setRecentGames(enrichedData)
       } else {
         setRecentGames([])
       }
     } catch (error) {
-      console.error('Error loading recent games:', error)
+      console.error('[GameManagement] Lỗi load recent games:', error?.message || error)
       setRecentGames([])
     }
   }
 
-  const loadTopPlayers = async () => {
+  const loadTopPlayers = async (page = 1) => {
     try {
-      console.log('Loading top players...')
-      
-      // Thử query đơn giản trước
-      const { data, error } = await supabase
+      const from = (page - 1) * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
+      const { data, error, count } = await supabase
         .from('player_game_stats')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('total_coins', { ascending: false })
-        .limit(10)
+        .range(from, to)
 
       if (error) {
         console.error('Error loading top players:', error)
         throw error
       }
 
-      console.log('Player stats data:', data)
+      setPlayersTotalCount(count ?? 0)
+      setPlayersPage(page)
 
-      // Nếu có data, lấy thêm thông tin profiles và ranks
       if (data && data.length > 0) {
         const userIds = data.map(p => p.user_id)
-        
-        // Lấy profiles
-        const { data: profiles, error: profilesError } = await supabase
+        const { data: profiles } = await supabase
           .from('profiles')
           .select('id, full_name, email, avatar_url')
           .in('id', userIds)
 
-        if (profilesError) {
-          console.error('Error loading profiles:', profilesError)
-        }
-        console.log('Profiles data:', profiles)
-
-        // Lấy ranks
         const rankIds = data.map(p => p.current_rank_id).filter(Boolean)
-        const { data: ranks, error: ranksError } = await supabase
+        const { data: ranks } = await supabase
           .from('game_ranks')
           .select('id, rank_name, rank_color, rank_icon')
           .in('id', rankIds)
 
-        if (ranksError) {
-          console.error('Error loading ranks:', ranksError)
-        }
-        console.log('Ranks data:', ranks)
-
-        // Merge data
         const enrichedData = data.map(player => ({
           ...player,
           profile: profiles?.find(p => p.id === player.user_id),
           current_rank: ranks?.find(r => r.id === player.current_rank_id)
         }))
-
-        console.log('Enriched top players:', enrichedData)
         setTopPlayers(enrichedData)
       } else {
-        console.log('No player stats found')
         setTopPlayers([])
       }
     } catch (error) {
@@ -218,8 +230,7 @@ function GameManagement() {
 
       if (error) throw error
       
-      // Reload shop items
-      await loadShopItems()
+      await loadShopItems(shopPage)
       alert('Item status updated successfully!')
     } catch (error) {
       console.error('Error updating item:', error)
@@ -238,7 +249,7 @@ function GameManagement() {
 
       if (error) throw error
       
-      await loadShopItems()
+      await loadShopItems(shopPage)
       alert('Item deleted successfully!')
     } catch (error) {
       console.error('Error deleting item:', error)
@@ -257,12 +268,40 @@ function GameManagement() {
   }
 
   const handleSaveItem = async () => {
-    await loadShopItems()
+    await loadShopItems(shopPage)
   }
 
   const handleCloseModal = () => {
     setShowItemModal(false)
     setEditingItem(null)
+  }
+
+  const totalPages = (total) => Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const renderPagination = (currentPage, total, loadPage) => {
+    const totalP = totalPages(total)
+    return (
+      <div className="gm-pagination">
+        <button
+          type="button"
+          className="gm-pagination-btn"
+          disabled={currentPage <= 1}
+          onClick={() => loadPage(currentPage - 1)}
+        >
+          <span className="material-symbols-outlined">chevron_left</span> Trước
+        </button>
+        <span className="gm-pagination-info">
+          Trang {currentPage} / {totalP} ({total} bản ghi)
+        </span>
+        <button
+          type="button"
+          className="gm-pagination-btn"
+          disabled={currentPage >= totalP}
+          onClick={() => loadPage(currentPage + 1)}
+        >
+          Sau <span className="material-symbols-outlined">chevron_right</span>
+        </button>
+      </div>
+    )
   }
 
   if (loading) {
@@ -512,17 +551,13 @@ function GameManagement() {
                 </tbody>
               </table>
             </div>
+            {shopTotalCount > 0 && renderPagination(shopPage, shopTotalCount, loadShopItems)}
           </div>
         )}
 
         {/* Top Players Tab */}
         {activeTab === 'players' && (
           <div className="gm-players-section">
-            <h2>
-              <span className="material-symbols-outlined">leaderboard</span>
-              Top Players
-            </h2>
-
             {topPlayers.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '64px', opacity: 0.3 }}>
@@ -548,7 +583,7 @@ function GameManagement() {
                     {topPlayers.map((player, index) => (
                       <tr key={player.user_id}>
                         <td>
-                          <div className="gm-rank">#{index + 1}</div>
+                          <div className="gm-rank">#{(playersPage - 1) * PAGE_SIZE + index + 1}</div>
                         </td>
                         <td>
                           <div className="gm-player-info">
@@ -594,17 +629,13 @@ function GameManagement() {
                 </table>
               </div>
             )}
+            {playersTotalCount > 0 && renderPagination(playersPage, playersTotalCount, loadTopPlayers)}
           </div>
         )}
 
         {/* Recent Games Tab */}
         {activeTab === 'sessions' && (
           <div className="gm-sessions-section">
-            <h2>
-              <span className="material-symbols-outlined">history</span>
-              Recent Game Sessions
-            </h2>
-
             {recentGames.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '64px', opacity: 0.3 }}>
@@ -619,10 +650,13 @@ function GameManagement() {
                     <tr>
                       <th>Player</th>
                       <th>Score</th>
-                      <th>Coins Earned</th>
+                      <th>Coins</th>
                       <th>Masks Hit</th>
+                      <th>Rounds</th>
+                      <th>Accuracy</th>
                       <th>Duration</th>
-                      <th>Date</th>
+                      <th>Rank</th>
+                      <th>Played At</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -634,17 +668,24 @@ function GameManagement() {
                             <small>{game.player?.email}</small>
                           </div>
                         </td>
-                        <td><strong>{game.score}</strong></td>
+                        <td><strong>{game.score ?? 0}</strong></td>
                         <td>
                           <span className="gm-coins">
                             <span className="material-symbols-outlined">toll</span>
-                            {game.coins_earned || 0}
+                            {game.coins_earned ?? 0}
                           </span>
                         </td>
-                        <td>{game.masks_hit || 0}</td>
-                        <td>{game.game_duration_seconds || 0}s</td>
+                        <td>{game.masks_hit ?? 0}</td>
+                        <td>{game.total_rounds ?? '-'}</td>
                         <td>
-                          <small>{new Date(game.played_at).toLocaleString()}</small>
+                          {game.accuracy_percentage != null
+                            ? `${Number(game.accuracy_percentage).toFixed(1)}%`
+                            : '-'}
+                        </td>
+                        <td>{game.game_duration_seconds != null ? `${game.game_duration_seconds}s` : '-'}</td>
+                        <td>{game.rank_at_time || '-'}</td>
+                        <td>
+                          <small>{game.played_at ? new Date(game.played_at).toLocaleString('vi-VN') : '-'}</small>
                         </td>
                       </tr>
                     ))}
@@ -652,6 +693,7 @@ function GameManagement() {
                 </table>
               </div>
             )}
+            {gamesTotalCount > 0 && renderPagination(gamesPage, gamesTotalCount, loadRecentGames)}
           </div>
         )}
       </div>

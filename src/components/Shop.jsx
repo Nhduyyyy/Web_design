@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { getShopItems, getShopCategories, purchaseItem, checkAffordability } from '../services/shopService'
+import { getShopItems, getShopCategories, purchaseItem, checkAffordability, getTransactionHistory } from '../services/shopService'
 import { getPlayerStats } from '../services/gameService'
 import { updateQuestProgress } from '../services/questService'
 import './Shop.css'
@@ -16,6 +16,9 @@ const Shop = () => {
   const [userRank, setUserRank] = useState(null) // Thêm state cho rank
   const [loading, setLoading] = useState(true)
   const [purchasing, setPurchasing] = useState(null)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [transactions, setTransactions] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   // Load shop data on mount
   useEffect(() => {
@@ -91,9 +94,37 @@ const Shop = () => {
     return (rankLevel - 1) * 25
   }
 
+  const isOutOfStock = (item) => {
+    return item.stock_quantity != null && item.stock_quantity <= 0
+  }
+
+  const openHistoryModal = async () => {
+    if (!isAuthenticated || !user) {
+      alert('Vui lòng đăng nhập để xem lịch sử giao dịch.')
+      return
+    }
+    setShowHistoryModal(true)
+    setHistoryLoading(true)
+    try {
+      const { data, error } = await getTransactionHistory(user.id, 50)
+      if (error) throw error
+      setTransactions(data || [])
+    } catch (error) {
+      console.error('Error loading transaction history:', error)
+      setTransactions([])
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
   const handlePurchase = async (item) => {
     if (!isAuthenticated || !user) {
       alert('Vui lòng đăng nhập để mua sản phẩm!')
+      return
+    }
+
+    if (isOutOfStock(item)) {
+      alert('Sản phẩm đã hết hàng.')
       return
     }
 
@@ -169,7 +200,7 @@ const Shop = () => {
               )}
             </div>
           </div>
-          <button className="shop-history-btn">
+          <button type="button" className="shop-history-btn" onClick={openHistoryModal}>
             <span className="material-symbols-outlined">history</span>
             Lịch Sử Giao Dịch
           </button>
@@ -239,6 +270,17 @@ const Shop = () => {
                 <div className="shop-card-content">
                   <h3 className="shop-card-title">{item.name}</h3>
                   <p className="shop-card-description">{item.description}</p>
+                  <div className="shop-card-stock">
+                    {item.stock_quantity != null ? (
+                      item.stock_quantity <= 0 ? (
+                        <span className="shop-stock-out">Hết hàng</span>
+                      ) : (
+                        <span className="shop-stock-available">Còn {item.stock_quantity}</span>
+                      )
+                    ) : (
+                      <span className="shop-stock-unlimited">Không giới hạn</span>
+                    )}
+                  </div>
                   <div className="shop-card-footer">
                     <div className="shop-card-price">
                       <span className="material-symbols-outlined">toll</span>
@@ -247,11 +289,19 @@ const Shop = () => {
                     <button
                       className="shop-card-cart-btn"
                       onClick={() => handlePurchase(item)}
-                      disabled={purchasing === item.id}
-                      title={purchasing === item.id ? 'Processing...' : 'Buy now'}
+                      disabled={purchasing === item.id || isOutOfStock(item)}
+                      title={
+                        isOutOfStock(item)
+                          ? 'Hết hàng'
+                          : purchasing === item.id
+                            ? 'Đang xử lý...'
+                            : 'Mua ngay'
+                      }
                     >
                       {purchasing === item.id ? (
                         <span className="material-symbols-outlined">hourglass_empty</span>
+                      ) : isOutOfStock(item) ? (
+                        <span className="material-symbols-outlined">block</span>
                       ) : (
                         <span className="material-symbols-outlined">shopping_cart</span>
                       )}
@@ -263,6 +313,61 @@ const Shop = () => {
           </div>
         )}
       </div>
+
+      {/* Transaction History Modal */}
+      {showHistoryModal && (
+        <div className="shop-history-overlay" onClick={() => setShowHistoryModal(false)}>
+          <div className="shop-history-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="shop-history-modal-header">
+              <h2 className="shop-history-modal-title">
+                <span className="material-symbols-outlined">history</span>
+                Lịch Sử Giao Dịch
+              </h2>
+              <button
+                type="button"
+                className="shop-history-modal-close"
+                onClick={() => setShowHistoryModal(false)}
+                aria-label="Đóng"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="shop-history-modal-body">
+              {historyLoading ? (
+                <div className="shop-history-loading">
+                  <span className="material-symbols-outlined">hourglass_empty</span>
+                  <p>Đang tải...</p>
+                </div>
+              ) : transactions.length === 0 ? (
+                <div className="shop-history-empty">
+                  <span className="material-symbols-outlined">receipt_long</span>
+                  <p>Chưa có giao dịch nào.</p>
+                </div>
+              ) : (
+                <ul className="shop-history-list">
+                  {transactions.map((tx) => (
+                    <li key={tx.id} className="shop-history-item">
+                      <div
+                        className="shop-history-item-image"
+                        style={{ backgroundImage: tx.item?.image_url ? `url('${tx.item.image_url}')` : 'none' }}
+                      />
+                      <div className="shop-history-item-info">
+                        <span className="shop-history-item-name">{tx.item?.name || 'Vật phẩm'}</span>
+                        <span className="shop-history-item-meta">
+                          x{tx.quantity} · {new Date(tx.created_at).toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                      <div className="shop-history-item-price">
+                        -{tx.price_paid?.toLocaleString() ?? 0} <span className="shop-history-coin">Coin</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer Info */}
       <footer className="shop-footer">

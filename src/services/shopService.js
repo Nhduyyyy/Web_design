@@ -135,7 +135,50 @@ export const purchaseItem = async (userId, itemId, quantity = 1) => {
 // =============================================
 
 /**
- * Get user's inventory
+ * Get user's inventory with full item details (from shop_items)
+ * @param {string} userId - User UUID
+ * @returns {Promise<{data: Array, error: Error}>} Each row: { ...inventoryFields, item: shop_item }
+ */
+export const getInventoryWithItems = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('user_inventory')
+      .select(`
+        id,
+        user_id,
+        item_id,
+        quantity,
+        is_equipped,
+        acquired_at,
+        expires_at,
+        metadata,
+        item:shop_items(
+          id,
+          name,
+          slug,
+          description,
+          image_url,
+          badge,
+          badge_color,
+          item_type,
+          category_id
+        )
+      `)
+      .eq('user_id', userId)
+      .gt('quantity', 0)
+      .order('acquired_at', { ascending: false })
+
+    if (error) throw error
+
+    return { data: data || [], error: null }
+  } catch (error) {
+    console.error('Error fetching inventory with items:', error)
+    return { data: null, error }
+  }
+}
+
+/**
+ * Get user's inventory (legacy RPC if available)
  * @param {string} userId - User UUID
  * @returns {Promise<{data: Array, error: Error}>}
  */
@@ -300,16 +343,17 @@ export const getTransactionStats = async (userId) => {
 export const checkAffordability = async (userId, price) => {
   try {
     const { data, error } = await supabase
-      .from('player_stats')
+      .from('player_game_stats')
       .select('total_coins')
       .eq('user_id', userId)
       .single()
 
     if (error) throw error
 
+    const totalCoins = data?.total_coins ?? 0
     return {
-      canAfford: data.total_coins >= price,
-      currentCoins: data.total_coins,
+      canAfford: totalCoins >= price,
+      currentCoins: totalCoins,
       error: null
     }
   } catch (error) {

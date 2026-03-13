@@ -1,6 +1,25 @@
 import { supabase } from '../lib/supabase'
 
 /**
+ * Get total revenue from bookings with status 'confirmed'
+ * @returns {Promise<number>}
+ */
+export const getTotalRevenueFromBookings = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('total_amount')
+      .eq('status', 'confirmed')
+
+    if (error) throw error
+    return (data || []).reduce((sum, b) => sum + (b.total_amount || 0), 0)
+  } catch (error) {
+    console.error('Error fetching total revenue from bookings:', error)
+    throw error
+  }
+}
+
+/**
  * Get admin dashboard statistics
  */
 export const getAdminStats = async () => {
@@ -45,20 +64,14 @@ export const getAdminStats = async () => {
       // Don't throw, events table might not exist yet
     }
 
-    // Get total revenue from completed payments
-    const { data: paymentsData, error: paymentsError } = await supabase
-      .from('payments')
-      .select('amount')
-      .eq('status', 'completed')
-
-    console.log('💰 Payments data:', paymentsData?.length, 'records, Error:', paymentsError)
-    
-    if (paymentsError) {
-      console.error('Payments query error:', paymentsError)
-      // Don't throw, payments table might not exist yet
+    // Total revenue from bookings with status 'confirmed'
+    let totalRevenue = 0
+    try {
+      totalRevenue = await getTotalRevenueFromBookings()
+      console.log('💰 Total revenue (confirmed bookings):', totalRevenue)
+    } catch (revenueError) {
+      console.error('Revenue from bookings error:', revenueError)
     }
-
-    const totalRevenue = paymentsData?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0
 
     // Calculate growth rates (compare with last month)
     const lastMonth = new Date()
@@ -229,7 +242,114 @@ export const getRecentActivities = async (limit = 10) => {
 }
 
 /**
- * Get revenue data for chart (last 6 months)
+ * Get revenue data for chart from bookings (status = 'confirmed')
+ * @param {string} timeRange - 'today' | 'week' | 'month' | '6months' | '12months'
+ * @returns {Promise<Array<{ label: string, revenue: number, date: string }>>}
+ */
+export const getRevenueDataFromBookings = async (timeRange = '6months') => {
+  try {
+    const now = new Date()
+    let startDate = new Date(now)
+
+    switch (timeRange) {
+      case 'today':
+        startDate.setHours(0, 0, 0, 0)
+        break
+      case 'week':
+        startDate.setDate(startDate.getDate() - 7)
+        break
+      case 'month':
+        startDate.setMonth(startDate.getMonth() - 1)
+        break
+      case '6months':
+        startDate.setMonth(startDate.getMonth() - 6)
+        break
+      case '12months':
+        startDate.setMonth(startDate.getMonth() - 12)
+        break
+      default:
+        startDate.setMonth(startDate.getMonth() - 6)
+    }
+
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select('total_amount, created_at')
+      .eq('status', 'confirmed')
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', now.toISOString())
+
+    if (error) throw error
+
+    const isMonthBucket = timeRange === '6months' || timeRange === '12months'
+    const isToday = timeRange === 'today'
+    const bucketMap = new Map()
+
+    const toLocalDateKey = (date) => {
+      const x = new Date(date)
+      const y = x.getFullYear()
+      const m = String(x.getMonth() + 1).padStart(2, '0')
+      const day = String(x.getDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
+    }
+    const toDateKey = (d) => {
+      const x = new Date(d)
+      if (isMonthBucket) return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}`
+      if (isToday) return `${toLocalDateKey(d)}-${String(x.getHours()).padStart(2, '0')}`
+      return toLocalDateKey(d)
+    }
+
+    const emptyBuckets = () => {
+      const out = []
+      const end = new Date(now)
+      if (isMonthBucket) {
+        const months = timeRange === '12months' ? 12 : 6
+        for (let i = months - 1; i >= 0; i--) {
+          const d = new Date(end.getFullYear(), end.getMonth() - i, 1)
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+          out.push({ key, date: d })
+        }
+      } else if (isToday) {
+        const todayKey = toLocalDateKey(end)
+        for (let h = 0; h < 24; h++) {
+          const d = new Date(end.getFullYear(), end.getMonth(), end.getDate(), h, 0, 0, 0)
+          const key = `${todayKey}-${String(h).padStart(2, '0')}`
+          out.push({ key, date: d })
+        }
+      } else {
+        const days = timeRange === 'week' ? 7 : 30
+        for (let i = days - 1; i >= 0; i--) {
+          const d = new Date(end.getFullYear(), end.getMonth(), end.getDate() - i, 0, 0, 0, 0)
+          const key = toLocalDateKey(d)
+          out.push({ key, date: d })
+        }
+      }
+      return out
+    }
+
+    emptyBuckets().forEach(({ key }) => bucketMap.set(key, 0))
+    ;(bookings || []).forEach((b) => {
+      const key = toDateKey(b.created_at)
+      if (bucketMap.has(key)) bucketMap.set(key, (bucketMap.get(key) || 0) + (b.total_amount || 0))
+    })
+
+    const buckets = emptyBuckets()
+    return buckets.map(({ key, date }) => ({
+      label: isMonthBucket
+        ? date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+        : isToday
+          ? `${date.getHours()}:00`
+          : date.toLocaleDateString('vi-VN', { day: '2-digit', month: 'short' }),
+      revenue: bucketMap.get(key) || 0,
+      date: key
+    }))
+  } catch (error) {
+    console.error('Error fetching revenue data from bookings:', error)
+    throw error
+  }
+}
+
+/**
+ * Get revenue data for chart (legacy: last N months from payments)
  */
 export const getRevenueData = async (months = 6) => {
   try {

@@ -2,7 +2,7 @@ function AdminSidebar({ activeView, setActiveView }) {
   const menuItems = [
     { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
     { id: 'users', icon: 'group', label: 'User Management' },
-    { id: 'theaters', icon: 'account_balance', label: 'Theater Management' },
+    // { id: 'theaters', icon: 'account_balance', label: 'Theater Management' },
     { id: 'organizations', icon: 'business', label: 'Organization Registration' },
     { id: 'schedule', icon: 'calendar_month', label: 'Show Schedule' },
     { id: 'livestream', icon: 'live_tv', label: 'Livestream' },
@@ -55,13 +55,6 @@ function AdminSidebar({ activeView, setActiveView }) {
           </button>
         ))}
       </nav>
-
-      <div className="sidebar-footer">
-        <button className="new-event-btn">
-          <span className="material-symbols-outlined">add_circle</span>
-          <span>New Event</span>
-        </button>
-      </div>
     </aside>
   )
 }

@@ -546,6 +546,22 @@
   flex-direction: column;
 }
 
+.chart-container-recharts {
+  min-height: 300px;
+}
+
+.revenue-chart .no-data,
+.revenue-chart-error,
+.revenue-chart-loading {
+  text-align: center;
+  color: #64748b;
+  padding: 2rem;
+}
+
+.revenue-chart-error {
+  color: #b91c1c;
+}
+
 .chart-svg {
   width: 100%;
   height: 100%;
