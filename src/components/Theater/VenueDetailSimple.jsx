@@ -358,7 +358,7 @@ const VenueDetailSimple = () => {
     )
   }
 
-  const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
+  const ShowForm = ({ initialData, theaterId, onSubmit, onCancel, loading }) => {
     const [form, setForm] = useState({
       title: initialData?.title || '',
       description: initialData?.description || '',
@@ -428,7 +428,14 @@ const VenueDetailSimple = () => {
       if (!validate()) return
 
       try {
-        const storageTheaterId = initialData?.theater_id || 'theater-shows'
+        const storageTheaterId = theaterId || initialData?.theater_id
+        if (!storageTheaterId) {
+          setErrors((prev) => ({
+            ...prev,
+            general: 'Không xác định được nhà hát. Vui lòng tải lại trang.',
+          }))
+          return
+        }
         const payload = { ...form }
 
         if (thumbnailFile) {
@@ -1969,6 +1976,7 @@ const VenueDetailSimple = () => {
             </h2>
             <ShowForm
               initialData={selectedShow || undefined}
+              theaterId={venue?.theater_id}
               onSubmit={handleShowFormSubmit}
               onCancel={() => {
                 setShowFormOpen(false)
