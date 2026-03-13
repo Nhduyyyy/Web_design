@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { QRCodeCanvas } from 'qrcode.react'
 import { useAuth } from '../../contexts/AuthContext'
 import { updateProfile, uploadAvatar, deleteAvatar } from '../../services/authService'
 import { getRegistrationsByUser } from '../../services/eventService'
@@ -35,6 +36,7 @@ export default function ProfilePage({ onClose, setActiveSection }) {
   const [loadingRegistrations, setLoadingRegistrations] = useState(false)
   const [bookingsError, setBookingsError] = useState(null)
   const [registrationsError, setRegistrationsError] = useState(null)
+  const [selectedBooking, setSelectedBooking] = useState(null)
 
   useEffect(() => {
     if (profile) {
@@ -618,10 +620,14 @@ export default function ProfilePage({ onClose, setActiveSection }) {
                     {bookings.map((booking) => (
                       <motion.div
                         key={booking.id}
-                        className="profile-list-item"
+                        className="profile-list-item profile-list-item-clickable"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
+                        onClick={() => setSelectedBooking(booking)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && setSelectedBooking(booking)}
                       >
                         <div className="profile-list-item-content">
                           <div className="profile-list-item-icon">
@@ -641,8 +647,8 @@ export default function ProfilePage({ onClose, setActiveSection }) {
                                     minute: '2-digit'
                                   })
                                 : 'N/A'} 
-                              {booking.seat_ids && booking.seat_ids.length > 0 && (
-                                <> • Ghế {booking.seat_ids.join(', ')}</>
+                              {booking.seat_labels?.length > 0 && (
+                                <> • Ghế {booking.seat_labels.join(', ')}</>
                               )}
                               {booking.booking_code && (
                                 <> • Mã: <strong>{booking.booking_code}</strong></>
@@ -744,6 +750,108 @@ export default function ProfilePage({ onClose, setActiveSection }) {
           </section>
         </div>
       </div>
+
+      {/* Modal chi tiết vé đã đặt */}
+      <AnimatePresence>
+        {selectedBooking && (
+          <motion.div
+            className="profile-booking-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedBooking(null)}
+          >
+            <motion.div
+              className="profile-booking-modal"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="profile-booking-modal-header">
+                <h3 className="profile-booking-modal-title">
+                  {selectedBooking.schedule?.show?.title || selectedBooking.schedule?.title || 'Chi tiết vé'}
+                </h3>
+                <button
+                  type="button"
+                  className="profile-booking-modal-close"
+                  onClick={() => setSelectedBooking(null)}
+                  aria-label="Đóng"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="profile-booking-modal-body">
+                <div className="profile-booking-detail-row">
+                  <span className="profile-booking-detail-label">Mã booking</span>
+                  <span className="profile-booking-detail-value">{selectedBooking.booking_code || '—'}</span>
+                </div>
+                <div className="profile-booking-detail-row">
+                  <span className="profile-booking-detail-label">Thời gian</span>
+                  <span className="profile-booking-detail-value">
+                    {selectedBooking.schedule?.start_datetime
+                      ? new Date(selectedBooking.schedule.start_datetime).toLocaleString('vi-VN', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      : '—'}
+                  </span>
+                </div>
+                <div className="profile-booking-detail-row">
+                  <span className="profile-booking-detail-label">Số ghế</span>
+                  <span className="profile-booking-detail-value">
+                    {selectedBooking.seat_labels?.length ? selectedBooking.seat_labels.join(', ') : '—'}
+                  </span>
+                </div>
+                <div className="profile-booking-detail-row">
+                  <span className="profile-booking-detail-label">Địa điểm</span>
+                  <span className="profile-booking-detail-value">
+                    {selectedBooking.schedule?.venue?.name || selectedBooking.schedule?.venue?.address || '—'}
+                  </span>
+                </div>
+                <div className="profile-booking-detail-row">
+                  <span className="profile-booking-detail-label">Giá vé</span>
+                  <span className="profile-booking-detail-value">
+                    {selectedBooking.total_amount != null ? formatPrice(selectedBooking.total_amount) : '—'}
+                  </span>
+                </div>
+                <div className="profile-booking-detail-row">
+                  <span className="profile-booking-detail-label">Trạng thái</span>
+                  <span className="profile-booking-detail-value">{getStatusBadge(selectedBooking.status)}</span>
+                </div>
+                {selectedBooking.status === 'confirmed' && (
+                  <div className="profile-booking-qr-wrap">
+                    <span className="profile-booking-detail-label">Mã QR vé</span>
+                    <QRCodeCanvas
+                      value={[
+                        `Mã: ${selectedBooking.booking_code || ''}`,
+                        `Thời gian: ${selectedBooking.schedule?.start_datetime
+                          ? new Date(selectedBooking.schedule.start_datetime).toLocaleString('vi-VN', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          : ''}`,
+                        `Ghế: ${selectedBooking.seat_labels?.join(', ') || ''}`,
+                        `Địa điểm: ${selectedBooking.schedule?.venue?.name || selectedBooking.schedule?.venue?.address || ''}`,
+                        `Giá: ${selectedBooking.total_amount != null ? formatPrice(selectedBooking.total_amount) : ''}`
+                      ].join('\n')}
+                      size={180}
+                      level="M"
+                      className="profile-booking-qr"
+                    />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
