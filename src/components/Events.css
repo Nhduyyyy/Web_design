@@ -3,9 +3,9 @@
 .events-page {
   min-height: 100vh;
   padding: 2rem 0 0;
-  background:
+  /* background:
     linear-gradient(135deg, #120808 0%, #1a0a0a 35%, #2d0f0f 60%, transparent 85%),
-    linear-gradient(180deg, #0f0808 0%, #1f0a0a 25%, #3d0f0f 50%, #4a1515 75%, #551a1a 100%);
+    linear-gradient(180deg, #0f0808 0%, #1f0a0a 25%, #3d0f0f 50%, #4a1515 75%, #551a1a 100%); */
   color: #f5f5f5;
   font-family: 'Be Vietnam Pro', 'Inter', system-ui, sans-serif;
 }

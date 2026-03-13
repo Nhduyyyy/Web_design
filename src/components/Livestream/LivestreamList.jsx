@@ -5,7 +5,7 @@ import Header from '../Header';
 import { getLivestreams } from '../../services/livestreamService';
 import '../LiveStream.css';
 
-export default function LivestreamList({ embedded = false } = {}) {
+export default function LivestreamList({ embedded = false, onWatch } = {}) {
   const [streams, setStreams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,7 +34,11 @@ export default function LivestreamList({ embedded = false } = {}) {
   );
 
   const handleWatch = (stream) => {
-    navigate(`/livestreams/${stream.id}`);
+    if (embedded && onWatch) {
+      onWatch(stream);
+    } else {
+      navigate(`/livestreams/${stream.id}`);
+    }
   };
 
   const content = (
@@ -139,7 +143,7 @@ export default function LivestreamList({ embedded = false } = {}) {
                           ? 'Vào xem ngay'
                           : 'Xem chi tiết'}
                       </button>
-                    </div>
+                      </div>
                   </motion.div>
                 ))}
               </div>

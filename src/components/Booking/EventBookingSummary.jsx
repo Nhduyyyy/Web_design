@@ -143,12 +143,12 @@ export default function EventBookingSummary({
         <div className="summary-section">
           <h3>Số lượng người tham gia</h3>
           {errors.quantity && (
-            <div className="error-message" style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fff1f2', border: '2px solid #f44336', borderRadius: '8px', color: '#c62828' }}>
+            <div className="error-message" style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(160, 22, 22, 0.25)', border: '2px solid rgba(244, 67, 54, 0.6)', borderRadius: '8px', color: '#fca5a5' }}>
               ⚠️ {errors.quantity}
             </div>
           )}
-          <div className="quantity-selection" style={{ display: 'flex', alignItems: 'center', backgroundColor: '#000' , justifyContent: 'space-between', gap: '1rem', padding: '1rem', background: '#f5f5f5', borderRadius: '8px' }}>
-            <label htmlFor="quantity" style={{ fontWeight: 600 }}>Số lượng:</label>
+          <div className="quantity-selection" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1rem', background: 'var(--booking-surface)', borderRadius: '8px', color: 'var(--booking-text)' }}>
+            <label htmlFor="quantity" style={{ fontWeight: 600, color: 'var(--booking-text)' }}>Số lượng:</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button
                 type="button"
@@ -156,8 +156,8 @@ export default function EventBookingSummary({
                 disabled={qty <= 1}
                 style={{
                   padding: '0.5rem 1rem',
-                  background: qty <= 1 ? '#ccc' : '#f44336',
-                  color: 'white',
+                  background: qty <= 1 ? 'rgba(255, 255, 255, 0.08)' : 'var(--booking-primary)',
+                  color: qty <= 1 ? 'var(--booking-text-muted)' : 'white',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: qty <= 1 ? 'not-allowed' : 'pointer',
@@ -180,12 +180,13 @@ export default function EventBookingSummary({
                   width: '80px',
                   padding: '0.5rem',
                   textAlign: 'center',
-                  border: errors.quantity ? '2px solid #f44336' : '2px solid #ddd',
+                  border: errors.quantity ? '2px solid rgba(244, 67, 54, 0.8)' : '2px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '6px',
                   fontSize: '1.1rem',
                   fontWeight: 600,
                   cursor: maxAvailable <= 0 ? 'not-allowed' : 'text',
-                  background: 'black',
+                  background: 'var(--booking-bg)',
+                  color: 'var(--booking-text)',
                   opacity: maxAvailable <= 0 ? 0.6 : 1
                 }}
               />
@@ -195,8 +196,8 @@ export default function EventBookingSummary({
                 disabled={qty >= maxAvailable || maxAvailable <= 0}
                 style={{
                   padding: '0.5rem 1rem',
-                  background: (qty >= maxAvailable || maxAvailable <= 0) ? '#ccc' : '#4caf50',
-                  color: 'white',
+                  background: (qty >= maxAvailable || maxAvailable <= 0) ? 'rgba(255, 255, 255, 0.08)' : 'rgba(34, 197, 94, 0.9)',
+                  color: (qty >= maxAvailable || maxAvailable <= 0) ? 'var(--booking-text-muted)' : 'white',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: (qty >= maxAvailable || maxAvailable <= 0) ? 'not-allowed' : 'pointer',
@@ -207,7 +208,7 @@ export default function EventBookingSummary({
                 +
               </button>
             </div>
-            <span style={{ color: maxAvailable <= 0 ? '#f44336' : '#666', fontSize: '0.9rem', fontWeight: maxAvailable <= 0 ? 600 : 400 }}>
+            <span style={{ color: maxAvailable <= 0 ? '#fca5a5' : 'var(--booking-text-muted)', fontSize: '0.9rem', fontWeight: maxAvailable <= 0 ? 600 : 400 }}>
               {maxAvailable <= 0 ? '(Đã hết chỗ)' : `(Còn ${maxAvailable} chỗ trống)`}
             </span>
           </div>

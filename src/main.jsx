@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
@@ -22,7 +22,6 @@ import OrganizationRegistration from './components/Organization/OrganizationRegi
 import RegistrationSuccess from './components/Organization/RegistrationSuccess'
 import OrganizationManagement from './components/Admin/OrganizationManagement'
 import LivestreamList from './components/Livestream/LivestreamList'
-import LivestreamWatch from './components/Livestream/LivestreamWatch'
 import LivestreamBroadcast from './components/Theater/LivestreamBroadcast'
 import TheaterLivestreams from './components/Theater/TheaterLivestreams'
 import TheaterLivestreamCreate from './components/Theater/TheaterLivestreamCreate'
@@ -37,6 +36,16 @@ import './utils/setAdminRole'
 import './utils/setTheaterRole'
 import './utils/quickCheckRole'
 import './utils/debugSeatLayout'
+
+/** Redirect /livestreams/:id → /app với state livestreamId để xem trong TuongPerformance */
+function LivestreamWatchRedirect() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (id) navigate('/app', { state: { livestreamId: id }, replace: true })
+  }, [id, navigate])
+  return null
+}
 
 console.log('🚀 main.jsx is loading...')
 console.log('💡 Debug commands available: window.debugSeatLayout.debugSeatLayoutTables()')
@@ -187,7 +196,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               path="/livestreams/:id" 
               element={
                 <ProtectedRoute>
-                  <LivestreamWatch />
+                  <LivestreamWatchRedirect />
                 </ProtectedRoute>
               } 
             />

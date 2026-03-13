@@ -358,7 +358,7 @@ const VenueDetailSimple = () => {
     )
   }
 
-  const ShowForm = ({ initialData, onSubmit, onCancel, loading }) => {
+  const ShowForm = ({ initialData, theaterId, onSubmit, onCancel, loading }) => {
     const [form, setForm] = useState({
       title: initialData?.title || '',
       description: initialData?.description || '',
@@ -428,7 +428,14 @@ const VenueDetailSimple = () => {
       if (!validate()) return
 
       try {
-        const storageTheaterId = initialData?.theater_id || 'theater-shows'
+        const storageTheaterId = theaterId || initialData?.theater_id
+        if (!storageTheaterId) {
+          setErrors((prev) => ({
+            ...prev,
+            general: 'Không xác định được nhà hát. Vui lòng tải lại trang.',
+          }))
+          return
+        }
         const payload = { ...form }
 
         if (thumbnailFile) {
@@ -1464,7 +1471,7 @@ const VenueDetailSimple = () => {
         stream_url: roomId,
         stream_key: uuidv4(),
         start_time: start,
-        status: 'scheduled',
+        status: 'upcoming',
         access_type: livestreamCreateAccessType,
         price: parsedPrice,
         chat_enabled: true,
@@ -1577,15 +1584,23 @@ const VenueDetailSimple = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-sm table-fixed">
+              <colgroup>
+                <col className="w-[min(28rem,35%)]" />
+                <col className="w-24" />
+                <col className="w-28" />
+                <col className="w-28" />
+                <col className="w-24" />
+                <col className="w-[min(14rem,22%)]" />
+              </colgroup>
               <thead className="bg-background-dark/60 text-slate-300">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium">Tiêu đề</th>
-                  <th className="px-4 py-2 text-left font-medium">Thời gian</th>
-                  <th className="px-4 py-2 text-left font-medium">Truy cập</th>
-                  <th className="px-4 py-2 text-left font-medium">Trạng thái</th>
-                  <th className="px-4 py-2 text-right font-medium">Người xem</th>
-                  <th className="px-4 py-2 text-right font-medium">Thao tác</th>
+                  <th className="px-3 py-2.5 text-left font-medium">Tiêu đề</th>
+                  <th className="px-3 py-2.5 text-left font-medium">Thời gian</th>
+                  <th className="px-3 py-2.5 text-left font-medium">Truy cập</th>
+                  <th className="px-3 py-2.5 text-left font-medium">Trạng thái</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Người xem</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -1594,19 +1609,19 @@ const VenueDetailSimple = () => {
                   return (
                     <tr
                       key={s.id}
-                      className="border-t border-white/5 hover:bg-background-dark/60 transition-colors"
+                      className="border-t border-white/5 hover:bg-background-dark/60 transition-colors align-middle"
                     >
-                      <td className="px-4 py-3 align-top">
-                        <div className="font-semibold text-slate-50 line-clamp-2">
+                      <td className="px-3 py-3 align-middle">
+                        <div className="font-semibold text-slate-50 line-clamp-2 min-w-0">
                           {s.title}
                         </div>
                         {s.description && (
-                          <div className="text-xs text-slate-400 mt-0.5 line-clamp-2">
+                          <div className="text-xs text-slate-400 mt-0.5 line-clamp-2 min-w-0">
                             {s.description}
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 align-top text-slate-300">
+                      <td className="px-3 py-3 align-middle text-slate-300 whitespace-nowrap">
                         {s.start_time ? (
                           <div className="flex flex-col gap-0.5">
                             <span>
@@ -1623,8 +1638,8 @@ const VenueDetailSimple = () => {
                           <span className="text-xs text-slate-500">Chưa đặt</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 align-top text-slate-300">
-                        <div className="flex flex-col gap-0.5">
+                      <td className="px-3 py-3 align-middle text-slate-300">
+                        <div className="flex flex-col gap-0.5 min-w-0">
                           <span className="text-xs uppercase tracking-wide text-slate-400">
                             {s.access_type || 'free'}
                           </span>
@@ -1635,14 +1650,14 @@ const VenueDetailSimple = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-3 py-3 align-middle">
                         <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide ${status.className}`}
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap ${status.className}`}
                         >
                           {status.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 align-top text-right text-slate-300">
+                      <td className="px-3 py-3 align-middle text-right text-slate-300">
                         <div className="flex flex-col items-end gap-0.5">
                           <span className="text-sm">
                             {s.current_viewers != null
@@ -1654,33 +1669,32 @@ const VenueDetailSimple = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 align-top text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
+                      <td className="px-3 py-3 align-middle text-right">
+                        <div className="grid grid-cols-2 gap-2 w-[min(14rem,100%)] ml-auto">
                           <button
                             type="button"
                             onClick={() => navigate(`/theater/livestreams/${s.id}/broadcast`)}
-                            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/20 text-primary hover:bg-primary/30 transition-colors inline-flex items-center gap-1.5"
+                            className="inline-flex items-center justify-center h-9 w-full rounded-lg text-xs font-semibold bg-primary/20 text-primary hover:bg-primary/30 transition-colors px-2 py-2"
                           >
-                            <span className="material-symbols-outlined text-base">radio</span>
                             Phát sóng
                           </button>
                           <button
                             type="button"
                             onClick={() => handleLivestreamToggleLive(s)}
-                            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-100 hover:bg-slate-600 transition-colors"
+                            className="inline-flex items-center justify-center h-9 w-full rounded-lg text-xs font-semibold bg-slate-700/60 text-slate-100 hover:bg-slate-600 transition-colors px-2 py-2"
                           >
                             {s.status === 'live' ? 'Kết thúc' : 'Đánh dấu Live'}
                           </button>
                           <Link
                             to={`/livestreams/${s.id}`}
-                            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-background-dark text-slate-200 hover:bg-slate-800 transition-colors"
+                            className="inline-flex items-center justify-center h-9 w-full rounded-lg text-xs font-semibold bg-background-dark text-slate-200 hover:bg-slate-800 transition-colors px-2 py-2"
                           >
-                            Xem như viewer
+                            Xem thử
                           </Link>
                           <button
                             type="button"
                             onClick={() => handleLivestreamDelete(s.id)}
-                            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-red-900/40 text-red-300 hover:bg-red-800/60 transition-colors"
+                            className="inline-flex items-center justify-center h-9 w-full rounded-lg text-xs font-semibold bg-red-900/40 text-red-300 hover:bg-red-800/60 transition-colors px-2 py-2"
                           >
                             Xóa
                           </button>
@@ -1969,6 +1983,7 @@ const VenueDetailSimple = () => {
             </h2>
             <ShowForm
               initialData={selectedShow || undefined}
+              theaterId={venue?.theater_id}
               onSubmit={handleShowFormSubmit}
               onCancel={() => {
                 setShowFormOpen(false)
