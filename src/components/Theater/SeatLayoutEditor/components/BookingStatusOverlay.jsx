@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Eye, EyeOff, Users, RefreshCw } from 'lucide-react';
+import { Calendar, Eye, EyeOff, Users, RefreshCw, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getDetailedBookingInfoForSchedule } from '@/services/bookingService';
 
 export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatusChange }) {
-  const [isVisible, setIsVisible] = useState(true); // Mặc định hiển thị
+  const [isVisible, setIsVisible] = useState(true);
   const [schedules, setSchedules] = useState([]);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [bookedSeatIds, setBookedSeatIds] = useState([]);
-  const [bookingDetails, setBookingDetails] = useState({}); // Map seat_id -> booking info
+  const [bookingDetails, setBookingDetails] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -58,8 +58,6 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
   const loadSchedules = async () => {
     try {
       console.log('🔍 Loading schedules for theaterId:', theaterId);
-      console.log('🏢 Hall ID:', hallId);
-      console.log('📅 Current datetime filter:', new Date().toISOString());
       
       // First, check venues for this theater
       const { data: venues, error: venuesError } = await supabase
@@ -68,6 +66,10 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
         .eq('theater_id', theaterId);
       
       console.log('🏛️ Venues for theater:', venues);
+      
+      if (venuesError) {
+        console.error('❌ Error loading venues:', venuesError);
+      }
       
       if (!venues || venues.length === 0) {
         console.log('⚠️ No venues found for theater:', theaterId);
@@ -78,15 +80,6 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
       // Get venue IDs
       const venueIds = venues.map(v => v.id);
       console.log('🎯 Venue IDs to search:', venueIds);
-      
-      // First, check if there are any schedules for these venues (without date filter)
-      const { data: allSchedules, error: allError } = await supabase
-        .from('schedules')
-        .select('id, title, start_datetime, theater_id, venue_id')
-        .eq('theater_id', theaterId)
-        .in('venue_id', venueIds);
-      
-      console.log('� All schedules for theater venues (no date filter):', allSchedules);
       
       const { data, error } = await supabase
         .from('schedules')
@@ -100,20 +93,11 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
         `)
         .eq('theater_id', theaterId)
         .in('venue_id', venueIds)
-        // .gte('start_datetime', new Date().toISOString()) // Tạm thời bỏ filter ngày
         .order('start_datetime', { ascending: true })
         .limit(10);
 
-      console.log('📅 Schedules query result (with date filter):', { data, error });
-      console.log('📊 Number of schedules found:', data?.length || 0);
+      console.log('📅 Schedules query result:', { data, error });
       
-      if (data && data.length > 0) {
-        console.log('✅ First schedule:', data[0]);
-      } else {
-        console.log('⚠️ No schedules found for theater venues');
-        console.log('💡 Check if schedules exist for venue IDs:', venueIds);
-      }
-
       if (error) throw error;
       setSchedules(data || []);
     } catch (err) {
@@ -139,7 +123,7 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
       
       setBookedSeatIds(seatIds);
       setBookingDetails(bookingMap);
-      onBookingStatusChange(seatIds, bookingMap); // Pass both seat IDs and details
+      onBookingStatusChange(seatIds, bookingMap);
     } catch (err) {
       console.error('Error loading booking status:', err);
       setError('Không thể tải trạng thái đặt vé');
@@ -162,7 +146,6 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
     setIsVisible(newVisibility);
     
     if (!newVisibility) {
-      // Hide booking status
       setSelectedSchedule(null);
       setBookedSeatIds([]);
       setBookingDetails({});
@@ -189,43 +172,76 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
         position: 'absolute',
         top: '20px',
         right: '20px',
-        background: 'rgba(0, 0, 0, 0.9)',
+        background: '#1A0F0F',
+        border: '1px solid #432828',
         borderRadius: '12px',
         padding: '16px',
-        minWidth: '280px',
-        maxWidth: '320px',
-        zIndex: 1000,
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)'
+        minWidth: '300px',
+        maxWidth: '350px',
+        maxHeight: 'calc(100vh - 100px)',
+        overflowY: 'auto',
+        zIndex: 45,
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(8px)'
       }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#432828]">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-blue-400" />
-          <span className="text-white font-semibold text-sm">Trạng thái đặt vé</span>
-          {loading && <RefreshCw className="w-3 h-3 animate-spin text-blue-400" />}
+          <Calendar className="w-5 h-5" style={{ color: '#D33131' }} />
+          <span className="text-white font-semibold">Trạng thái đặt vé</span>
+          {loading && <RefreshCw className="w-4 h-4 animate-spin text-[#D33131]" />}
         </div>
         <div className="flex items-center gap-1">
           {selectedSchedule && (
             <button
               onClick={() => loadBookingStatus(selectedSchedule)}
-              className="p-1 rounded-md hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-md transition-colors"
+              style={{
+                background: '#2D1B1B',
+                border: '1px solid #432828',
+                color: '#9CA3AF'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#3D2525';
+                e.target.style.borderColor = '#D33131';
+                e.target.style.color = 'white';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = '#2D1B1B';
+                e.target.style.borderColor = '#432828';
+                e.target.style.color = '#9CA3AF';
+              }}
               title="Làm mới trạng thái"
               disabled={loading}
             >
-              <RefreshCw className={`w-3 h-3 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
             </button>
           )}
           <button
             onClick={toggleVisibility}
-            className="p-1 rounded-md hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-md transition-colors ml-1"
+            style={{
+              background: '#2D1B1B',
+              border: '1px solid #432828',
+              color: '#9CA3AF'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#3D2525';
+              e.target.style.borderColor = '#D33131';
+              e.target.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#2D1B1B';
+              e.target.style.borderColor = '#432828';
+              e.target.style.color = '#9CA3AF';
+            }}
             title={isVisible ? 'Ẩn trạng thái' : 'Hiện trạng thái'}
           >
             {isVisible ? (
-              <EyeOff className="w-4 h-4 text-gray-400" />
+              <EyeOff className="w-4 h-4" />
             ) : (
-              <Eye className="w-4 h-4 text-gray-400" />
+              <Eye className="w-4 h-4" />
             )}
           </button>
         </div>
@@ -238,61 +254,78 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
+            className="space-y-4"
           >
             {/* Schedule Selector */}
-            <div className="mb-3">
-              <label className="block text-xs text-gray-300 mb-2">
+            <div>
+              <label className="block text-sm font-medium text-[#E5E7EB] mb-2">
                 Chọn suất diễn:
               </label>
-              <select
-                value={selectedSchedule || ''}
-                onChange={(e) => handleScheduleChange(e.target.value || null)}
-                className="w-full bg-gray-800 text-white text-sm rounded-md px-3 py-2 border border-gray-600 focus:border-blue-400 focus:outline-none"
-              >
-                <option value="">-- Chọn suất diễn --</option>
-                {schedules.map((schedule) => {
-                  console.log('🎪 Rendering schedule option:', schedule);
-                  return (
+              <div className="relative">
+                <select
+                  value={selectedSchedule || ''}
+                  onChange={(e) => handleScheduleChange(e.target.value || null)}
+                  className="w-full text-sm rounded-lg px-3 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-[#D33131] appearance-none"
+                  style={{
+                    background: '#2D1B1B',
+                    border: '1px solid #432828',
+                    color: 'white'
+                  }}
+                >
+                  <option value="">-- Chọn suất diễn --</option>
+                  {schedules.map((schedule) => (
                     <option key={schedule.id} value={schedule.id}>
                       {schedule.title} - {formatDateTime(schedule.start_datetime)}
                     </option>
-                  );
-                })}
-              </select>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#9CA3AF] pointer-events-none" />
+              </div>
             </div>
 
             {/* Loading State */}
             {loading && (
-              <div className="flex items-center gap-2 text-blue-400 text-sm mb-2">
-                <RefreshCw className="w-3 h-3 animate-spin" />
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-2 text-[#D33131] text-sm p-3 rounded-lg"
+                style={{ background: '#2D1B1B', border: '1px solid #432828' }}
+              >
+                <RefreshCw className="w-4 h-4 animate-spin" />
                 <span>Đang tải trạng thái ghế...</span>
-              </div>
+              </motion.div>
             )}
 
             {/* Error State */}
             {error && (
-              <div className="text-red-400 text-xs bg-red-900/20 rounded-md p-2 mb-2">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-red-400 text-sm p-3 rounded-lg"
+                style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+              >
                 {error}
-              </div>
+              </motion.div>
             )}
 
             {/* Booking Statistics */}
             {selectedSchedule && !loading && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-gray-800/50 rounded-md p-3"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-lg"
+                style={{ background: '#2D1B1B', border: '1px solid #432828' }}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="w-4 h-4 text-green-400" />
-                  <span className="text-white font-medium text-sm">Thống kê</span>
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className="w-4 h-4 text-[#D33131]" />
+                  <span className="text-white font-semibold text-sm">Thống kê đặt vé</span>
                 </div>
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Ghế đã bán:</span>
-                    <span className="text-red-400 font-semibold">{bookedSeatIds.length}</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#9CA3AF] text-sm">Ghế đã bán:</span>
+                    <span className="text-[#D33131] font-bold text-lg">{bookedSeatIds.length}</span>
                   </div>
-                  <div className="text-gray-400 text-[10px] mt-2">
+                  <div className="text-[#9CA3AF] text-xs p-2 rounded" style={{ background: '#1A0F0F' }}>
                     💡 Ghế đã bán sẽ có dấu chấm đỏ ở góc trên
                   </div>
                 </div>
@@ -304,12 +337,24 @@ export default function BookingStatusOverlay({ hallId, theaterId, onBookingStatu
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-3 pt-3 border-t border-gray-700"
+                className="pt-3 border-t border-[#432828]"
               >
-                <div className="flex items-center gap-2 text-xs">
-                  <div className="w-3 h-3 bg-red-500 rounded-full border border-white"></div>
-                  <span className="text-gray-300">Ghế đã bán (confirmed)</span>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-3 h-3 bg-[#D33131] rounded-full border border-white shadow-sm"></div>
+                  <span className="text-[#E5E7EB]">Ghế đã bán (confirmed)</span>
                 </div>
+              </motion.div>
+            )}
+
+            {/* Empty State */}
+            {!selectedSchedule && schedules.length === 0 && !loading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-6"
+              >
+                <Calendar className="w-8 h-8 text-[#9CA3AF] mx-auto mb-2" />
+                <p className="text-[#9CA3AF] text-sm">Không có suất diễn nào</p>
               </motion.div>
             )}
           </motion.div>

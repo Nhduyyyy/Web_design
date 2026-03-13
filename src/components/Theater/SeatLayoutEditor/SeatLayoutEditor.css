@@ -356,6 +356,8 @@
   width: 300px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   z-index: 40;
+  max-height: calc(100vh - 200px); /* Đảm bảo không vượt quá màn hình */
+  overflow-y: auto; /* Scroll nếu nội dung quá dài */
 }
 
 .price-list-header {
@@ -763,5 +765,245 @@
 /* BookingStatusOverlay positioning fix */
 .booking-status-overlay {
   pointer-events: auto; /* Chỉ overlay có thể nhận mouse events */
-  z-index: 1000; /* Đảm bảo luôn ở trên cùng */
+  z-index: 45; /* Thấp hơn modal (z-50) nhưng cao hơn seat-price-list (z-40) */
+}
+
+/* Đảm bảo dropdown của booking overlay hiển thị đúng */
+.booking-status-overlay select {
+  position: relative;
+  z-index: 46;
+}
+
+/* Responsive positioning để tránh overlap trên màn hình nhỏ */
+@media (max-width: 768px) {
+  .booking-status-overlay {
+    position: fixed !important;
+    top: 10px !important;
+    right: 10px !important;
+    left: auto !important;
+    bottom: auto !important;
+    max-width: calc(100vw - 20px) !important;
+    min-width: 250px !important;
+  }
+  
+  .seat-price-list {
+    max-width: calc(100vw - 20px) !important;
+    width: 280px !important;
+  }
+}
+
+/* ===== MODAL STYLING ===== */
+/* Custom styling for modals to match SeatLayoutEditor theme */
+
+/* Dialog Overlay - Dark theme */
+[data-radix-dialog-overlay] {
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Dialog Content - Theater theme */
+[data-radix-dialog-content] {
+  background: #1A0F0F !important;
+  border: 1px solid #432828 !important;
+  color: white !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Ensure modal content is not transparent */
+.template-selector-modal {
+  background: #1A0F0F !important;
+  opacity: 1 !important;
+}
+
+/* Dialog Header */
+[data-radix-dialog-content] h2 {
+  color: #D33131 !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Dialog Description */
+[data-radix-dialog-content] p {
+  color: #9CA3AF !important;
+}
+
+/* Version History Modal Specific */
+.version-history-item {
+  background: #2D1B1B !important;
+  border: 1px solid #432828 !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.version-history-item:hover {
+  background: #3D2525 !important;
+  border-color: #D33131 !important;
+}
+
+.version-history-item .version-title {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.version-history-item .version-meta {
+  color: #9CA3AF !important;
+  font-size: 0.875rem !important;
+}
+
+/* Zone Manager Modal Specific */
+.zone-form {
+  background: #2D1B1B !important;
+  border: 1px solid #432828 !important;
+  border-radius: 8px !important;
+  padding: 1rem !important;
+}
+
+.zone-item {
+  background: #2D1B1B !important;
+  border: 1px solid #432828 !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.zone-item:hover {
+  background: #3D2525 !important;
+  border-color: #D33131 !important;
+}
+
+.zone-item .zone-name {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.zone-item .zone-description {
+  color: #9CA3AF !important;
+  font-size: 0.75rem !important;
+}
+
+/* Template Selector Modal Specific */
+.template-card {
+  background: #2D1B1B !important;
+  border: 1px solid #432828 !important;
+  transition: all 0.2s ease !important;
+}
+
+.template-card:hover {
+  border-color: #D33131 !important;
+  background: #3D2525 !important;
+}
+
+.template-card.selected {
+  border-color: #D33131 !important;
+  background: #3D2525 !important;
+  box-shadow: 0 0 0 2px rgba(211, 49, 49, 0.2) !important;
+}
+
+.template-card .template-title {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.template-card .template-description {
+  color: #9CA3AF !important;
+  font-size: 0.75rem !important;
+}
+
+.template-card .template-meta {
+  color: #9CA3AF !important;
+  font-size: 0.875rem !important;
+}
+
+/* Form Elements in Modals */
+[data-radix-dialog-content] input,
+[data-radix-dialog-content] select,
+[data-radix-dialog-content] textarea {
+  background: #2D1B1B !important;
+  border: 1px solid #432828 !important;
+  color: white !important;
+  border-radius: 6px !important;
+}
+
+[data-radix-dialog-content] input:focus,
+[data-radix-dialog-content] select:focus,
+[data-radix-dialog-content] textarea:focus {
+  border-color: #D33131 !important;
+  box-shadow: 0 0 0 2px rgba(211, 49, 49, 0.2) !important;
+  outline: none !important;
+}
+
+[data-radix-dialog-content] label {
+  color: #E5E7EB !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+}
+
+/* Buttons in Modals */
+[data-radix-dialog-content] button {
+  transition: all 0.2s ease !important;
+}
+
+[data-radix-dialog-content] button[data-variant="default"] {
+  background: #D33131 !important;
+  color: white !important;
+  border: none !important;
+}
+
+[data-radix-dialog-content] button[data-variant="default"]:hover {
+  background: #B82828 !important;
+}
+
+[data-radix-dialog-content] button[data-variant="outline"] {
+  background: transparent !important;
+  border: 1px solid #432828 !important;
+  color: white !important;
+}
+
+[data-radix-dialog-content] button[data-variant="outline"]:hover {
+  background: #2D1B1B !important;
+  border-color: #D33131 !important;
+}
+
+[data-radix-dialog-content] button[data-variant="ghost"] {
+  background: transparent !important;
+  color: #9CA3AF !important;
+}
+
+[data-radix-dialog-content] button[data-variant="ghost"]:hover {
+  background: #2D1B1B !important;
+  color: white !important;
+}
+
+/* Close button */
+[data-radix-dialog-content] button[aria-label="Close"] {
+  color: #9CA3AF !important;
+}
+
+[data-radix-dialog-content] button[aria-label="Close"]:hover {
+  color: white !important;
+  background: #2D1B1B !important;
+}
+
+/* Loading states */
+.loading-spinner {
+  color: #D33131 !important;
+}
+
+/* Scrollbar styling for modals */
+[data-radix-dialog-content]::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-radix-dialog-content]::-webkit-scrollbar-track {
+  background: #2D1B1B;
+  border-radius: 4px;
+}
+
+[data-radix-dialog-content]::-webkit-scrollbar-thumb {
+  background: #432828;
+  border-radius: 4px;
+}
+
+[data-radix-dialog-content]::-webkit-scrollbar-thumb:hover {
+  background: #D33131;
 }
