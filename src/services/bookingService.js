@@ -381,3 +381,18 @@ export const completeBookingFlow = async ({
     throw error
   }
 }
+/**
+ * Lấy danh sách ghế đã được đặt và CONFIRMED cho một schedule (chỉ dành cho seat editor).
+ * Chỉ hiển thị ghế đã thanh toán thành công, không bao gồm pending.
+ */
+export const getConfirmedBookedSeatIdsForSchedule = async (scheduleId) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('seat_ids')
+    .eq('schedule_id', scheduleId)
+    .eq('status', 'confirmed') // Chỉ lấy booking đã confirmed
+
+  if (error) throw error
+  const ids = (data || []).flatMap((b) => b.seat_ids || [])
+  return [...new Set(ids)]
+}

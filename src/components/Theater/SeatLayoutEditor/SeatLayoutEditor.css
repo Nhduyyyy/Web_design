@@ -693,3 +693,75 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Booking Status Overlay */
+.booking-status-overlay {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.booking-status-overlay select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+.booking-status-overlay select:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Booking Indicator on Seat */
+.seat-cell .booking-indicator {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: #ef4444;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 20;
+  pointer-events: none; /* Không can thiệp vào mouse events */
+  animation: pulse-booking 2s infinite;
+}
+
+@keyframes pulse-booking {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Seat cell positioning for booking indicator */
+.seat-cell {
+  /* Không thêm position: relative ở đây vì đã có absolute trong inline style */
+  /* Đảm bảo không bị ảnh hưởng bởi booking indicator */
+  isolation: isolate;
+}
+
+/* Ensure booking indicator is visible on all seat types */
+.seat-standard .booking-indicator,
+.seat-vip .booking-indicator,
+.seat-couple .booking-indicator,
+.seat-wheelchair .booking-indicator {
+  display: block;
+}
+
+/* Hide booking indicator on aisle and stage */
+.seat-aisle .booking-indicator,
+.seat-stage .booking-indicator {
+  display: none;
+}
+
+/* BookingStatusOverlay positioning fix */
+.booking-status-overlay {
+  pointer-events: auto; /* Chỉ overlay có thể nhận mouse events */
+  z-index: 1000; /* Đảm bảo luôn ở trên cùng */
+}

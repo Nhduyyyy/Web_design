@@ -9,10 +9,12 @@ import SeatCell from './SeatCell';
 import StageArea from './StageArea';
 import ZoomControls from './ZoomControls';
 import SeatPriceList from './SeatPriceList';
+import BookingStatusOverlay from './BookingStatusOverlay';
 
 export default function SeatCanvas({ hall }) {
   const canvasRef = useRef(null);
   const [isPainting, setIsPainting] = useState(false);
+  const [bookedSeatIds, setBookedSeatIds] = useState([]);
   
   const {
     seats,
@@ -28,6 +30,20 @@ export default function SeatCanvas({ hall }) {
     moveSeat,
     setPan
   } = useSeatLayoutStore();
+
+  const handleBookingStatusChange = useCallback((bookedIds) => {
+    console.log('Booking status updated:', bookedIds.length, 'confirmed bookings');
+    setBookedSeatIds(bookedIds);
+  }, []);
+
+  // Create a Set for faster lookup
+  const bookedSeatSet = useMemo(() => {
+    const seatSet = new Set(bookedSeatIds.map(id => String(id)));
+    if (bookedSeatIds.length > 0) {
+      console.log('Booking status loaded:', bookedSeatIds.length, 'seats');
+    }
+    return seatSet;
+  }, [bookedSeatIds]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -149,20 +165,41 @@ export default function SeatCanvas({ hall }) {
             <AnimatePresence mode="popLayout">
               {seats
                 .filter(seat => seat.type !== SeatType.STAGE) // Ẩn các seat loại STAGE vì đã render trong StageArea
-                .map((seat) => (
-                  <SeatCell key={seat.id} seat={seat} />
-                ))
+                .map((seat) => {
+                  // Remove "seat-" prefix from seat.id for comparison
+                  const seatIdWithoutPrefix = seat.id.startsWith('seat-') ? seat.id.substring(5) : seat.id;
+                  const isBooked = bookedSeatSet.has(seatIdWithoutPrefix);
+                  
+                  // Debug: Log comparison
+                  if (bookedSeatIds.length > 0 && seats.indexOf(seat) < 5) {
+                    console.log(`Seat ID: ${seat.id}, Without prefix: ${seatIdWithoutPrefix}, isBooked: ${isBooked}`);
+                  }
+                  
+                  return (
+                    <SeatCell 
+                      key={seat.id} 
+                      seat={seat} 
+                      isBooked={isBooked}
+                    />
+                  );
+                })
               }
             </AnimatePresence>
           </div>
         </motion.div>
-        
-        <SeatPriceList 
-          theaterId={hall?.theater_id} 
-          hallId={hall?.id} 
-        />
-        <ZoomControls />
       </DndContext>
+      
+      {/* Fixed position overlays - outside of canvas transform */}
+      <SeatPriceList 
+        theaterId={hall?.theater_id} 
+        hallId={hall?.id} 
+      />
+      <BookingStatusOverlay
+        hallId={hall?.id}
+        theaterId={hall?.theater_id}
+        onBookingStatusChange={handleBookingStatusChange}
+      />
+      <ZoomControls />
     </div>
   );
 }

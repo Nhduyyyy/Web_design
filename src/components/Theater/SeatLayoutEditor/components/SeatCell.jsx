@@ -39,7 +39,7 @@ const seatBackgrounds = {
   [SeatType.STAGE]: 'bg-red-700',
 };
 
-const SeatCell = forwardRef(({ seat }, ref) => {
+const SeatCell = forwardRef(({ seat, isBooked = false }, ref) => {
   const { 
     selectedCells,
     selectedTool,
@@ -50,6 +50,11 @@ const SeatCell = forwardRef(({ seat }, ref) => {
     removeSeat,
     cellSize 
   } = useSeatLayoutStore();
+
+  // Debug log
+  if (isBooked) {
+    console.log(`SeatCell ${seat.id} (${seat.label}) received isBooked = true`);
+  }
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: seat.id,
@@ -111,6 +116,7 @@ const SeatCell = forwardRef(({ seat }, ref) => {
         alignItems: 'center',
         justifyContent: 'center',
         transform: `rotate(${seat.rotation}deg)`,
+        position: 'absolute', // Đảm bảo positioning không bị override
       }}
       initial={{ scale: 0, opacity: 0, rotate: -180 }}
       animate={{ 
@@ -144,11 +150,40 @@ const SeatCell = forwardRef(({ seat }, ref) => {
              width: cellSize - 8, 
              height: cellSize - 8,
              maxWidth: '100%',
-             maxHeight: '100%'
+             maxHeight: '100%',
+             position: 'relative' // Chỉ relative cho inner div
            }}>
         <Icon className="w-4 h-4 flex-shrink-0 drop-shadow-sm" />
         {seat.type !== 'aisle' && (
           <span className="text-[10px] font-bold leading-none drop-shadow-sm">{seat.label}</span>
+        )}
+        
+        {/* Booking Status Indicator - Dấu chấm tròn ở góc trên */}
+        {isBooked && seat.type !== 'aisle' && (
+          <>
+            {/* Debug: Temporary large indicator */}
+            <div 
+              className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-lg pointer-events-none animate-pulse"
+              title="Ghế đã bán (confirmed)"
+              style={{ 
+                zIndex: 30,
+                fontSize: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold'
+              }}
+            >
+              ●
+            </div>
+            {/* Debug text overlay */}
+            <div 
+              className="absolute top-0 left-0 bg-red-600 text-white text-[8px] px-1 rounded pointer-events-none"
+              style={{ zIndex: 25 }}
+            >
+              SOLD
+            </div>
+          </>
         )}
       </div>
     </motion.div>
@@ -166,6 +201,7 @@ export default memo(SeatCell, (prevProps, nextProps) => {
     prevProps.seat.rotation === nextProps.seat.rotation &&
     prevProps.seat.label === nextProps.seat.label &&
     prevProps.seat.row === nextProps.seat.row &&
-    prevProps.seat.col === nextProps.seat.col
+    prevProps.seat.col === nextProps.seat.col &&
+    prevProps.isBooked === nextProps.isBooked
   );
 });
