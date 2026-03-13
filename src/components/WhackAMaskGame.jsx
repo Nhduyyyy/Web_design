@@ -18,7 +18,7 @@ class WhackAMaskScene extends Phaser.Scene {
     this.score = 0
     this.holes = []
     this.gameActive = false
-    this.roundsLeft = 16
+    this.timeLeft = 120 // Thời gian còn lại (giây)
   }
 
   preload() {
@@ -126,7 +126,7 @@ class WhackAMaskScene extends Phaser.Scene {
 
   startGame() {
     this.score = 0
-    this.roundsLeft = 16
+    this.timeLeft = 120 // Reset thời gian
     this.gameActive = true
     
     if (this.onScoreUpdate) {
@@ -139,8 +139,27 @@ class WhackAMaskScene extends Phaser.Scene {
       this.spawnMole()
     })
   }
+
+  // Tính delay dựa trên thời gian còn lại
+  getSpawnDelay() {
+    // 120s-90s: 700ms (bình thường)
+    // 90s-60s: 600ms (hơi nhanh)
+    // 60s-30s: 500ms (nhanh)
+    // 30s-0s: 400ms (rất nhanh)
+    if (this.timeLeft > 90) {
+      return 700
+    } else if (this.timeLeft > 60) {
+      return 600
+    } else if (this.timeLeft > 30) {
+      return 500
+    } else {
+      return 400
+    }
+  }
+
   spawnMole() {
-    if (!this.gameActive || this.roundsLeft <= 0) {
+    // Chỉ kiểm tra gameActive, không giới hạn số vòng
+    if (!this.gameActive) {
       this.endGame()
       return
     }
@@ -154,9 +173,10 @@ class WhackAMaskScene extends Phaser.Scene {
     const hole = this.holes[randomIndex]
     
     hole.popup()
-    this.roundsLeft--
 
-    this.time.delayedCall(700, () => {
+    // Sử dụng delay động dựa trên thời gian còn lại
+    const delay = this.getSpawnDelay()
+    this.time.delayedCall(delay, () => {
       this.spawnMole()
     })
   }
@@ -337,6 +357,7 @@ const WhackAMaskGame = () => {
   const [showQuests, setShowQuests] = useState(false)
   const [showInventory, setShowInventory] = useState(false)
   const [score, setScore] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(120) // 2 phút = 120 giây
   const [totalCoins, setTotalCoins] = useState(0)
   const [currentRank, setCurrentRank] = useState('Newbie')
   const [gameOver, setGameOver] = useState(false)
@@ -385,6 +406,39 @@ const WhackAMaskGame = () => {
   }
 
   const userInfo = getUserDisplayInfo()
+
+  // Timer countdown
+  useEffect(() => {
+    if (!isPlaying || gameOver) return
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          // Kết thúc game khi hết thời gian
+          if (phaserGameRef.current) {
+            const scene = phaserGameRef.current.scene.scenes[0]
+            if (scene && scene.gameActive) {
+              scene.endGame()
+            }
+          }
+          return 0
+        }
+        
+        // Cập nhật timeLeft trong scene để tính delay
+        if (phaserGameRef.current) {
+          const scene = phaserGameRef.current.scene.scenes[0]
+          if (scene) {
+            scene.timeLeft = prev - 1
+          }
+        }
+        
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [isPlaying, gameOver])
 
   useEffect(() => {
     if (!isPlaying || !gameRef.current || phaserGameRef.current) return
@@ -453,7 +507,7 @@ const WhackAMaskGame = () => {
         score: finalScore,
         coinsEarned: finalScore, // Mỗi điểm = 1 coin
         masksHit: finalScore, // Số mặt nạ đập trúng = score
-        totalRounds: 16,
+        totalRounds: finalScore, // Số vòng = số mặt nạ đập được
         gameDurationSeconds: gameDuration
       })
 
@@ -484,6 +538,7 @@ const WhackAMaskGame = () => {
   
   const handlePlayGame = () => {
     gameStartTimeRef.current = Date.now()
+    setTimeLeft(120) // Reset timer về 2 phút
     setIsPlaying(true)
     setGameOver(false)
     setScore(0)
@@ -711,8 +766,16 @@ const WhackAMaskGame = () => {
               </div>
             ) : (
               <div className="phaser-game-wrapper">
-                <div className="phaser-score-display">
-                  Coin: <span className="phaser-score-value">{score}</span>
+                <div className="phaser-stats-row">
+                  <div className="phaser-score-display">
+                    Coin: <span className="phaser-score-value">{score}</span>
+                  </div>
+                  <div className="phaser-timer-display">
+                    <span className="material-symbols-outlined">timer</span>
+                    <span className="phaser-timer-value">
+                      {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
                 </div>
 
                 <div ref={gameRef} className="phaser-game-container" />
