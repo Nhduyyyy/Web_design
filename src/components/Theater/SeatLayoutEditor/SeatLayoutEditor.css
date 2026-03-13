@@ -5,7 +5,42 @@
 }
 
 .seat-editor-header {
-  @apply border-b border-border bg-card px-6 py-4 relative z-50;
+  background: #1A0F0F;
+  border-bottom: 1px solid #432828;
+  padding: 1rem 1.5rem;
+  position: relative;
+  z-index: 50;
+}
+
+/* Custom button styles for seat editor */
+.seat-editor-header button[class*="outline"] {
+  background: #2D1B1B !important;
+  color: white !important;
+  border-color: #432828 !important;
+}
+
+.seat-editor-header button[class*="outline"]:hover {
+  background: #3D2525 !important;
+  border-color: #432828 !important;
+}
+
+/* Save button (primary) */
+.seat-editor-header .save-button,
+.seat-editor-header .save-button:hover,
+.seat-editor-header .save-button:active,
+.seat-editor-header .save-button:focus {
+  background: #D33131 !important;
+  background-color: #D33131 !important;
+  color: white !important;
+  border: 1px solid #D33131 !important;
+  border-color: #D33131 !important;
+}
+
+.seat-editor-header .save-button:disabled {
+  background: #D33131 !important;
+  background-color: #D33131 !important;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .seat-editor-main {

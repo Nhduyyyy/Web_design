@@ -324,7 +324,12 @@ export default function SeatLayoutEditor() {
               size="sm"
               onClick={handleSave}
               disabled={saving}
-              className="relative"
+              className="relative save-button"
+              style={{ 
+                backgroundColor: '#D33131',
+                borderColor: '#D33131',
+                color: 'white'
+              }}
             >
               {saving ? (
                 <>
