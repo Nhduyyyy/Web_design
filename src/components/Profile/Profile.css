@@ -1,8 +1,8 @@
 /* ===== Profile Page - Tuồng Việt Nam ===== */
-
+/* Top padding để nội dung không bị Header (fixed) đè lên */
 .profile-page {
   min-height: 100vh;
-  padding: 2rem 0;
+  padding: 7rem 0 2rem 0;
   background: var(--bg-dark);
   color: var(--text-primary);
 }
