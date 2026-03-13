@@ -12,7 +12,7 @@ function parseDragData(e) {
   }
 }
 
-export default function VuDaiLoanTheBench({ benchState = [], championsMap, onSlotClick, onDropToBench, onSell }) {
+export default function VuDaiLoanTheBench({ benchState = [], championsMap, onSlotClick, onChampionInfo, onDropToBench, onSell }) {
   const slots = Array.from({ length: BENCH_SLOTS }, (_, i) => {
     const unit = benchState[i] ?? null
     const champion = unit ? championsMap?.[unit.champion_key] : null
@@ -62,7 +62,11 @@ export default function VuDaiLoanTheBench({ benchState = [], championsMap, onSlo
                 champion={champion}
                 star={unit.star ?? 1}
                 maskColor={unit.mask_color}
-                onClick={() => onSlotClick?.(index, unit)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (onChampionInfo) onChampionInfo(index, unit)
+                  else onSlotClick?.(index, unit)
+                }}
               />
               {onSell && (
                 <button

@@ -5,6 +5,7 @@ import { createMatch, updateMatchPlayer, finishMatch } from '../../services/vuDa
 import { CHAMPIONS_STATIC, getChampionsMap } from '../../data/vuDaiLoanTheChampions'
 import { SHOP_ODDS_BY_LEVEL } from './constants/shopOdds'
 import { resolveCombat, unitStatsFromChampion } from './utils/combatResolver'
+import { getTraitBuffsForBoard, applyTraitBuffsToUnit } from './constants/traitBuffs'
 import VuDaiLoanTheBoard from './VuDaiLoanTheBoard'
 import VuDaiLoanTheBench from './VuDaiLoanTheBench'
 import VuDaiLoanTheShop from './VuDaiLoanTheShop'
@@ -12,6 +13,7 @@ import TrongChauBar from './TrongChauBar'
 import CombatOverlay from './CombatOverlay'
 import TribeClassPanel from './TribeClassPanel'
 import OpponentsPanel from './OpponentsPanel'
+import ChampionDetailModal from './ChampionDetailModal'
 import './VuDaiLoanThe.css'
 
 const BOARD_SLOTS_MAX = 9
@@ -67,26 +69,120 @@ function createInitialPlayer(isBot = false, userId = null) {
   }
 }
 
+/** Ghép 3 tướng cùng champion_key và cùng sao trên bench thành 1 tướng lên sao. */
+function combineBenchUnits(bench) {
+  const valid = (bench || []).filter((u) => u && u.champion_key)
+  if (valid.length < 3) return valid
+  let out = [...valid]
+  let changed = true
+  while (changed) {
+    changed = false
+    const keyToIndices = {}
+    out.forEach((u, i) => {
+      if (!u || u.champion_key == null) return
+      const k = `${u.champion_key}|${u.star ?? 1}`
+      if (!keyToIndices[k]) keyToIndices[k] = []
+      keyToIndices[k].push(i)
+    })
+    for (const indices of Object.values(keyToIndices)) {
+      if (indices.length >= 3) {
+        const [i0, i1, i2] = indices.slice(0, 3).sort((a, b) => b - a)
+        const u = out[i0]
+        const star = Math.min(3, (u.star ?? 1) + 1)
+        const newUnit = { champion_key: u.champion_key, star, mask_color: u.mask_color ?? 'red' }
+        out.splice(i0, 1)
+        out.splice(i1, 1)
+        out.splice(i2, 1)
+        out.push(newUnit)
+        changed = true
+        break
+      }
+    }
+  }
+  return out
+}
+
+/** Tự động ghép 3 cùng loại cùng sao trên cả bench + board thành 1 lên sao (ưu tiên lấy từ bench). */
+function combineBenchAndBoard(bench, board) {
+  let b = (bench || []).filter((u) => u && u.champion_key)
+  let brd = (board || []).filter((u) => u && u.champion_key)
+  for (;;) {
+    const keyCount = {}
+    b.forEach((u) => {
+      if (!u || u.champion_key == null) return
+      const k = `${u.champion_key}|${u.star ?? 1}`
+      keyCount[k] = (keyCount[k] || 0) + 1
+    })
+    brd.forEach((u) => {
+      if (!u || u.champion_key == null) return
+      const k = `${u.champion_key}|${u.star ?? 1}`
+      keyCount[k] = (keyCount[k] || 0) + 1
+    })
+    const keyWith3 = Object.keys(keyCount).find((k) => keyCount[k] >= 3)
+    if (!keyWith3) break
+    const star = parseInt(keyWith3.split('|')[1], 10)
+    const champion_key = keyWith3.split('|')[0]
+    const benchIndices = b
+      .map((u, i) => i)
+      .filter((i) => b[i].champion_key === champion_key && (b[i].star ?? 1) === star)
+      .slice(0, 3)
+    const nFromBench = benchIndices.length
+    const nFromBoard = 3 - nFromBench
+    const boardSlots = brd
+      .filter((u) => u.champion_key === champion_key && (u.star ?? 1) === star)
+      .map((u) => u.slotIndex)
+      .slice(0, nFromBoard)
+    if (benchIndices.length + boardSlots.length < 3) break
+    const mask = (b[benchIndices[0]] || brd.find((u) => u.champion_key === champion_key))?.mask_color ?? 'red'
+    b = b.filter((_, i) => !benchIndices.includes(i))
+    brd = brd.filter((u) => !boardSlots.includes(u.slotIndex))
+    b.push({ champion_key, star: Math.min(3, star + 1), mask_color: mask })
+  }
+  return { bench: b, board: brd }
+}
+
 function buildCombatUnits(boardState, championsMap) {
+  const buffs = getTraitBuffsForBoard(boardState, championsMap)
   return boardState
     .filter((u) => u && u.champion_key)
     .map((u) => {
       const c = championsMap[u.champion_key]
       if (!c) return null
-      return unitStatsFromChampion(c, u.star ?? 1, u.mask_color)
+      const unit = unitStatsFromChampion(c, u.star ?? 1, u.mask_color)
+      return applyTraitBuffsToUnit(unit, buffs)
     })
     .filter(Boolean)
 }
 
-function botRandomBoard(championsMap, rng = Math.random) {
+function botRandomBoard(championsMap, level = 1, roundNumber = 1, rng = Math.random) {
   const list = Object.values(championsMap)
-  const count = 3 + Math.floor(rng() * 4)
-  const units = []
+  if (!list.length) return []
+
+  // Số lượng tướng địch tăng dần theo vòng, nhưng không quá nhiều
+  const baseUnits = 2 + Math.min(level, 3) // level thấp: 3–5 tướng
+  const bonusFromRound = Math.floor(Math.max(0, roundNumber - 1) / 3) // +1 tướng mỗi 3 vòng
+  const count = Math.min(baseUnits + bonusFromRound, 7)
+
+  // Chia champion theo cost để pick giống shop (công bằng hơn)
+  const byCost = { 1: [], 2: [], 3: [], 4: [], 5: [] }
+  list.forEach((c) => {
+    if (c && c.cost >= 1 && c.cost <= 5) byCost[c.cost].push(c)
+  })
+
+  const picks = []
   for (let i = 0; i < count; i++) {
-    const c = randomFromArray(list, rng)
-    if (c) units.push(unitStatsFromChampion(c, 1, c.default_mask_color))
+    const cost = pickCostByLevel(level, rng)
+    const pool = byCost[cost].length ? byCost[cost] : list
+    const c = randomFromArray(pool, rng)
+    if (c) picks.push({ champion_key: c.key, star: 1, mask_color: c.default_mask_color })
   }
-  return units
+  const buffs = getTraitBuffsForBoard(picks, championsMap)
+  return picks.map((p) => {
+    const c = championsMap[p.champion_key]
+    if (!c) return null
+    const unit = unitStatsFromChampion(c, p.star, p.mask_color)
+    return applyTraitBuffsToUnit(unit, buffs)
+  }).filter(Boolean)
 }
 
 export default function VuDaiLoanThe() {
@@ -105,6 +201,13 @@ export default function VuDaiLoanThe() {
   const [matchId, setMatchId] = useState(null)
   const [lastOpponentBoard, setLastOpponentBoard] = useState([])
   const [selectedOpponentIndex, setSelectedOpponentIndex] = useState(null)
+  const [championDetail, setChampionDetail] = useState(null)
+
+  // Bàn cờ địch (hiển thị lại lần combat gần nhất) – gán slotIndex theo thứ tự
+  const opponentBoardState = (lastOpponentBoard || []).map((u, idx) => ({
+    ...u,
+    slotIndex: idx
+  }))
 
   useEffect(() => {
     getChampions().then(({ data }) => {
@@ -121,7 +224,11 @@ export default function VuDaiLoanThe() {
             base_attack: c.base_attack,
             base_armor: c.base_armor,
             base_magic_resist: c.base_magic_resist,
-            default_mask_color: c.default_mask_color ?? 'red'
+            default_mask_color: c.default_mask_color ?? 'red',
+            tribe_key: tribe?.key,
+            tribe,
+            class_key: cls?.key,
+            class: cls
           }
         })
         setChampionsMap((prev) => (Object.keys(map).length ? map : prev))
@@ -166,7 +273,9 @@ export default function VuDaiLoanThe() {
       const bench = [...(myPlayer.bench_state || [])]
       if (bench.length >= BENCH_SLOTS) return
       bench.push({ champion_key: champion.key, star: 1, mask_color: champion.default_mask_color })
-      setMyPlayer((p) => ({ ...p, gold: p.gold - champion.cost, bench_state: bench }))
+      const board = myPlayer.board_state || []
+      const { bench: combinedBench, board: combinedBoard } = combineBenchAndBoard(bench, board)
+      setMyPlayer((p) => ({ ...p, gold: p.gold - champion.cost, bench_state: combinedBench, board_state: combinedBoard }))
       setShopSlots((s) => s.map((sl, i) => (i === shopIndex ? null : sl)))
     },
     [championsMap, myPlayer]
@@ -183,7 +292,8 @@ export default function VuDaiLoanThe() {
         if (already) return
         board.push({ ...unit, slotIndex })
         bench.splice(selectedBenchIndex, 1)
-        setMyPlayer((p) => ({ ...p, board_state: board, bench_state: bench }))
+        const { bench: combinedBench, board: combinedBoard } = combineBenchAndBoard(bench, board)
+        setMyPlayer((p) => ({ ...p, board_state: combinedBoard, bench_state: combinedBench }))
         setSelectedBenchIndex(null)
         return
       }
@@ -193,7 +303,8 @@ export default function VuDaiLoanThe() {
         if (bench.length >= BENCH_SLOTS) return
         const { slotIndex: _, ...rest } = existingUnit
         bench.push(rest)
-        setMyPlayer((p) => ({ ...p, board_state: board, bench_state: bench }))
+        const { bench: combinedBench, board: combinedBoard } = combineBenchAndBoard(bench, board)
+        setMyPlayer((p) => ({ ...p, board_state: combinedBoard, bench_state: combinedBench }))
       }
     },
     [myPlayer, selectedBenchIndex]
@@ -202,6 +313,12 @@ export default function VuDaiLoanThe() {
   const selectBench = useCallback((index) => {
     setSelectedBenchIndex((prev) => (prev === index ? null : index))
   }, [])
+
+  const openChampionDetail = useCallback((payload) => {
+    if (!payload?.champion) return
+    setChampionDetail(payload)
+  }, [])
+  const closeChampionDetail = useCallback(() => setChampionDetail(null), [])
 
   const buyLevel = useCallback(() => {
     setMyPlayer((p) => {
@@ -248,12 +365,13 @@ export default function VuDaiLoanThe() {
           const existingAtSlot = board.find((x) => x.slotIndex === slotIndex)
           const newBoard = board.filter((x) => x.slotIndex !== slotIndex)
           newBoard.push({ ...u, slotIndex })
-          const newBench = bench.filter((_, i) => i !== sourceIndex)
+          let newBench = bench.filter((_, i) => i !== sourceIndex)
           if (existingAtSlot) {
             const { slotIndex: _, ...rest } = existingAtSlot
             newBench.splice(sourceIndex, 0, rest)
           }
-          return { ...p, board_state: newBoard, bench_state: newBench }
+          const { bench: combinedBench, board: combinedBoard } = combineBenchAndBoard(newBench, newBoard)
+          return { ...p, board_state: combinedBoard, bench_state: combinedBench }
         }
         if (source === 'board') {
           if (sourceIndex === slotIndex) return p
@@ -279,12 +397,14 @@ export default function VuDaiLoanThe() {
         if (source === 'board') {
           const { slotIndex: _, ...rest } = unit
           const newBoard = board.filter((x) => x.slotIndex !== sourceIndex)
+          let newBench
           if (bench.length >= BENCH_SLOTS) {
-            const newBench = bench.map((b, i) => (i === benchIndex ? rest : b))
-            return { ...p, board_state: newBoard, bench_state: newBench }
+            newBench = bench.map((b, i) => (i === benchIndex ? rest : b))
+          } else {
+            newBench = bench.slice(0, benchIndex).concat([rest]).concat(bench.slice(benchIndex))
           }
-          const newBench = bench.slice(0, benchIndex).concat([rest]).concat(bench.slice(benchIndex))
-          return { ...p, board_state: newBoard, bench_state: newBench }
+          const { bench: combinedBench, board: combinedBoard } = combineBenchAndBoard(newBench, newBoard)
+          return { ...p, board_state: combinedBoard, bench_state: combinedBench }
         }
         if (source === 'bench' && sourceIndex !== benchIndex) {
           const newBench = [...bench]
@@ -308,7 +428,7 @@ export default function VuDaiLoanThe() {
         }
     const opponent = alive[Math.floor(Math.random() * alive.length)]
     const myUnits = buildCombatUnits(myPlayer.board_state, championsMap)
-    const oppUnits = botRandomBoard(championsMap)
+    const oppUnits = botRandomBoard(championsMap, myPlayer.level ?? 1, round)
     setLastOpponentBoard(oppUnits)
     const { winner, boardA, boardB } = resolveCombat(myUnits, oppUnits)
     const damageTaken = boardA.length === 0 ? Math.max(2, oppUnits.length * DAMAGE_PER_SURVIVING) : 0
@@ -430,12 +550,38 @@ export default function VuDaiLoanThe() {
           <TrongChauBar energy={trongChauEnergy} daiVuDaiActive={daiVuDaiActive} />
 
           <div className="vdlt-stage-wrap">
+            {opponentBoardState.length > 0 && (
+              <div className="vdlt-opponent-board-inline">
+                <p className="vdlt-opponent-board-title">Bàn cờ đối thủ vừa đấu</p>
+                <VuDaiLoanTheBoard
+                  boardState={opponentBoardState}
+                  championsMap={championsMap}
+                  maxSlots={opponentBoardState.length}
+                  readOnly
+                  onChampionInfo={(_, unit) =>
+                    unit?.champion_key &&
+                    openChampionDetail({
+                      champion: championsMap[unit.champion_key],
+                      unit: { star: unit.star ?? 1, mask_color: unit.mask_color },
+                      source: 'opponent'
+                    })
+                  }
+                />
+              </div>
+            )}
             <p className="vdlt-drag-hint">Kéo tướng từ ghế dự bị lên sân khấu, hoặc click chọn tướng rồi click ô trống.</p>
             <VuDaiLoanTheBoard
               boardState={myPlayer?.board_state ?? []}
               championsMap={championsMap}
               maxSlots={myPlayer?.level ?? 1}
               onSlotClick={placeOnBoard}
+              onChampionInfo={(slotIndex, unit) =>
+                unit?.champion_key && openChampionDetail({
+                  champion: championsMap[unit.champion_key],
+                  unit: { star: unit.star ?? 1, mask_color: unit.mask_color },
+                  source: 'board'
+                })
+              }
               onDropToBoard={onDropToBoard}
               onSell={sellChampionFromBoard}
             />
@@ -443,6 +589,14 @@ export default function VuDaiLoanThe() {
               benchState={myPlayer?.bench_state ?? []}
               championsMap={championsMap}
               onSlotClick={(idx) => selectBench(idx)}
+              onChampionInfo={(index, unit) =>
+                unit?.champion_key && openChampionDetail({
+                  champion: championsMap[unit.champion_key],
+                  unit: { star: unit.star ?? 1, mask_color: unit.mask_color },
+                  source: 'bench',
+                  benchIndex: index
+                })
+              }
               onDropToBench={onDropToBench}
               onSell={sellChampionFromBench}
             />
@@ -471,9 +625,40 @@ export default function VuDaiLoanThe() {
             championsMap={championsMap}
             selectedOpponentIndex={selectedOpponentIndex}
             onSelectOpponent={setSelectedOpponentIndex}
+            onChampionClick={(u) =>
+              u?.champion_key &&
+              openChampionDetail({
+                champion: championsMap[u.champion_key],
+                unit: { star: u.star ?? 1, mask_color: u.mask_color },
+                source: 'opponent'
+              })
+            }
           />
         </aside>
       </div>
+
+      {championDetail?.champion && (
+        <ChampionDetailModal
+          champion={championDetail.champion}
+          unit={championDetail.unit}
+          boardState={championDetail.source === 'opponent' ? [] : (myPlayer?.board_state ?? [])}
+          championsMap={championsMap}
+          source={championDetail.source}
+          shopIndex={championDetail.shopIndex}
+          slot={championDetail.slot}
+          benchIndex={championDetail.benchIndex}
+          onClose={closeChampionDetail}
+          onBuy={championDetail.source === 'shop' ? buyFromShop : undefined}
+          onSelectForBoard={
+            championDetail.source === 'bench' && championDetail.benchIndex != null
+              ? () => {
+                  setSelectedBenchIndex(championDetail.benchIndex)
+                  closeChampionDetail()
+                }
+              : undefined
+          }
+        />
+      )}
 
       {combatResult && (
         <CombatOverlay result={combatResult} onClose={closeCombatOverlay} />

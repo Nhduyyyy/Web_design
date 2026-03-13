@@ -10,7 +10,16 @@ function parseDragData(e) {
   }
 }
 
-export default function VuDaiLoanTheBoard({ boardState = [], championsMap, maxSlots = 10, onSlotClick, onDropToBoard, onSell }) {
+export default function VuDaiLoanTheBoard({
+  boardState = [],
+  championsMap,
+  maxSlots = 10,
+  onSlotClick,
+  onChampionInfo,
+  onDropToBoard,
+  onSell,
+  readOnly = false
+}) {
   const slotCount = Math.max(1, Math.min(10, Number(maxSlots) || 10))
   const slots = Array.from({ length: slotCount }, (_, i) => {
     const unit = boardState.find((u) => u.slotIndex === i)
@@ -38,32 +47,43 @@ export default function VuDaiLoanTheBoard({ boardState = [], championsMap, maxSl
       {slots.map(({ slotIndex, unit, champion }) => (
         <div
           key={slotIndex}
-          className={`vdlt-board-slot ${unit ? 'filled' : ''}`}
-          onClick={() => onSlotClick?.(slotIndex, unit)}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, slotIndex)}
+          className={`vdlt-board-slot ${unit ? 'filled' : ''} ${readOnly ? 'vdlt-board-slot-readonly' : ''}`}
+          onClick={readOnly && !onChampionInfo ? undefined : () => (unit && onChampionInfo ? onChampionInfo(slotIndex, unit) : onSlotClick?.(slotIndex, unit))}
+          onDragOver={readOnly ? undefined : handleDragOver}
+          onDragLeave={readOnly ? undefined : handleDragLeave}
+          onDrop={readOnly ? undefined : (e) => handleDrop(e, slotIndex)}
           role="button"
-          tabIndex={0}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSlotClick?.(slotIndex, unit)}
+          tabIndex={readOnly && !onChampionInfo ? -1 : 0}
+          onKeyDown={
+            readOnly && !onChampionInfo
+              ? undefined
+              : (e) => (e.key === 'Enter' || e.key === ' ') && (unit && onChampionInfo ? onChampionInfo(slotIndex, unit) : onSlotClick?.(slotIndex, unit))
+          }
         >
           {champion ? (
             <div
               className="vdlt-draggable-wrap"
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.setData('application/json', JSON.stringify({ source: 'board', sourceIndex: slotIndex, unit }))
-                e.dataTransfer.effectAllowed = 'move'
-              }}
-              onClick={(ev) => ev.stopPropagation()}
+              draggable={readOnly ? false : true}
+              onDragStart={
+                readOnly
+                  ? undefined
+                  : (e) => {
+                      e.dataTransfer.setData(
+                        'application/json',
+                        JSON.stringify({ source: 'board', sourceIndex: slotIndex, unit })
+                      )
+                      e.dataTransfer.effectAllowed = 'move'
+                    }
+              }
+              onClick={readOnly && !onChampionInfo ? undefined : (ev) => ev.stopPropagation()}
             >
               <ChampionCard
                 champion={champion}
                 star={unit.star ?? 1}
                 maskColor={unit.mask_color}
-                onClick={() => onSlotClick?.(slotIndex, unit)}
+                onClick={unit && onChampionInfo ? () => onChampionInfo(slotIndex, unit) : (readOnly ? undefined : () => onSlotClick?.(slotIndex, unit))}
               />
-              {onSell && (
+              {!readOnly && onSell && (
                 <button
                   type="button"
                   className="vdlt-sell-btn"
