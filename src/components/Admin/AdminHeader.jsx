@@ -23,7 +23,7 @@ function AdminHeader({ user, profile }) {
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Admin'
 
   return (
-    <header className="admin-header">
+    <header className="admin-header flex items-center justify-end">
       <div className="header-search">
         <span className="material-symbols-outlined search-icon">search</span>
         <input
@@ -34,7 +34,7 @@ function AdminHeader({ user, profile }) {
         />
       </div>
 
-      <div className="header-actions">
+      <div className="header-actions flex items-center gap-4">
         <button className="header-icon-btn" title="Notifications">
           <span className="material-symbols-outlined">notifications</span>
           <span className="notification-badge"></span>
@@ -66,12 +66,12 @@ function AdminHeader({ user, profile }) {
           {showUserMenu && (
             <div className="user-menu">
               <button onClick={handleBackToApp}>
-                <span className="material-symbols-outlined">home</span>
-                Back to App
+                <span className="material-symbols-outlined text-primary">home</span>
+                <p className="text-primary">Trở về App</p>
               </button>
               <button onClick={handleLogout}>
-                <span className="material-symbols-outlined">logout</span>
-                Logout
+                <span className="material-symbols-outlined text-primary">logout</span>
+                Đăng xuất
               </button>
             </div>
           )}

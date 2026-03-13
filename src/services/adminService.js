@@ -1,6 +1,25 @@
 import { supabase } from '../lib/supabase'
 
 /**
+ * Get total revenue from bookings with status 'confirmed'
+ * @returns {Promise<number>}
+ */
+export const getTotalRevenueFromBookings = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('total_amount')
+      .eq('status', 'confirmed')
+
+    if (error) throw error
+    return (data || []).reduce((sum, b) => sum + (b.total_amount || 0), 0)
+  } catch (error) {
+    console.error('Error fetching total revenue from bookings:', error)
+    throw error
+  }
+}
+
+/**
  * Get admin dashboard statistics
  */
 export const getAdminStats = async () => {
@@ -45,20 +64,14 @@ export const getAdminStats = async () => {
       // Don't throw, events table might not exist yet
     }
 
-    // Get total revenue from completed payments
-    const { data: paymentsData, error: paymentsError } = await supabase
-      .from('payments')
-      .select('amount')
-      .eq('status', 'completed')
-
-    console.log('💰 Payments data:', paymentsData?.length, 'records, Error:', paymentsError)
-    
-    if (paymentsError) {
-      console.error('Payments query error:', paymentsError)
-      // Don't throw, payments table might not exist yet
+    // Total revenue from bookings with status 'confirmed'
+    let totalRevenue = 0
+    try {
+      totalRevenue = await getTotalRevenueFromBookings()
+      console.log('💰 Total revenue (confirmed bookings):', totalRevenue)
+    } catch (revenueError) {
+      console.error('Revenue from bookings error:', revenueError)
     }
-
-    const totalRevenue = paymentsData?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0
 
     // Calculate growth rates (compare with last month)
     const lastMonth = new Date()
