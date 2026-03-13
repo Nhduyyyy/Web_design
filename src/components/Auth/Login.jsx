@@ -94,7 +94,45 @@ function Login() {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-[#120808]">
+    <>
+      <style>{`
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+          -webkit-text-fill-color: white !important;
+          box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+          transition: background-color 5000s ease-in-out 0s;
+          font-size: 16px !important;
+          font-family: Arial, sans-serif !important;
+          font-weight: 400 !important;
+          letter-spacing: normal !important;
+          line-height: 1.5 !important;
+          caret-color: white !important;
+        }
+        input {
+          font-size: 16px !important;
+          font-family: Arial, sans-serif !important;
+          font-weight: 400 !important;
+          letter-spacing: normal !important;
+          line-height: 1.5 !important;
+          transform: none !important;
+        }
+        input:focus {
+          font-size: 16px !important;
+          font-family: Arial, sans-serif !important;
+          font-weight: 400 !important;
+          letter-spacing: normal !important;
+          line-height: 1.5 !important;
+          transform: none !important;
+        }
+        input:hover {
+          font-size: 16px !important;
+          transform: none !important;
+        }
+      `}</style>
+      <div className="flex h-screen w-full overflow-hidden bg-[#120808]">
       {/* Visual Side: Cinematic Mask */}
       <div className="hidden lg:flex lg:w-3/5 relative overflow-hidden bg-black">
         {/* Background Image with Mask */}
@@ -134,7 +172,7 @@ function Login() {
       </div>
 
       {/* Form Side */}
-      <div className="w-full lg:w-2/5 flex flex-col bg-slate-50 dark:bg-[#120808] border-l border-white/5 relative z-20">
+      <div className="w-full lg:w-2/5 flex flex-col bg-[#120808] border-l border-white/5 relative z-20">
         {/* Header/Logo */}
         <header className="flex items-center justify-between px-8 py-8 lg:px-12">
           <Link to="/" className="flex items-center gap-3 group">
@@ -143,7 +181,7 @@ function Login() {
                 🎭
               </span>
             </div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h2 className="text-xl font-bold tracking-tight text-white">
               Tuồng <span className="text-[#d33131]">Theatre</span>
             </h2>
           </Link>
@@ -158,10 +196,10 @@ function Login() {
         {/* Login Form Container */}
         <div className="flex-1 flex flex-col justify-center px-8 lg:px-16 max-w-xl mx-auto w-full">
           <div className="mb-10">
-            <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+            <h3 className="text-3xl font-bold text-white mb-2">
               Chào Mừng Trở Lại
             </h3>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-slate-400">
               Đăng nhập để truy cập sân khấu số của bạn
             </p>
           </div>
@@ -180,7 +218,7 @@ function Login() {
             <div className="space-y-2">
               <label 
                 htmlFor="email"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1"
+                className="text-sm font-medium text-slate-300 ml-1"
               >
                 Email hoặc Tên Sân Khấu
               </label>
@@ -194,10 +232,17 @@ function Login() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#201212] focus:ring-2 focus:ring-[#d33131]/20 focus:border-[#d33131] outline-none transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-white/10 bg-[#1a1a1a] focus:bg-[#1a1a1a] focus:ring-2 focus:ring-[#d33131]/20 focus:border-[#d33131] outline-none transition-all text-white placeholder:text-slate-500 text-base font-sans"
+                  style={{ 
+                    fontSize: '16px',
+                    fontFamily: 'Arial, sans-serif',
+                    fontWeight: '400',
+                    letterSpacing: 'normal',
+                    lineHeight: '1.5'
+                  }}
                   placeholder="actor@tuongtheatre.vn"
                   required
-                  autoComplete="email"
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -207,7 +252,7 @@ function Login() {
               <div className="flex justify-between items-center px-1">
                 <label 
                   htmlFor="password"
-                  className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                  className="text-sm font-medium text-slate-300"
                 >
                   Mật khẩu
                 </label>
@@ -228,16 +273,23 @@ function Login() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-12 pr-12 py-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#201212] focus:ring-2 focus:ring-[#d33131]/20 focus:border-[#d33131] outline-none transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
+                  className="w-full pl-12 pr-12 py-4 rounded-xl border border-white/10 bg-[#1a1a1a] focus:bg-[#1a1a1a] focus:ring-2 focus:ring-[#d33131]/20 focus:border-[#d33131] outline-none transition-all text-white placeholder:text-slate-500 text-base font-sans"
+                  style={{ 
+                    fontSize: '16px',
+                    fontFamily: 'Arial, sans-serif',
+                    fontWeight: '400',
+                    letterSpacing: 'normal',
+                    lineHeight: '1.5'
+                  }}
                   placeholder="••••••••"
                   required
-                  autoComplete="current-password"
+                  autoComplete="off"
                   minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white text-xl"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xl"
                 >
                   {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
@@ -256,7 +308,7 @@ function Login() {
               />
               <label 
                 htmlFor="rememberMe"
-                className="text-sm text-slate-600 dark:text-slate-400 select-none cursor-pointer"
+                className="text-sm text-slate-400 select-none cursor-pointer"
               >
                 Duy trì đăng nhập
               </label>
@@ -289,7 +341,7 @@ function Login() {
             <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
-                className="flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#201212] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                className="flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -297,18 +349,18 @@ function Login() {
                     fill="#EA4335"
                   />
                 </svg>
-                <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                <span className="text-sm font-semibold text-white">
                   Google
                 </span>
               </button>
               <button
                 type="button"
-                className="flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#201212] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                className="flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
               >
                 <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
-                <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                <span className="text-sm font-semibold text-white">
                   Facebook
                 </span>
               </button>
@@ -344,6 +396,7 @@ function Login() {
         </footer>
       </div>
     </div>
+    </>
   )
 }
 
