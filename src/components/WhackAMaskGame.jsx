@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import Phaser from 'phaser'
 import Leaderboard from './Leaderboard'
@@ -704,6 +705,10 @@ const WhackAMaskGame = () => {
                 <span className="material-symbols-outlined">inventory</span>
                 <span>Kho Vật Phẩm</span>
               </a>
+              <Link to="/game/vu-dai-loan-the" className="whack-intro-nav-link">
+                <span className="material-symbols-outlined">sports_martial_arts</span>
+                <span>Vũ Đài Loạn Thế</span>
+              </Link>
             </nav>
 
             <div className="whack-intro-reward-card">

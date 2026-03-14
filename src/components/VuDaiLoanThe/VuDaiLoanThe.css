@@ -1,15 +1,20 @@
-/* Vũ Đại Loạn Thế - Sân khấu tuồng */
+/* Vũ Đại Loạn Thế - Design tokens từ index.css */
 .vdlt-root {
-  --vdlt-bg: #1a0f0f;
-  --vdlt-stage: #3d2314;
-  --vdlt-gold: #d4af37;
+  /* Map sang global tokens; giữ --vdlt-* chỉ cho game-specific */
+  --vdlt-bg: var(--bg-dark);
+  --vdlt-stage: var(--bg-stage);
+  --vdlt-gold: var(--gold);
   --vdlt-curtain: #8b2500;
-  --vdlt-text: #f5f0e8;
-  --vdlt-muted: rgba(245, 240, 232, 0.7);
+  --vdlt-text: var(--text-primary);
+  --vdlt-muted: var(--text-muted);
+  --vdlt-border: var(--border-subtle);
+  --vdlt-bg-card: var(--bg-card);
+  --vdlt-primary: var(--accent-red);
+  font-family: 'Be Vietnam Pro', 'Inter', system-ui, sans-serif;
   min-height: 100%;
   background: var(--vdlt-bg);
   color: var(--vdlt-text);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
@@ -46,22 +51,27 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  overflow: visible;
 }
 
 .vdlt-sidebar-left {
   order: 0;
+  background: linear-gradient(to right, var(--vdlt-bg) 0%, transparent 100%);
+  border-right: 1px solid var(--border-subtle);
 }
 
 .vdlt-sidebar-right {
   order: 2;
+  background: linear-gradient(to left, var(--vdlt-bg) 0%, transparent 100%);
+  border-left: 1px solid var(--border-subtle);
 }
 
 .vdlt-board-slot.vdlt-drop-over,
 .vdlt-bench-slot.vdlt-drop-over {
-  border: 2px solid var(--vdlt-gold);
+  border: 2px solid var(--gold);
   border-style: solid;
   background: rgba(212, 175, 55, 0.45);
-  box-shadow: 0 0 0 3px var(--vdlt-gold), inset 0 0 20px rgba(212, 175, 55, 0.2);
+  box-shadow: var(--shadow-gold), inset 0 0 20px rgba(212, 175, 55, 0.2);
   transform: scale(1.05);
   transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
@@ -84,19 +94,66 @@
   gap: 0.5rem;
   margin: 0 0 0.75rem;
   font-size: 1rem;
-  color: var(--vdlt-gold);
+  font-weight: 700;
+  color: var(--gold);
 }
 
 .vdlt-panel-title .material-symbols-outlined {
   font-size: 1.2rem;
 }
 
-.vdlt-tribe-class-panel,
-.vdlt-opponents-panel {
-  background: rgba(61, 35, 20, 0.9);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 8px;
+.vdlt-tribe-class-panel {
+  background: rgba(42, 21, 21, 0.6);
+  border: 1px solid var(--border-active);
+  border-radius: var(--radius-md);
   padding: 1rem;
+  overflow: visible;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vdlt-tribe-class-panel:hover {
+  box-shadow: var(--shadow-gold);
+}
+
+/* Panel đối thủ – style card giống GameSelector */
+.vdlt-opponents-panel {
+  background: linear-gradient(135deg, rgba(211, 49, 49, 0.08) 0%, rgba(139, 35, 35, 0.06) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  overflow: visible;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vdlt-opponents-panel:hover {
+  border-color: var(--border-active);
+}
+
+.vdlt-opponents-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.vdlt-opponents-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vdlt-gold);
+}
+
+.vdlt-opponents-header-icon .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.vdlt-opponents-header-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+.vdlt-tribe-class-panel {
+  position: relative;
 }
 
 .vdlt-tribe-class-empty {
@@ -108,6 +165,12 @@
 
 .vdlt-panel-section {
   margin-bottom: 1rem;
+  overflow: visible;
+}
+.vdlt-panel-section.vdlt-mask-legend {
+  margin-bottom: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .vdlt-panel-section:last-child {
@@ -125,6 +188,7 @@
   list-style: none;
   padding: 0;
   margin: 0;
+  overflow: visible;
 }
 
 .vdlt-tribe-item {
@@ -185,7 +249,7 @@
   left: 0;
   top: 100%;
   margin-top: 4px;
-  z-index: 50;
+  z-index: 100;
   min-width: 200px;
   max-width: 260px;
   padding: 0.5rem 0.6rem;
@@ -195,6 +259,9 @@
   font-size: 0.8rem;
   color: var(--vdlt-text);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  white-space: normal;
+  word-break: normal;
 }
 
 .vdlt-champ-tooltip strong {
@@ -243,7 +310,7 @@
 
 .vdlt-label {
   font-size: 0.75rem;
-  color: var(--vdlt-muted);
+  color: var(--text-muted);
   margin-right: 0.25rem;
 }
 
@@ -287,70 +354,217 @@
   flex-shrink: 0;
 }
 
-.vdlt-mask-dot.mask-red { background: #c62828; }
+.vdlt-mask-dot.mask-red { background: var(--accent-red); }
 .vdlt-mask-dot.mask-black { background: #37474f; }
 .vdlt-mask-dot.mask-white { background: #eceff1; }
 .vdlt-mask-dot.mask-blue { background: #1565c0; }
 
-.vdlt-opponent-avatars {
+/* Danh sách đối thủ dọc: mỗi hàng = vòng HP + tên + số HP */
+.vdlt-opponent-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.vdlt-opponent-avatar {
-  width: 36px;
-  height: 36px;
+.vdlt-opponent-list li {
+  margin: 0;
+  padding: 0;
+}
+
+.vdlt-opponent-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vdlt-opponent-list-item:hover {
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.vdlt-opponent-list-item.selected {
+  background: rgba(212, 175, 55, 0.25);
+  box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.5);
+}
+
+.vdlt-opponent-list-item.dead {
+  opacity: 0.6;
+}
+
+.vdlt-opponent-list-item .vdlt-opponent-hp-circle {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(212, 175, 55, 0.5);
-  background: rgba(0, 0, 0, 0.4);
-  color: var(--vdlt-text);
-  font-size: 0.7rem;
+  border: 2px solid rgba(212, 175, 55, 0.7);
+  background: linear-gradient(180deg, rgba(180, 140, 60, 0.5) 0%, rgba(120, 90, 40, 0.6) 100%);
+  color: #fff;
+  font-size: 0.75rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  padding: 0;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.vdlt-opponent-avatar:hover {
-  border-color: var(--vdlt-gold);
-  background: rgba(212, 175, 55, 0.2);
+.vdlt-opponent-list-item.dead .vdlt-opponent-hp-circle {
+  border-color: rgba(80, 60, 40, 0.8);
+  background: rgba(40, 30, 20, 0.7);
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.vdlt-opponent-avatar.dead {
-  opacity: 0.4;
-  border-color: #555;
+.vdlt-opponent-list-item.selected .vdlt-opponent-hp-circle {
+  border-color: #ffd700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.vdlt-opponent-avatar.selected {
-  border-color: var(--vdlt-gold);
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+.vdlt-opponent-list-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.vdlt-opponent-board-preview h4 {
+.vdlt-opponent-list-hp {
+  font-weight: 700;
+  color: var(--vdlt-gold);
+  flex-shrink: 0;
+}
+
+.vdlt-opponent-hp-value {
+  line-height: 1;
+}
+
+.vdlt-opponent-board-preview {
+  margin-top: 0.5rem;
+}
+
+.vdlt-opponent-board-heading {
   margin: 0 0 0.5rem;
-  font-size: 0.85rem;
-  color: var(--vdlt-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
 }
 
-.vdlt-opponent-champs {
-  display: flex;
-  flex-wrap: wrap;
+.vdlt-opponent-champs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
+  align-items: stretch;
 }
 
+.vdlt-opponent-champ-btn {
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.vdlt-opponent-champ-btn:hover .vdlt-opponent-champ .vdlt-champ-card {
+  box-shadow: 0 0 0 2px var(--vdlt-gold);
+}
+
+.vdlt-opponent-champ-btn .vdlt-opponent-champ {
+  width: 100%;
+  height: 100%;
+  min-height: 48px;
+}
+
+.vdlt-opponent-empty {
+  font-size: 0.8rem;
+  color: var(--vdlt-muted);
+  margin: 0;
+}
+
+/* Ô cố định vuông */
 .vdlt-opponent-champ {
   width: 48px;
   height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  aspect-ratio: 1;
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 6px;
 }
 
+/* Đối thủ: viền vuông bo góc nhẹ, chỉ ảnh căn giữa, không text; dấu chấm đè lên */
 .vdlt-opponent-champ .vdlt-champ-card {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
   min-width: 0;
   min-height: 0;
-  font-size: 0.6rem;
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 2px solid rgba(212, 175, 55, 0.5);
+  overflow: hidden;
+}
+.vdlt-opponent-champ .vdlt-champ-mask-badge {
+  z-index: 10;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 8px;
+  height: 8px;
+}
+.vdlt-opponent-champ .vdlt-champ-card.has-image .vdlt-champ-image-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.vdlt-opponent-champ .vdlt-champ-card.has-image .vdlt-champ-image {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+.vdlt-opponent-champ .vdlt-champ-card .vdlt-champ-content,
+.vdlt-opponent-champ .vdlt-champ-card .vdlt-champ-name,
+.vdlt-opponent-champ .vdlt-champ-card .vdlt-champ-cost,
+.vdlt-opponent-champ .vdlt-champ-card .vdlt-champ-tribe,
+.vdlt-opponent-champ .vdlt-champ-card .vdlt-champ-class {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+.vdlt-opponent-champ .vdlt-champ-star-badge {
+  font-size: 0.55rem;
+  padding: 1px 3px;
+  bottom: 2px;
+  left: 2px;
 }
 
 .vdlt-muted {
@@ -364,9 +578,11 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background: rgba(61, 35, 20, 0.9);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 8px;
+  background: rgba(42, 21, 21, 0.9);
+  border: 1px solid rgba(211, 49, 49, 0.2);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(12px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .vdlt-title {
@@ -381,7 +597,33 @@
 .vdlt-round-info {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
+}
+
+.vdlt-stage-round {
+  color: var(--vdlt-muted);
+  font-size: 0.9rem;
+}
+
+.vdlt-round-type {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  margin-left: 0.25rem;
+}
+
+.vdlt-planning-timer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(211, 49, 49, 0.25);
+  color: #ff8a80;
+  border: 1px solid rgba(255, 138, 128, 0.5);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .vdlt-gold {
@@ -393,7 +635,7 @@
 }
 
 .vdlt-hp {
-  color: #c62828;
+  color: var(--accent-red);
   font-weight: 600;
 }
 
@@ -402,19 +644,49 @@
   font-weight: 600;
 }
 
+.vdlt-xp-info {
+  font-size: 0.75rem;
+  color: var(--vdlt-gold);
+  font-weight: 400;
+}
+
+.vdlt-xp-bar-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.25rem;
+}
+
+.vdlt-xp-bar {
+  width: 40px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.vdlt-xp-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-dark));
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+
 .vdlt-btn-level {
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
   background: rgba(212, 175, 55, 0.25);
-  color: var(--vdlt-gold);
-  border: 1px solid rgba(212, 175, 55, 0.5);
-  border-radius: 6px;
+  color: var(--gold);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .vdlt-btn-level:hover:not(:disabled) {
   background: rgba(212, 175, 55, 0.4);
+  border-color: var(--border-active);
 }
 
 .vdlt-btn-level:disabled {
@@ -430,8 +702,8 @@
   height: 20px;
   padding: 0;
   border: none;
-  border-radius: 4px;
-  background: rgba(198, 40, 40, 0.9);
+  border-radius: var(--radius-sm);
+  background: rgba(211, 49, 49, 0.9);
   color: #fff;
   cursor: pointer;
   display: flex;
@@ -441,7 +713,7 @@
 }
 
 .vdlt-sell-btn:hover {
-  background: #c62828;
+  background: var(--accent-red);
 }
 
 .vdlt-sell-btn .material-symbols-outlined {
@@ -452,19 +724,20 @@
 .vdlt-lobby {
   text-align: center;
   padding: 3rem 2rem;
-  background: linear-gradient(180deg, rgba(61, 35, 20, 0.6) 0%, rgba(26, 15, 15, 0.9) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(211, 49, 49, 0.1) 0%, rgba(139, 35, 35, 0.08) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
 }
 
 .vdlt-lobby h2 {
   margin: 0 0 0.5rem;
-  color: var(--vdlt-gold);
+  color: var(--gold);
   font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .vdlt-lobby p {
-  color: var(--vdlt-muted);
+  color: var(--text-muted);
   margin: 0 0 1.5rem;
 }
 
@@ -473,28 +746,55 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(180deg, #c62828 0%, #8b0000 100%);
-  color: #fff;
-  border: 2px solid var(--vdlt-gold);
-  border-radius: 8px;
+  background: linear-gradient(135deg, var(--gold-cta) 0%, #FF9A44 100%);
+  color: var(--bg-dark);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius-sm);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .vdlt-btn-start:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-gold);
 }
 
 /* Stage = Board area */
 .vdlt-stage-wrap {
-  background: var(--vdlt-stage);
+  background: linear-gradient(135deg, #201212 0%, var(--bg-stage) 100%);
   border: 2px solid rgba(139, 37, 0, 0.5);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 1rem;
   position: relative;
+}
+
+.vdlt-combat-boards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.vdlt-combat-board-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.vdlt-combat-board-section .vdlt-board {
+  max-width: 100%;
+}
+
+.vdlt-opponent-board-inline {
+  margin-bottom: 0.75rem;
+}
+
+.vdlt-opponent-board-title {
+  font-size: 0.8rem;
+  color: var(--vdlt-muted);
+  margin: 0 0 0.25rem;
 }
 
 .vdlt-drag-hint {
@@ -514,8 +814,8 @@
   aspect-ratio: 1;
   max-width: 80px;
   background: rgba(0, 0, 0, 0.3);
-  border: 2px dashed rgba(212, 175, 55, 0.4);
-  border-radius: 8px;
+  border: 2px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -524,13 +824,54 @@
 }
 
 .vdlt-board-slot:hover {
-  border-color: var(--vdlt-gold);
+  border-color: var(--border-active);
   background: rgba(212, 175, 55, 0.1);
 }
 
 .vdlt-board-slot.filled {
   border-style: solid;
-  border-color: rgba(212, 175, 55, 0.6);
+  border-color: var(--border-active);
+}
+.vdlt-board-slot {
+  overflow: hidden;
+}
+
+/* Thẻ tướng trên sàn đấu: chỉ hiện ảnh full, không text */
+.vdlt-board-slot .vdlt-draggable-wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: block;
+}
+.vdlt-board-slot .vdlt-champ-card {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 2px;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.vdlt-board-slot .vdlt-champ-card.has-image .vdlt-champ-image-wrap {
+  position: absolute;
+  inset: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.vdlt-board-slot .vdlt-champ-card.has-image .vdlt-champ-image {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  object-fit: contain !important;
+  object-position: center center;
+}
+.vdlt-board-slot .vdlt-champ-card .vdlt-champ-content {
+  display: none;
 }
 
 /* Bench */
@@ -546,8 +887,8 @@
   width: 56px;
   height: 56px;
   background: rgba(0, 0, 0, 0.3);
-  border: 2px dashed rgba(212, 175, 55, 0.3);
-  border-radius: 6px;
+  border: 2px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -556,7 +897,49 @@
 }
 
 .vdlt-bench-slot:hover {
-  border-color: var(--vdlt-gold);
+  border-color: var(--border-active);
+}
+.vdlt-bench-slot {
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Thẻ tướng trên ghế dự bị: chỉ hiện ảnh full, không text */
+.vdlt-bench-slot .vdlt-draggable-wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: block;
+}
+.vdlt-bench-slot .vdlt-champ-card {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 2px;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.vdlt-bench-slot .vdlt-champ-card.has-image .vdlt-champ-image-wrap {
+  position: absolute;
+  inset: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.vdlt-bench-slot .vdlt-champ-card.has-image .vdlt-champ-image {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  object-fit: contain !important;
+  object-position: center center;
+}
+.vdlt-bench-slot .vdlt-champ-card .vdlt-champ-content {
+  display: none;
 }
 
 /* Shop */
@@ -565,9 +948,10 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem;
-  background: rgba(61, 35, 20, 0.8);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 8px;
+  background: var(--vdlt-bg);
+  border-top: 2px solid var(--border-active);
+  border-radius: 0;
+  flex-shrink: 0;
 }
 
 .vdlt-shop-odds {
@@ -590,9 +974,9 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.2rem 0.5rem;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 4px;
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: var(--vdlt-bg-card);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
 }
 
 .vdlt-shop-odds-cost {
@@ -618,26 +1002,27 @@
 }
 
 .vdlt-shop-slot {
-  width: 120px;
+  width: 180px;
   flex-shrink: 0;
 }
 
 .vdlt-shop-slot-btn {
   width: 100%;
   padding: 0;
-  border: 2px solid rgba(212, 175, 55, 0.4);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--vdlt-bg-card);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  overflow: hidden;
 }
 
 .vdlt-shop-slot-btn:hover:not(:disabled) {
-  border-color: var(--vdlt-gold);
-  background: rgba(212, 175, 55, 0.1);
+  border-color: var(--border-active);
+  background: var(--bg-card-hover);
 }
 
 .vdlt-shop-slot-btn.disabled {
@@ -647,30 +1032,21 @@
 
 .vdlt-shop-slot-card {
   width: 100%;
-  min-height: 72px;
+  min-height: 160px;
+  max-height: 200px;
   margin: 6px auto 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .vdlt-shop-slot-card .vdlt-champ-card {
   min-width: 0;
   width: 100%;
-  min-height: 68px;
+  min-height: 140px;
   font-size: 0.68rem;
-}
-
-.vdlt-shop-slot-card .vdlt-champ-name {
-  font-size: 0.95em;
-  font-weight: 800;
-  white-space: normal;
-  text-overflow: clip;
-  overflow: visible;
-  word-break: break-word;
-  line-height: 1.2;
-  max-width: 100%;
-  display: block;
+  overflow: hidden;
 }
 
 .vdlt-shop-slot-info {
@@ -706,23 +1082,24 @@
 .vdlt-shop-slot-empty {
   width: 100%;
   height: 90px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 2px dashed rgba(212, 175, 55, 0.25);
-  border-radius: 8px;
+  background: var(--vdlt-bg-card);
+  border: 2px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
 }
 
 .vdlt-btn-roll {
   padding: 0.5rem 1rem;
-  background: var(--vdlt-gold);
-  color: #1a0f0f;
-  border: none;
-  border-radius: 6px;
+  background: linear-gradient(to right, var(--accent-red), rgba(139, 35, 35, 0.8));
+  color: #fff;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;
+  transition: box-shadow 0.2s ease;
 }
 
-.vdlt-btn-roll:hover {
-  filter: brightness(1.1);
+.vdlt-btn-roll:hover:not(:disabled) {
+  box-shadow: 0 0 15px rgba(211, 49, 49, 0.5);
 }
 
 .vdlt-btn-roll:disabled {
@@ -734,8 +1111,8 @@
 .vdlt-trong-chau {
   padding: 0.5rem 1rem;
   background: rgba(0, 0, 0, 0.4);
-  border-radius: 8px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
 }
 
 .vdlt-trong-chau-label {
@@ -744,7 +1121,7 @@
   gap: 0.5rem;
   margin-bottom: 0.35rem;
   font-size: 0.9rem;
-  color: var(--vdlt-muted);
+  color: var(--text-muted);
 }
 
 .vdlt-trong-chau-bar-wrap {
@@ -756,13 +1133,13 @@
 
 .vdlt-trong-chau-bar {
   height: 100%;
-  background: linear-gradient(90deg, #8b2500, #d4af37);
-  border-radius: 6px;
+  background: linear-gradient(90deg, #8b2500, var(--gold));
+  border-radius: var(--radius-sm);
   transition: width 0.3s ease;
 }
 
 .vdlt-trong-chau.dai-vu-dai .vdlt-trong-chau-bar {
-  background: linear-gradient(90deg, #d4af37, #fff);
+  background: linear-gradient(90deg, var(--gold), #fff);
   animation: vdlt-glow 0.5s ease infinite alternate;
 }
 
@@ -778,7 +1155,7 @@
   height: 100%;
   min-width: 52px;
   min-height: 52px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 2px solid;
   display: flex;
   flex-direction: column;
@@ -790,13 +1167,156 @@
   font-size: 0.7rem;
   text-align: center;
   line-height: 1.2;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.vdlt-champ-card.mask-red { border-color: #c62828; border-width: 2px; }
+.vdlt-champ-card:hover {
+  box-shadow: var(--shadow-card);
+}
+
+.vdlt-hp-bar {
+  position: absolute;
+  bottom: 1px;
+  left: 2px;
+  right: 2px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 2px;
+  overflow: hidden;
+  z-index: 15;
+}
+
+.vdlt-hp-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, #43a047, #ffeb3b, #e53935);
+  transition: width 0.2s ease-out;
+}
+
+.vdlt-champ-attacker {
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.9);
+}
+
+.vdlt-champ-target {
+  animation: vdlt-hit-pulse 0.2s ease-out;
+}
+
+@keyframes vdlt-hit-pulse {
+  from {
+    box-shadow: 0 0 0 rgba(229, 57, 53, 0.9);
+  }
+  to {
+    box-shadow: 0 0 10px rgba(229, 57, 53, 0.9);
+  }
+}
+
+.vdlt-champ-dead {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+
+/* Chỉ áp dụng cho thẻ có ảnh khi KHÔNG nằm trong ô board/bench (tránh đè slot 56px/80px) */
+.vdlt-shop-slot-card .vdlt-champ-card.has-image:not(.layout-horizontal),
+.vdlt-champ-card.has-image:not(.layout-horizontal) {
+  justify-content: flex-start;
+  padding-top: 2px;
+  min-height: 140px;
+}
+.vdlt-board-slot .vdlt-champ-card.has-image,
+.vdlt-bench-slot .vdlt-champ-card.has-image {
+  min-height: 0 !important;
+}
+
+/* Layout ngang: ảnh trái, text phải */
+.vdlt-champ-card.layout-horizontal {
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-height: 100px;
+  padding: 4px;
+  text-align: left;
+}
+.vdlt-champ-card.layout-horizontal .vdlt-champ-image-wrap {
+  width: 88px;
+  min-width: 88px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+}
+.vdlt-champ-card.layout-horizontal .vdlt-champ-image {
+  width: 100%;
+  height: 100%;
+  min-height: 96px;
+  max-height: 140px;
+  object-fit: cover;
+  object-position: top center;
+}
+.vdlt-champ-card.layout-horizontal .vdlt-champ-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding-left: 8px;
+  overflow: hidden;
+}
+.vdlt-champ-card.layout-horizontal .vdlt-champ-name {
+  font-size: 0.85em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  margin: 0;
+}
+.vdlt-champ-card.layout-horizontal .vdlt-champ-cost {
+  font-size: 0.65rem;
+}
+.vdlt-champ-card.layout-horizontal .vdlt-champ-tribe,
+.vdlt-champ-card.layout-horizontal .vdlt-champ-class {
+  font-size: 0.6rem;
+  color: var(--vdlt-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vdlt-champ-image-wrap {
+  display: block;
+  flex-shrink: 0;
+}
+/* Rule chung cho ảnh — KHÔNG áp dụng trong board/bench (đã có rule riêng với contain) */
+.vdlt-champ-image {
+  width: 100%;
+  height: auto;
+  max-height: 120px;
+  min-height: 80px;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: block;
+}
+/* Board/bench: reset min-height để ảnh vừa ô, không tràn */
+.vdlt-board-slot .vdlt-champ-image,
+.vdlt-bench-slot .vdlt-champ-image {
+  min-height: 0 !important;
+  max-height: none !important;
+}
+.vdlt-champ-card.has-image:not(.layout-horizontal) .vdlt-champ-name {
+  margin-top: 4px;
+}
+
+.vdlt-champ-card.mask-red { border-color: var(--accent-red); border-width: 2px; }
 .vdlt-champ-card.mask-black { border-color: #546e7a; border-width: 2px; }
 .vdlt-champ-card.mask-white { border-color: #eceff1; color: #cfd8dc; border-width: 2px; }
 .vdlt-champ-card.mask-blue { border-color: #1565c0; border-width: 2px; }
 
+/* Dấu chấm hóa trang (màu mặt nạ) luôn đè lên ảnh */
 .vdlt-champ-mask-badge {
   position: absolute;
   top: 3px;
@@ -806,11 +1326,33 @@
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+  z-index: 10;
 }
-.vdlt-champ-card.mask-red .vdlt-champ-mask-badge { background: #c62828; }
+.vdlt-champ-image-wrap {
+  position: relative;
+  z-index: 0;
+}
+.vdlt-champ-card.mask-red .vdlt-champ-mask-badge { background: var(--accent-red); }
 .vdlt-champ-card.mask-black .vdlt-champ-mask-badge { background: #546e7a; }
 .vdlt-champ-card.mask-white .vdlt-champ-mask-badge { background: #eceff1; }
 .vdlt-champ-card.mask-blue .vdlt-champ-mask-badge { background: #1565c0; }
+
+/* Kí hiệu sao (1★ 2★ 3★) luôn hiển thị trên thẻ */
+.vdlt-champ-star-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  z-index: 10;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #ffd700;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 5px;
+  border-radius: 4px;
+  line-height: 1;
+  pointer-events: none;
+}
 
 .vdlt-champ-name {
   font-weight: 800;
@@ -829,11 +1371,440 @@
   font-size: 0.65rem;
 }
 
+/* Champion detail modal (Phase A/B/C) */
+.vdlt-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+  padding: 1rem;
+}
+.vdlt-detail-modal {
+  position: relative;
+  background: var(--bg-stage);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius-md);
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.25rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), var(--shadow-gold);
+}
+.vdlt-detail-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.vdlt-detail-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.vdlt-detail-header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+}
+.vdlt-detail-portrait {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid rgba(212, 175, 55, 0.5);
+}
+.vdlt-detail-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.vdlt-detail-star-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffd700;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.vdlt-detail-title-wrap { flex: 1; min-width: 0; }
+.vdlt-detail-name {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  color: var(--vdlt-gold);
+}
+.vdlt-detail-meta {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  color: var(--vdlt-muted);
+}
+.vdlt-detail-skill {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Hàng tổng hợp chỉ số cuối cùng (sau tất cả buff) */
+.vdlt-detail-final-row {
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+.vdlt-detail-final-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--vdlt-gold);
+}
+.vdlt-detail-final-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+.vdlt-detail-final-stats span {
+  white-space: nowrap;
+}
+.vdlt-detail-final-stats strong {
+  color: #4dd0e1;
+  margin-left: 0.2rem;
+}
+
+.vdlt-detail-section {
+  margin-bottom: 1rem;
+}
+.vdlt-detail-section h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--vdlt-gold);
+}
+.vdlt-detail-section p,
+.vdlt-detail-section ul {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+.vdlt-detail-stats-table-wrap {
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+.vdlt-detail-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.vdlt-detail-stats-table th,
+.vdlt-detail-stats-table td {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+.vdlt-detail-stats-table th {
+  color: var(--vdlt-gold);
+}
+.vdlt-detail-mask-list,
+.vdlt-detail-trait ul {
+  margin: 0.25rem 0 0 1rem;
+  padding-left: 0.5rem;
+}
+
+/* Dòng mô tả buff đang áp dụng – màu nổi bật (xanh lơ) */
+.vdlt-detail-buff-active {
+  color: #4dd0e1 !important;
+  font-weight: 600;
+}
+.vdlt-detail-buff-active strong {
+  color: #80deea;
+}
+.vdlt-detail-trait ul li.vdlt-detail-buff-active {
+  color: #4dd0e1;
+}
+
+.vdlt-detail-item-stats {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 400;
+}
+
+.vdlt-detail-augment-effect {
+  color: #4dd0e1;
+  font-weight: 500;
+}
+
+.vdlt-detail-muted {
+  color: var(--vdlt-muted);
+  font-size: 0.85rem;
+}
+
+.vdlt-detail-augment-hint {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--vdlt-muted);
+}
+
+.vdlt-detail-augment-pending {
+  color: var(--vdlt-muted);
+}
+
+.vdlt-detail-augment-pending strong {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.vdlt-detail-augment-pending-reason {
+  color: var(--vdlt-muted);
+  font-size: 0.85rem;
+}
+
+.vdlt-detail-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.3);
+}
+.vdlt-detail-btn-buy {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+  color: var(--bg-dark);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.vdlt-detail-btn-buy:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-gold);
+}
+.vdlt-detail-btn-close {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.vdlt-detail-btn-close:hover { background: rgba(255, 255, 255, 0.25); }
+
+/* Carousel */
+.vdlt-carousel-wrap {
+  padding: 1.5rem;
+  text-align: center;
+}
+.vdlt-carousel-title {
+  margin: 0 0 1rem;
+  color: var(--vdlt-gold);
+  font-size: 1.1rem;
+}
+.vdlt-carousel-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+.vdlt-carousel-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  background: var(--vdlt-bg-card);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+.vdlt-carousel-option:hover {
+  border-color: var(--border-active);
+  transform: scale(1.02);
+  box-shadow: var(--shadow-gold);
+}
+.vdlt-carousel-item {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--vdlt-muted);
+}
+
+/* PvE / Neutral round */
+.vdlt-number-select-wrap {
+  padding: 2rem;
+  text-align: center;
+}
+.vdlt-number-select-title {
+  margin: 0 0 0.5rem;
+  color: var(--vdlt-gold);
+  font-size: 1.2rem;
+}
+.vdlt-number-select-desc {
+  margin: 0 0 1.5rem;
+  color: var(--vdlt-muted);
+  font-size: 0.95rem;
+}
+.vdlt-number-select-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+.vdlt-number-select-option {
+  width: 4rem;
+  height: 4rem;
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--vdlt-bg-card);
+  color: var(--vdlt-text);
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.vdlt-number-select-option:hover {
+  border-color: var(--gold);
+  transform: scale(1.08);
+}
+
+.vdlt-pve-wrap {
+  padding: 2rem;
+  text-align: center;
+}
+.vdlt-pve-title {
+  margin: 0 0 0.5rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+.vdlt-pve-desc {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+}
+
+/* Item inventory */
+.vdlt-item-inventory {
+  margin-top: 1rem;
+}
+.vdlt-item-inventory-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.9rem;
+  color: var(--vdlt-muted);
+}
+.vdlt-item-inventory-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.vdlt-item-chip {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--vdlt-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.vdlt-item-chip-selected {
+  border-color: var(--vdlt-gold);
+  background: rgba(212, 175, 55, 0.25);
+}
+
+.vdlt-item-combine-preview {
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.vdlt-item-tooltip {
+  margin-top: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(12, 8, 8, 0.98);
+  border: 1px solid rgba(214, 174, 82, 0.6);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.7);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.vdlt-item-tooltip-header {
+  margin-bottom: 0.4rem;
+}
+
+.vdlt-item-tooltip-name {
+  font-weight: 600;
+  color: #f7e4b5;
+}
+
+.vdlt-item-tooltip-tagline {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.vdlt-item-tooltip-section {
+  margin-top: 0.4rem;
+}
+
+.vdlt-item-tooltip-section-title {
+  font-weight: 500;
+  margin-bottom: 0.15rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.vdlt-item-tooltip-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.vdlt-item-tooltip-stats li {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.vdlt-item-tooltip-stats-small li {
+  font-size: 0.72rem;
+}
+
+.vdlt-item-tooltip-combos {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.vdlt-item-tooltip-combo-title {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.vdlt-item-tooltip-highlight {
+  color: #ffd966;
+}
+
+.vdlt-item-tooltip-text {
+  margin: 0.15rem 0 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* Combat overlay */
 .vdlt-combat-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -841,12 +1812,13 @@
 }
 
 .vdlt-combat-box {
-  background: var(--vdlt-stage);
-  border: 2px solid var(--vdlt-gold);
-  border-radius: 12px;
+  background: var(--bg-stage);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius-lg);
   padding: 2rem;
   text-align: center;
   max-width: 360px;
+  box-shadow: var(--shadow-gold);
 }
 
 .vdlt-combat-box h3 {
@@ -876,21 +1848,223 @@
   margin: 0.5rem 0;
 }
 
-.vdlt-result-placement.place-1 { color: #ffd700; }
+.vdlt-result-placement.place-1 { color: var(--gold); }
 .vdlt-result-placement.place-2 { color: #c0c0c0; }
 .vdlt-result-placement.place-3 { color: #cd7f32; }
 
 .vdlt-btn-again {
   margin-top: 1.5rem;
   padding: 0.75rem 1.5rem;
-  background: var(--vdlt-gold);
-  color: #1a0f0f;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+  color: var(--bg-dark);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
   cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .vdlt-btn-again:hover {
-  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-gold);
+}
+
+/* Augment select modal */
+.vdlt-augment-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.vdlt-augment-modal {
+  background: var(--bg-stage);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  max-width: 920px;
+  width: 95%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), var(--shadow-gold);
+}
+
+.vdlt-augment-modal-title {
+  margin: 0 0 0.25rem;
+  color: var(--vdlt-gold);
+  font-size: 1.5rem;
+}
+
+.vdlt-augment-modal-subtitle {
+  margin: 0 0 1.5rem;
+  color: var(--vdlt-muted);
+  font-size: 0.95rem;
+}
+
+.vdlt-augment-options {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.vdlt-augment-option {
+  flex: 1;
+  min-width: 220px;
+  max-width: 280px;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-subtle);
+  background: var(--vdlt-bg-card);
+  color: var(--vdlt-text);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.vdlt-augment-option:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-gold);
+}
+
+.vdlt-augment-tier {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.vdlt-augment-silver .vdlt-augment-tier { background: #9e9e9e; color: var(--bg-dark); }
+.vdlt-augment-gold .vdlt-augment-tier { background: var(--gold); color: var(--bg-dark); }
+.vdlt-augment-prismatic .vdlt-augment-tier { background: linear-gradient(135deg, #9c27b0, #e91e63); color: #fff; }
+
+.vdlt-augment-name {
+  display: block;
+  font-weight: 600;
+  color: var(--vdlt-gold);
+  margin-bottom: 0.5rem;
+}
+
+.vdlt-augment-flavor {
+  font-size: 0.85rem;
+  color: var(--vdlt-muted);
+  margin: 0 0 0.5rem;
+  font-style: italic;
+}
+
+.vdlt-augment-effect {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+.vdlt-augment-effect-detail {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Lõi đã chọn – hiển thị trong giao diện chơi */
+.vdlt-augments-panel {
+  background: rgba(61, 35, 20, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow: visible;
+}
+
+.vdlt-augments-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.vdlt-augment-chip {
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.vdlt-augment-chip-silver {
+  background: rgba(158, 158, 158, 0.2);
+  border-color: #9e9e9e;
+  color: #e0e0e0;
+}
+
+.vdlt-augment-chip-gold {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--vdlt-gold);
+  color: var(--vdlt-gold);
+}
+
+.vdlt-augment-chip-prismatic {
+  background: rgba(156, 39, 176, 0.2);
+  border-color: #ce93d8;
+  color: #e1bee7;
+}
+
+.vdlt-augment-chip-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+  display: inline-block;
+}
+
+.vdlt-augment-chip {
+  cursor: help;
+}
+
+.vdlt-augment-tooltip {
+  margin-top: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(12, 8, 8, 0.98);
+  border: 1px solid rgba(214, 174, 82, 0.6);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.7);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 320px;
+  white-space: normal;
+}
+
+.vdlt-augment-tooltip-name {
+  font-weight: 600;
+  color: var(--vdlt-gold);
+  margin-bottom: 0.35rem;
+}
+
+.vdlt-augment-tooltip-flavor {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  color: var(--vdlt-muted);
+  font-style: italic;
+}
+
+.vdlt-augment-tooltip-effect {
+  color: rgba(255, 255, 255, 0.9);
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.vdlt-augments-inline {
+  font-size: 0.85rem;
+  color: var(--vdlt-muted);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }

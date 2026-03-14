@@ -51,7 +51,7 @@ export default function VuDaiLoanTheShop({ shopSlots = [], championsMap, gold, l
                       star={slot?.star ?? 1}
                       maskColor={slot.mask_color}
                       tribeName={tribe?.name}
-                      classRole={cls?.role}
+                      classRole={cls?.name}
                       compact
                     />
                   </div>
@@ -60,8 +60,6 @@ export default function VuDaiLoanTheShop({ shopSlots = [], championsMap, gold, l
                       <span className="material-symbols-outlined">monetization_on</span>
                       {cost}
                     </span>
-                    {tribe && <span className="vdlt-shop-tribe" style={{ color: tribe.color_hex }}>Tộc: {tribe.name}</span>}
-                    {cls && <span className="vdlt-shop-class">Hệ: {cls.name}</span>}
                   </div>
                 </button>
               ) : (

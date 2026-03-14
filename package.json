@@ -13,6 +13,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@formkit/auto-animate": "^0.9.0",
+    "@google/genai": "^1.0.0",
     "@mediapipe/camera_utils": "^0.3.1640029074",
     "@mediapipe/drawing_utils": "^0.3.1620248257",
     "@mediapipe/face_mesh": "^0.4.1630673314",
@@ -55,6 +56,8 @@
     "three": "^0.158.0",
     "usehooks-ts": "^3.1.1",
     "uuid": "^13.0.0",
+    "zod": "^3.23.0",
+    "zod-to-json-schema": "^3.23.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

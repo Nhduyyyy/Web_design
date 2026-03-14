@@ -9,6 +9,9 @@ export default function CombatOverlay({ result, onClose }) {
       <div className="vdlt-combat-box" onClick={(e) => e.stopPropagation()}>
         <h3>{text}</h3>
         <p>Damage nhận: {result?.damageTaken ?? 0}</p>
+        {result?.damageDealt != null && (
+          <p>Damage gây ra: {result.damageDealt}</p>
+        )}
         <button type="button" className="vdlt-btn-start" onClick={onClose}>
           Tiếp tục
         </button>
