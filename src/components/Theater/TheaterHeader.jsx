@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from '../../contexts/AuthContext'
 
 const TheaterHeader = ({ theater }) => {
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   const navigate = useNavigate()
   const [showUserMenu, setShowUserMenu] = useState(false)
 
@@ -16,9 +16,8 @@ const TheaterHeader = ({ theater }) => {
   return (
     <header className="flex items-center justify-between border-b border-border-gold px-6 py-4 bg-surface-dark/50 backdrop-blur-md sticky top-0 z-50">
       <div className="flex items-center gap-8">
-        <Link to="/" className="flex items-center gap-3 text-primary">
-          <span className="material-symbols-outlined text-3xl">theater_comedy</span>
-          <h2 className="text-xl font-bold leading-tight tracking-tight">Tuồng Platform</h2>
+        <Link to="/" className="text-primary">
+          <h2 className="text-xl font-bold leading-tight tracking-tight">Quản Lý Nhà Hát</h2>
         </Link>
         
         <nav className="hidden md:flex items-center gap-6">
@@ -69,15 +68,15 @@ const TheaterHeader = ({ theater }) => {
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="h-10 w-10 rounded-full border-2 border-primary overflow-hidden hover:border-primary/70 transition-colors"
           >
-            {user?.user_metadata?.avatar_url ? (
+            {profile?.avatar_url ? (
               <img 
                 alt="Avatar" 
                 className="h-full w-full object-cover" 
-                src={user.user_metadata.avatar_url}
+                src={profile.avatar_url}
               />
             ) : (
               <div className="h-full w-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                {user?.email?.[0]?.toUpperCase() || 'U'}
+                {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
               </div>
             )}
           </button>
@@ -85,8 +84,8 @@ const TheaterHeader = ({ theater }) => {
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-64 bg-surface-dark border border-border-gold rounded-lg shadow-xl py-2 z-50">
               <div className="px-4 py-2 border-b border-border-gold">
-                <p className="text-sm font-medium text-slate-200">{user?.email}</p>
-                <p className="text-xs text-slate-400">Quản lý Nhà hát</p>
+                <p className="text-sm font-medium text-slate-200">{profile?.full_name || user?.email}</p>
+                <p className="text-xs text-slate-400">{profile?.email || user?.email}</p>
               </div>
               {/* <Link 
                 to="/theater/settings" 

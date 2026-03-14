@@ -761,7 +761,7 @@ const WhackAMaskGame = () => {
                 </div>
 
                 <h1 className="whack-intro-title">
-                  WHACK-A-<span className="whack-intro-title-highlight">MASK</span>
+                  Đập <span className="whack-intro-title-highlight">Chuột</span>
                 </h1>
 
                 <p className="whack-intro-description">
