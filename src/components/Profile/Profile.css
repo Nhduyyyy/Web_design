@@ -3,7 +3,7 @@
 .profile-page {
   min-height: 100vh;
   padding: 7rem 0 2rem 0;
-  background: var(--bg-dark);
+  background: transparent;
   color: var(--text-primary);
 }
 
