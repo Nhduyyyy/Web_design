@@ -117,6 +117,7 @@ export const getBookingsByUser = async (userId) => {
       schedule:schedules(
         id,
         title,
+        description,
         start_datetime,
         end_datetime,
         venue_id,
@@ -131,7 +132,10 @@ export const getBookingsByUser = async (userId) => {
   if (error) throw error
   const bookings = data || []
   const allSeatIds = [...new Set(bookings.flatMap((b) => b.seat_ids || []))]
-  const seatMap = allSeatIds.length > 0 ? await getSeatLabelsByIds(allSeatIds) : new Map()
+  
+  // Lấy thông tin seats bao gồm hall_id
+  const seatMap = allSeatIds.length > 0 ? await getSeatDetailsWithHall(allSeatIds) : new Map()
+  
   const getLabel = (id) => {
     const row = seatMap.get(id)
     if (!row) return id
@@ -139,10 +143,47 @@ export const getBookingsByUser = async (userId) => {
     if (row.row_number != null && row.seat_number != null) return `R${row.row_number}-${row.seat_number}`
     return id
   }
-  return bookings.map((b) => ({
-    ...b,
-    seat_labels: (b.seat_ids || []).map(getLabel)
-  }))
+  
+  // Lấy hall_id từ seat đầu tiên của mỗi booking
+  return bookings.map((b) => {
+    const firstSeatId = (b.seat_ids || [])[0]
+    const firstSeat = firstSeatId ? seatMap.get(firstSeatId) : null
+    
+    return {
+      ...b,
+      seat_labels: (b.seat_ids || []).map(getLabel),
+      hall: firstSeat?.hall || null
+    }
+  })
+}
+
+/**
+ * Lấy thông tin chi tiết seats bao gồm hall
+ */
+export const getSeatDetailsWithHall = async (seatIds) => {
+  if (!seatIds || seatIds.length === 0) return new Map()
+  const unique = [...new Set(seatIds)]
+  const { data, error } = await supabase
+    .from('seats')
+    .select(`
+      id, 
+      seat_label, 
+      row_number, 
+      seat_number,
+      hall:halls(id, name)
+    `)
+    .in('id', unique)
+  if (error) throw error
+  const map = new Map()
+  ;(data || []).forEach((row) => {
+    map.set(row.id, {
+      seat_label: row.seat_label,
+      row_number: row.row_number,
+      seat_number: row.seat_number,
+      hall: row.hall
+    })
+  })
+  return map
 }
 
 /**
@@ -200,24 +241,50 @@ export const updateBooking = async (bookingId, updates) => {
  * Confirm booking
  */
 export const confirmBooking = async (bookingId) => {
-  const booking = await getBookingById(bookingId)
+  try {
+    console.log('🔄 Confirming booking:', bookingId)
+    
+    // Get booking first to verify it exists
+    const booking = await getBookingById(bookingId)
+    console.log('📦 Booking data:', booking)
+    
+    if (!booking) {
+      throw new Error('Booking not found')
+    }
+    
+    if (booking.status === 'confirmed') {
+      console.log('ℹ️ Booking already confirmed')
+      return booking
+    }
 
-  // Trạng thái ghế đã đặt theo bảng bookings (seats không cập nhật status theo schedule)
-  await occupySeats(booking.seat_ids || [])
+    // Trạng thái ghế đã đặt theo bảng bookings (seats không cập nhật status theo schedule)
+    if (booking.seat_ids && booking.seat_ids.length > 0) {
+      await occupySeats(booking.seat_ids)
+      console.log('✅ Seats occupied:', booking.seat_ids)
+    }
 
-  // Update booking status
-  const { data, error } = await supabase
-    .from('bookings')
-    .update({
-      status: 'confirmed',
-      confirmed_at: new Date().toISOString()
-    })
-    .eq('id', bookingId)
-    .select()
-    .single()
+    // Update booking status
+    const { data, error } = await supabase
+      .from('bookings')
+      .update({
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString()
+      })
+      .eq('id', bookingId)
+      .select()
+      .single()
 
-  if (error) throw error
-  return data
+    if (error) {
+      console.error('❌ Error updating booking status:', error)
+      throw error
+    }
+    
+    console.log('✅ Booking confirmed successfully:', data)
+    return data
+  } catch (error) {
+    console.error('❌ Error in confirmBooking:', error)
+    throw error
+  }
 }
 
 /**

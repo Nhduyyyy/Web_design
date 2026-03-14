@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import PricingEditor from './PricingEditor'
-import { STATUS_OPTIONS, validateSchedulePayload } from '../../../utils/scheduleHelpers'
+import { STATUS_OPTIONS, STATUS_LABELS, validateSchedulePayload } from '../../../utils/scheduleHelpers'
 import { getVenuesByTheater } from '../../../services/theaterService'
 
 export default function ScheduleFormModal({ theaterId, schedule, defaultVenueId, onSubmit, onClose }) {
@@ -175,7 +175,7 @@ export default function ScheduleFormModal({ theaterId, schedule, defaultVenueId,
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>
-                    {s}
+                    {STATUS_LABELS[s]}
                   </option>
                 ))}
               </select>

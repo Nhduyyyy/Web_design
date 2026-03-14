@@ -37,6 +37,222 @@ export default function ProfilePage({ onClose, setActiveSection }) {
   const [bookingsError, setBookingsError] = useState(null)
   const [registrationsError, setRegistrationsError] = useState(null)
   const [selectedBooking, setSelectedBooking] = useState(null)
+  const [selectedEvent, setSelectedEvent] = useState(null)
+
+  // Handle share ticket
+  const handleShareTicket = async (booking) => {
+    const shareData = {
+      title: `Vé ${booking.schedule?.title || 'Vở diễn Tuồng'}`,
+      text: `Tôi đã đặt vé xem ${booking.schedule?.title || 'vở diễn'} vào ${
+        booking.schedule?.start_datetime
+          ? new Date(booking.schedule.start_datetime).toLocaleDateString('vi-VN', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            })
+          : ''
+      }. Mã đặt vé: ${booking.booking_code}`,
+      url: window.location.origin + `/booking/${booking.booking_code}`
+    }
+
+    try {
+      // Check if Web Share API is supported
+      if (navigator.share) {
+        await navigator.share(shareData)
+        setSuccess('Đã chia sẻ vé thành công!')
+      } else {
+        // Fallback: Copy to clipboard
+        const textToShare = `${shareData.title}\n${shareData.text}\n${shareData.url}`
+        await navigator.clipboard.writeText(textToShare)
+        setSuccess('Đã sao chép thông tin vé vào clipboard!')
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Error sharing:', error)
+        setError('Không thể chia sẻ vé. Vui lòng thử lại.')
+      }
+    }
+  }
+
+  // Handle download ticket
+  const handleDownloadTicket = (booking) => {
+    try {
+      // Create ticket content
+      const ticketContent = `
+VÉ XEM TUỒNG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${booking.schedule?.title || 'VỞ DIỄN TUỒNG'}
+${booking.schedule?.description || ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 NGÀY DIỄN
+${booking.schedule?.start_datetime
+  ? new Date(booking.schedule.start_datetime).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })
+  : '—'}
+
+🕐 THỜI GIAN
+${booking.schedule?.start_datetime
+  ? new Date(booking.schedule.start_datetime).toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  : '—'}${booking.schedule?.end_datetime 
+    ? ` - ${new Date(booking.schedule.end_datetime).toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`
+    : ''}
+
+📍 ĐỊA ĐIỂM
+${booking.schedule?.venue?.name || booking.schedule?.theater?.name || '—'}
+
+🏛️ KHÁN PHÒNG
+${booking.hall?.name || '—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎫 HẠNG VÉ: ${booking.seat_type || 'VIP GOLD'}
+💺 CHỖ NGỒI: ${booking.seat_labels?.join(', ') || '—'}
+👤 KHÁCH HÀNG: ${profile?.full_name || displayName}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 MÃ ĐẶT VÉ: ${booking.booking_code}
+💰 TỔNG TIỀN: ${booking.total_amount != null ? formatPrice(booking.total_amount) : '—'}
+✅ TRẠNG THÁI: ${booking.status === 'confirmed' ? 'Đã xác nhận' : booking.status}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vui lòng xuất trình vé này khi vào cổng.
+Cảm ơn quý khách đã ủng hộ Tuồng Việt Nam!
+      `.trim()
+
+      // Create blob and download
+      const blob = new Blob([ticketContent], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `ve-tuong-${booking.booking_code}.txt`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      setSuccess('Đã tải vé điện tử thành công!')
+    } catch (error) {
+      console.error('Error downloading ticket:', error)
+      setError('Không thể tải vé. Vui lòng thử lại.')
+    }
+  }
+
+  // Handle share event
+  const handleShareEvent = async (event) => {
+    const shareData = {
+      title: `Sự kiện ${event.event?.title || 'Tuồng'}`,
+      text: `Tôi đã đăng ký tham gia ${event.event?.title || 'sự kiện'} vào ${
+        event.event?.event_date
+          ? new Date(event.event.event_date).toLocaleDateString('vi-VN', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            })
+          : ''
+      }. Mã đăng ký: ${event.registration_code}`,
+      url: window.location.origin + `/event/${event.event?.id || event.registration_code}`
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData)
+        setSuccess('Đã chia sẻ sự kiện thành công!')
+      } else {
+        const textToShare = `${shareData.title}\n${shareData.text}\n${shareData.url}`
+        await navigator.clipboard.writeText(textToShare)
+        setSuccess('Đã sao chép thông tin sự kiện vào clipboard!')
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Error sharing:', error)
+        setError('Không thể chia sẻ sự kiện. Vui lòng thử lại.')
+      }
+    }
+  }
+
+  // Handle download event registration
+  const handleDownloadEvent = (event) => {
+    try {
+      const eventContent = `
+ĐĂNG KÝ SỰ KIỆN TUỒNG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${event.event?.title || 'SỰ KIỆN TUỒNG'}
+${event.event?.description || ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 NGÀY TỔ CHỨC
+${event.event?.event_date
+  ? new Date(event.event.event_date).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })
+  : '—'}
+
+🕐 THỜI GIAN
+${event.event?.event_date
+  ? new Date(event.event.event_date).toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  : '—'}
+
+📍 ĐỊA ĐIỂM
+${event.event?.venue?.name || '—'}
+
+⏱️ THỜI LƯỢNG
+${event.event?.duration ? `${event.event.duration} phút` : '—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👤 NGƯỜI THAM GIA: ${event.participant_name || profile?.full_name || displayName}
+📧 EMAIL: ${event.participant_email || '—'}
+📱 SỐ ĐIỆN THOẠI: ${event.participant_phone || '—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 MÃ ĐĂNG KÝ: ${event.registration_code}
+💰 PHÍ THAM GIA: ${event.amount != null ? formatPrice(event.amount) : 'Miễn phí'}
+✅ TRẠNG THÁI: ${event.status === 'confirmed' ? 'Đã xác nhận' : event.status}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vui lòng xuất trình mã đăng ký khi tham gia sự kiện.
+Cảm ơn bạn đã quan tâm đến Tuồng Việt Nam!
+      `.trim()
+
+      const blob = new Blob([eventContent], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `su-kien-${event.registration_code}.txt`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      setSuccess('Đã tải thông tin sự kiện thành công!')
+    } catch (error) {
+      console.error('Error downloading event:', error)
+      setError('Không thể tải thông tin sự kiện. Vui lòng thử lại.')
+    }
+  }
 
   useEffect(() => {
     if (profile) {
@@ -620,7 +836,7 @@ export default function ProfilePage({ onClose, setActiveSection }) {
                     {bookings.map((booking) => (
                       <motion.div
                         key={booking.id}
-                        className="profile-list-item profile-list-item-clickable"
+                        className="profile-booking-card"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
@@ -629,37 +845,61 @@ export default function ProfilePage({ onClose, setActiveSection }) {
                         tabIndex={0}
                         onKeyDown={(e) => e.key === 'Enter' && setSelectedBooking(booking)}
                       >
-                        <div className="profile-list-item-content">
-                          <div className="profile-list-item-icon">
-                            {booking.schedule?.show?.title?.charAt(0) || 'T'}
-                          </div>
-                          <div className="profile-list-item-info">
-                            <h4 className="profile-list-item-title">
-                              {booking.schedule?.show?.title || 'Vở diễn Tuồng'}
-                            </h4>
-                            <p className="profile-list-item-meta">
-                              {booking.schedule?.start_datetime 
-                                ? new Date(booking.schedule.start_datetime).toLocaleString('vi-VN', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })
-                                : 'N/A'} 
-                              {booking.seat_labels?.length > 0 && (
-                                <> • Ghế {booking.seat_labels.join(', ')}</>
-                              )}
-                              {booking.booking_code && (
-                                <> • Mã: <strong>{booking.booking_code}</strong></>
-                              )}
-                              {booking.total_amount && booking.total_amount > 0 && (
-                                <> • {formatPrice(booking.total_amount)}</>
-                              )}
-                            </p>
+                        {/* Left: Icon/Thumbnail */}
+                        <div className="booking-card-icon">
+                          <div className="booking-icon-placeholder">
+                            {booking.schedule?.title?.charAt(0) || 'T'}
                           </div>
                         </div>
-                        <div className="profile-list-item-status">
+
+                        {/* Center: Info */}
+                        <div className="booking-card-info">
+                          <h4 className="booking-card-title">
+                            {booking.schedule?.title || 'Vở diễn Tuồng'}
+                          </h4>
+                          <div className="booking-card-meta">
+                            <span className="booking-meta-item">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                              </svg>
+                              {booking.schedule?.start_datetime 
+                                ? new Date(booking.schedule.start_datetime).toLocaleString('vi-VN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                  })
+                                : 'N/A'}
+                            </span>
+                            {booking.seat_labels?.length > 0 && (
+                              <span className="booking-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                </svg>
+                                Ghế {booking.seat_labels.join(', ')}
+                              </span>
+                            )}
+                            {booking.booking_code && (
+                              <span className="booking-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                Mã: <strong>{booking.booking_code}</strong>
+                              </span>
+                            )}
+                            {booking.total_amount && booking.total_amount > 0 && (
+                              <span className="booking-meta-item booking-price">
+                                {formatPrice(booking.total_amount)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Right: Status */}
+                        <div className="booking-card-status">
                           {getStatusBadge(booking.status)}
                         </div>
                       </motion.div>
@@ -701,44 +941,76 @@ export default function ProfilePage({ onClose, setActiveSection }) {
                     {registrations.map((reg) => (
                       <motion.div
                         key={reg.id}
-                        className="profile-list-item"
+                        className="profile-booking-card"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
+                        onClick={() => setSelectedEvent(reg)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && setSelectedEvent(reg)}
                       >
-                        <div className="profile-list-item-content">
-                          <div className="profile-list-item-icon event-icon">
-                            <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        {/* Left: Icon */}
+                        <div className="booking-card-icon">
+                          <div className="booking-icon-placeholder event-icon-placeholder">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                              <circle cx="9" cy="7" r="4"/>
+                              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                             </svg>
                           </div>
-                          <div className="profile-list-item-info">
-                            <h4 className="profile-list-item-title">
-                              {reg.event?.title || 'Sự kiện'}
-                            </h4>
-                            <p className="profile-list-item-meta">
+                        </div>
+
+                        {/* Center: Info */}
+                        <div className="booking-card-info">
+                          <h4 className="booking-card-title">
+                            {reg.event?.title || 'Sự kiện'}
+                          </h4>
+                          <div className="booking-card-meta">
+                            <span className="booking-meta-item">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                              </svg>
                               {reg.event?.event_date 
                                 ? new Date(reg.event.event_date).toLocaleString('vi-VN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
                                     day: '2-digit',
                                     month: '2-digit',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
+                                    year: 'numeric'
                                   })
                                 : 'N/A'}
-                              {reg.event?.venue?.name && (
-                                <> • {reg.event.venue.name}</>
-                              )}
-                              {reg.registration_code && (
-                                <> • Mã: <strong>{reg.registration_code}</strong></>
-                              )}
-                              {reg.amount && reg.amount > 0 && (
-                                <> • {formatPrice(reg.amount)}</>
-                              )}
-                            </p>
+                            </span>
+                            {reg.event?.venue?.name && (
+                              <span className="booking-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                  <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                {reg.event.venue.name}
+                              </span>
+                            )}
+                            {reg.registration_code && (
+                              <span className="booking-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                Mã: <strong>{reg.registration_code}</strong>
+                              </span>
+                            )}
+                            {reg.amount && reg.amount > 0 && (
+                              <span className="booking-meta-item booking-price">
+                                {formatPrice(reg.amount)}
+                              </span>
+                            )}
                           </div>
                         </div>
-                        <div className="profile-list-item-status">
+
+                        {/* Right: Status */}
+                        <div className="booking-card-status">
                           {getStatusBadge(reg.status)}
                         </div>
                       </motion.div>
@@ -752,102 +1024,444 @@ export default function ProfilePage({ onClose, setActiveSection }) {
       </div>
 
       {/* Modal chi tiết vé đã đặt */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {selectedBooking && (
           <motion.div
-            className="profile-booking-modal-overlay"
+            className="ticket-modal-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             onClick={() => setSelectedBooking(null)}
           >
             <motion.div
-              className="profile-booking-modal"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              className="ticket-modal"
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 40 }}
+              transition={{ 
+                duration: 0.4, 
+                ease: [0.34, 1.56, 0.64, 1],
+                opacity: { duration: 0.3 }
+              }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="profile-booking-modal-header">
-                <h3 className="profile-booking-modal-title">
-                  {selectedBooking.schedule?.show?.title || selectedBooking.schedule?.title || 'Chi tiết vé'}
-                </h3>
-                <button
-                  type="button"
-                  className="profile-booking-modal-close"
-                  onClick={() => setSelectedBooking(null)}
-                  aria-label="Đóng"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="profile-booking-modal-body">
-                <div className="profile-booking-detail-row">
-                  <span className="profile-booking-detail-label">Mã booking</span>
-                  <span className="profile-booking-detail-value">{selectedBooking.booking_code || '—'}</span>
+              {/* Close button */}
+              <button
+                type="button"
+                className="ticket-modal-close"
+                onClick={() => setSelectedBooking(null)}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+
+              {/* Special badge */}
+              {selectedBooking.status === 'confirmed' && (
+                <div className="ticket-special-badge">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                  SUẤT DIỄN ĐẶC BIỆT
                 </div>
-                <div className="profile-booking-detail-row">
-                  <span className="profile-booking-detail-label">Thời gian</span>
-                  <span className="profile-booking-detail-value">
-                    {selectedBooking.schedule?.start_datetime
-                      ? new Date(selectedBooking.schedule.start_datetime).toLocaleString('vi-VN', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })
-                      : '—'}
-                  </span>
-                </div>
-                <div className="profile-booking-detail-row">
-                  <span className="profile-booking-detail-label">Số ghế</span>
-                  <span className="profile-booking-detail-value">
-                    {selectedBooking.seat_labels?.length ? selectedBooking.seat_labels.join(', ') : '—'}
-                  </span>
-                </div>
-                <div className="profile-booking-detail-row">
-                  <span className="profile-booking-detail-label">Địa điểm</span>
-                  <span className="profile-booking-detail-value">
-                    {selectedBooking.schedule?.venue?.name || selectedBooking.schedule?.venue?.address || '—'}
-                  </span>
-                </div>
-                <div className="profile-booking-detail-row">
-                  <span className="profile-booking-detail-label">Giá vé</span>
-                  <span className="profile-booking-detail-value">
-                    {selectedBooking.total_amount != null ? formatPrice(selectedBooking.total_amount) : '—'}
-                  </span>
-                </div>
-                <div className="profile-booking-detail-row">
-                  <span className="profile-booking-detail-label">Trạng thái</span>
-                  <span className="profile-booking-detail-value">{getStatusBadge(selectedBooking.status)}</span>
-                </div>
-                {selectedBooking.status === 'confirmed' && (
-                  <div className="profile-booking-qr-wrap">
-                    <span className="profile-booking-detail-label">Mã QR vé</span>
-                    <QRCodeCanvas
-                      value={[
-                        `Mã: ${selectedBooking.booking_code || ''}`,
-                        `Thời gian: ${selectedBooking.schedule?.start_datetime
-                          ? new Date(selectedBooking.schedule.start_datetime).toLocaleString('vi-VN', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric',
+              )}
+
+              <div className="ticket-modal-content">
+                {/* Left side - Main info with background */}
+                <div className="ticket-main-section">
+                  {/* Background image overlay */}
+                  <div className="ticket-bg-overlay"></div>
+                  
+                  {/* Content */}
+                  <div className="ticket-main-content">
+                    <h2 className="ticket-title">
+                      {selectedBooking.schedule?.title || 'VỞ DIỄN TUỒNG'}
+                    </h2>
+                    <p className="ticket-subtitle">
+                      {selectedBooking.schedule?.description || 'Kiệt tác Tuồng Cổ Đỗ kịch diễn'}
+                    </p>
+
+                    <div className="ticket-info-grid">
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                          </svg>
+                          NGÀY DIỄN
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedBooking.schedule?.start_datetime
+                            ? new Date(selectedBooking.schedule.start_datetime).toLocaleDateString('vi-VN', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                              })
+                            : '—'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                          </svg>
+                          THỜI GIAN
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedBooking.schedule?.start_datetime
+                            ? new Date(selectedBooking.schedule.start_datetime).toLocaleTimeString('vi-VN', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : '—'}
+                          {selectedBooking.schedule?.end_datetime && 
+                            ` - ${new Date(selectedBooking.schedule.end_datetime).toLocaleTimeString('vi-VN', {
                               hour: '2-digit',
                               minute: '2-digit'
-                            })
-                          : ''}`,
-                        `Ghế: ${selectedBooking.seat_labels?.join(', ') || ''}`,
-                        `Địa điểm: ${selectedBooking.schedule?.venue?.name || selectedBooking.schedule?.venue?.address || ''}`,
-                        `Giá: ${selectedBooking.total_amount != null ? formatPrice(selectedBooking.total_amount) : ''}`
-                      ].join('\n')}
-                      size={180}
-                      level="M"
-                      className="profile-booking-qr"
-                    />
+                            })}`
+                          }
+                        </div>
+                      </div>
+
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                          </svg>
+                          ĐỊA ĐIỂM
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedBooking.schedule?.venue?.name || selectedBooking.schedule?.theater?.name || '—'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                          </svg>
+                          KHÁN PHÒNG
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedBooking.hall?.name || '—'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Ticket details */}
+                    <div className="ticket-details-grid">
+                      <div className="ticket-detail-card">
+                        <div className="ticket-detail-label">HẠNG VÉ</div>
+                        <div className="ticket-detail-value ticket-vip">
+                          {selectedBooking.seat_type || 'VIP GOLD'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-detail-card">
+                        <div className="ticket-detail-label">CHỖ NGỒI</div>
+                        <div className="ticket-detail-value">
+                          {selectedBooking.seat_labels?.length 
+                            ? selectedBooking.seat_labels.join(', ')
+                            : 'HÀNG A - GHẾ 12'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-detail-card">
+                        <div className="ticket-detail-label">KHÁCH HÀNG</div>
+                        <div className="ticket-detail-value">
+                          {profile?.full_name || displayName}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
+
+                {/* Right side - QR Code */}
+                <div className="ticket-qr-section">
+                  <div className="ticket-qr-header">QUÉT ĐỂ VÀO CỔNG</div>
+                  
+                  <div className="ticket-qr-container">
+                    <div className="ticket-qr-frame">
+                      <QRCodeCanvas
+                        value={JSON.stringify({
+                          code: selectedBooking.booking_code,
+                          show: selectedBooking.schedule?.show?.title,
+                          date: selectedBooking.schedule?.start_datetime,
+                          seats: selectedBooking.seat_labels?.join(', '),
+                          venue: selectedBooking.schedule?.venue?.name,
+                          amount: selectedBooking.total_amount
+                        })}
+                        size={160}
+                        level="H"
+                        className="ticket-qr-code"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="ticket-qr-note">
+                    HIỆU LỰC CHO ĐẾN NGƯỜI LỚN
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="ticket-actions">
+                    <button 
+                      className="ticket-btn ticket-btn-download"
+                      onClick={() => handleDownloadTicket(selectedBooking)}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                      Tải vé điện tử
+                    </button>
+                    
+                    <button 
+                      className="ticket-btn ticket-btn-share"
+                      onClick={() => handleShareTicket(selectedBooking)}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="18" cy="5" r="3"/>
+                        <circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                      </svg>
+                      Chia sẻ vé
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              {/* Decorative bottom border */}
+              <div className="ticket-modal-border"></div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal chi tiết sự kiện */}
+      <AnimatePresence mode="wait">
+        {selectedEvent && (
+          <motion.div
+            className="ticket-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            onClick={() => setSelectedEvent(null)}
+          >
+            <motion.div
+              className="ticket-modal"
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 40 }}
+              transition={{ 
+                duration: 0.4, 
+                ease: [0.34, 1.56, 0.64, 1],
+                opacity: { duration: 0.3 }
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                type="button"
+                className="ticket-modal-close"
+                onClick={() => setSelectedEvent(null)}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+
+              {/* Special badge */}
+              {selectedEvent.status === 'confirmed' && (
+                <div className="ticket-special-badge">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  SỰ KIỆN ĐẶC BIỆT
+                </div>
+              )}
+
+              <div className="ticket-modal-content">
+                {/* Left side - Main info with background */}
+                <div className="ticket-main-section">
+                  {/* Background image overlay */}
+                  <div className="ticket-bg-overlay"></div>
+                  
+                  {/* Content */}
+                  <div className="ticket-main-content">
+                    <h2 className="ticket-title">
+                      {selectedEvent.event?.title || 'SỰ KIỆN TUỒNG'}
+                    </h2>
+                    <p className="ticket-subtitle">
+                      {selectedEvent.event?.description || 'Sự kiện văn hóa Tuồng Việt Nam'}
+                    </p>
+
+                    <div className="ticket-info-grid">
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                          </svg>
+                          NGÀY TỔ CHỨC
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedEvent.event?.event_date
+                            ? new Date(selectedEvent.event.event_date).toLocaleDateString('vi-VN', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                              })
+                            : '—'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                          </svg>
+                          THỜI GIAN
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedEvent.event?.event_date
+                            ? new Date(selectedEvent.event.event_date).toLocaleTimeString('vi-VN', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : '—'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                          </svg>
+                          ĐỊA ĐIỂM
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedEvent.event?.venue?.name || '—'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-info-item">
+                        <div className="ticket-info-label">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                          </svg>
+                          THỜI LƯỢNG
+                        </div>
+                        <div className="ticket-info-value">
+                          {selectedEvent.event?.duration ? `${selectedEvent.event.duration} phút` : '—'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Event details */}
+                    <div className="ticket-details-grid">
+                      <div className="ticket-detail-card">
+                        <div className="ticket-detail-label">LOẠI SỰ KIỆN</div>
+                        <div className="ticket-detail-value ticket-vip">
+                          {selectedEvent.event?.type === 'workshop' ? 'Workshop' : 
+                           selectedEvent.event?.type === 'performance' ? 'Biểu diễn' :
+                           selectedEvent.event?.type === 'tour' ? 'Tour' : 'Sự kiện'}
+                        </div>
+                      </div>
+
+                      <div className="ticket-detail-card">
+                        <div className="ticket-detail-label">SỐ LƯỢNG</div>
+                        <div className="ticket-detail-value">
+                          {selectedEvent.event?.current_participants || 0} / {selectedEvent.event?.max_participants || 0}
+                        </div>
+                      </div>
+
+                      <div className="ticket-detail-card">
+                        <div className="ticket-detail-label">NGƯỜI THAM GIA</div>
+                        <div className="ticket-detail-value">
+                          {selectedEvent.participant_name || profile?.full_name || displayName}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right side - QR Code */}
+                <div className="ticket-qr-section">
+                  <div className="ticket-qr-header">MÃ ĐĂNG KÝ</div>
+                  
+                  <div className="ticket-qr-container">
+                    <div className="ticket-qr-frame">
+                      <QRCodeCanvas
+                        value={JSON.stringify({
+                          code: selectedEvent.registration_code,
+                          event: selectedEvent.event?.title,
+                          date: selectedEvent.event?.event_date,
+                          participant: selectedEvent.participant_name,
+                          venue: selectedEvent.event?.venue?.name,
+                          amount: selectedEvent.amount
+                        })}
+                        size={160}
+                        level="H"
+                        className="ticket-qr-code"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="ticket-qr-note">
+                    VUI LÒNG XUẤT TRÌNH KHI THAM GIA
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="ticket-actions">
+                    <button 
+                      className="ticket-btn ticket-btn-download"
+                      onClick={() => handleDownloadEvent(selectedEvent)}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                      Tải thông tin
+                    </button>
+                    
+                    <button 
+                      className="ticket-btn ticket-btn-share"
+                      onClick={() => handleShareEvent(selectedEvent)}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="18" cy="5" r="3"/>
+                        <circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                      </svg>
+                      Chia sẻ
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Decorative bottom border */}
+              <div className="ticket-modal-border"></div>
             </motion.div>
           </motion.div>
         )}

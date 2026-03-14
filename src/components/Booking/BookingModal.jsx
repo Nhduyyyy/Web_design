@@ -5,8 +5,8 @@ import BookingSummary from './BookingSummary'
 import PaymentMethod from './PaymentMethod'
 import Confirmation from './Confirmation'
 import { useAuth } from '../../contexts/AuthContext'
-import { generateSeatingChart, calculateTotal, generateBookingId, processPayment, sendEmailConfirmation, sendSMSConfirmation, scheduleReminder } from '../../utils/booking'
-import { cancelBooking, createBooking, updateBooking } from '../../services/bookingService'
+import { generateSeatingChart, calculateTotal, processPayment, sendEmailConfirmation, sendSMSConfirmation, scheduleReminder } from '../../utils/booking'
+import { cancelBooking, confirmBooking, createBooking, updateBooking } from '../../services/bookingService'
 import { getScheduleById } from '../../services/scheduleService'
 import seatPricingSyncService from '../../services/seatPricingSyncService'
 import './booking.css'
@@ -34,6 +34,7 @@ export default function BookingModal({ event, isOpen, onClose }) {
   const [bookingId, setBookingId] = useState(null) // booking_code
   const [bookingDbId, setBookingDbId] = useState(null) // bookings.id (uuid)
   const [bookingExpiresAt, setBookingExpiresAt] = useState(null) // bookings.payment_expires_at
+  const [isBookingConfirmed, setIsBookingConfirmed] = useState(false) // Track if booking is confirmed
   
   // Error states
   const [bookingError, setBookingError] = useState(null)
@@ -100,8 +101,12 @@ export default function BookingModal({ event, isOpen, onClose }) {
         clearInterval(scheduleCheckIntervalRef.current)
         scheduleCheckIntervalRef.current = null
       }
-      if (bookingDbId) {
+      // Only cancel booking if it hasn't been confirmed yet
+      if (bookingDbId && !isBookingConfirmed) {
+        console.log('🧹 Cleanup: Canceling pending booking', bookingDbId)
         cancelPendingBooking()
+      } else if (bookingDbId && isBookingConfirmed) {
+        console.log('✅ Cleanup: Booking already confirmed, skipping cancel', bookingDbId)
       }
     }
   }, [isOpen, event])
@@ -371,6 +376,22 @@ export default function BookingModal({ event, isOpen, onClose }) {
     }
 
     if (alreadyCompleted) {
+      // Confirm booking in database
+      if (bookingDbId) {
+        try {
+          console.log('🔄 Attempting to confirm booking:', bookingDbId)
+          const confirmedBooking = await confirmBooking(bookingDbId)
+          console.log('✅ Booking confirmed successfully:', confirmedBooking)
+          setIsBookingConfirmed(true) // Mark as confirmed to prevent cleanup cancellation
+        } catch (error) {
+          console.error('❌ Error confirming booking:', error)
+          // Don't block the flow, but log the error
+          setPaymentError('Thanh toán thành công nhưng có lỗi khi cập nhật trạng thái. Vui lòng liên hệ hỗ trợ.')
+        }
+      } else {
+        console.warn('⚠️ No bookingDbId available to confirm')
+      }
+      
       setPaymentResult({
         success: true,
         message: 'Thanh toán thành công!',
@@ -402,6 +423,22 @@ export default function BookingModal({ event, isOpen, onClose }) {
       setPaymentResult(result)
 
       if (result.success) {
+        // Confirm booking in database
+        if (bookingDbId) {
+          try {
+            console.log('🔄 Attempting to confirm booking:', bookingDbId)
+            const confirmedBooking = await confirmBooking(bookingDbId)
+            console.log('✅ Booking confirmed successfully:', confirmedBooking)
+            setIsBookingConfirmed(true) // Mark as confirmed to prevent cleanup cancellation
+          } catch (error) {
+            console.error('❌ Error confirming booking:', error)
+            // Don't block the flow, but log the error
+            setPaymentError('Thanh toán thành công nhưng có lỗi khi cập nhật trạng thái. Vui lòng liên hệ hỗ trợ.')
+          }
+        } else {
+          console.warn('⚠️ No bookingDbId available to confirm')
+        }
+        
         const booking = {
           bookingId,
           event,

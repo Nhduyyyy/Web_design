@@ -18,27 +18,43 @@ const TheaterStats = ({ theater, venueCount }) => {
   }, [theater])
 
   const loadStats = async () => {
+    if (!theater?.id) {
+      console.warn('⚠️ Theater ID not available for stats')
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       
-      // Get schedules count
+      // Get schedules count for this theater only
       const schedules = await getSchedulesByTheater(theater.id)
+      console.log('📊 Schedules for theater', theater.id, ':', schedules?.length || 0)
       
-      // Get events count
+      // Get events count - ONLY for this theater
       const events = await getEventsByTheater(theater.id)
+      console.log('📊 Events for theater', theater.id, ':', events?.length || 0, events)
       
-      // Get livestreams count
+      // Verify all events belong to this theater
+      const invalidEvents = events?.filter(e => e.theater_id !== theater.id) || []
+      if (invalidEvents.length > 0) {
+        console.error('❌ Found events with wrong theater_id:', invalidEvents)
+      }
+      
+      // Get livestreams count for this theater only
       const livestreams = await getLivestreams({ theaterId: theater.id })
+      console.log('📊 Livestreams for theater', theater.id, ':', livestreams?.length || 0)
 
       setStats({
-        venues: venueCount,
+        venues: venueCount || 0,
         capacity: theater.capacity || 0,
         schedules: schedules?.length || 0,
-        events: events?.length || 0,
+        events: events?.length || 0, // Only count events for THIS theater
         livestreams: livestreams?.length || 0
       })
     } catch (error) {
-      console.error('Error loading stats:', error)
+      console.error('❌ Error loading theater stats:', error)
+      // Keep previous stats on error
     } finally {
       setLoading(false)
     }

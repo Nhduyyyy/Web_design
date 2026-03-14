@@ -3,6 +3,18 @@ import { vi } from 'date-fns/locale'
 
 export const STATUS_OPTIONS = ['draft', 'scheduled', 'ongoing', 'completed', 'cancelled']
 
+export const STATUS_LABELS = {
+  draft: 'Nháp',
+  scheduled: 'Đã lên lịch',
+  ongoing: 'Đang diễn ra',
+  completed: 'Hoàn thành',
+  cancelled: 'Đã hủy'
+}
+
+export function getStatusLabel(status) {
+  return STATUS_LABELS[status] || status
+}
+
 export function formatDateTime(dt) {
   if (!dt) return ''
   try {
