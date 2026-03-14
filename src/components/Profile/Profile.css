@@ -490,6 +490,120 @@
   gap: var(--space-md);
 }
 
+/* New Booking Card Design */
+.profile-booking-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-booking-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--gold);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.profile-booking-card:hover {
+  border-color: var(--border-active);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.profile-booking-card:hover::before {
+  opacity: 1;
+}
+
+.booking-card-icon {
+  flex-shrink: 0;
+}
+
+.booking-icon-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.05) 100%);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.event-icon-placeholder {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
+}
+
+.event-icon-placeholder svg {
+  color: var(--gold);
+}
+
+.booking-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.booking-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-sm) 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.booking-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.booking-meta-item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.booking-meta-item strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.booking-meta-item.booking-price {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.booking-card-status {
+  flex-shrink: 0;
+}
+
+/* Old list item styles - keep for events */
 .profile-list-item {
   display: flex;
   flex-direction: column;
@@ -564,6 +678,36 @@
 
 .profile-list-item-clickable {
   cursor: pointer;
+}
+
+/* Responsive for booking cards */
+@media (max-width: 767px) {
+  .profile-booking-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--space-md);
+  }
+
+  .booking-card-icon {
+    align-self: center;
+  }
+
+  .booking-card-info {
+    width: 100%;
+  }
+
+  .booking-card-title {
+    white-space: normal;
+  }
+
+  .booking-card-meta {
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .booking-card-status {
+    align-self: flex-end;
+  }
 }
 
 /* ===== Modal chi tiết vé - New Design ===== */

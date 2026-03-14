@@ -836,7 +836,7 @@ Cảm ơn bạn đã quan tâm đến Tuồng Việt Nam!
                     {bookings.map((booking) => (
                       <motion.div
                         key={booking.id}
-                        className="profile-list-item profile-list-item-clickable"
+                        className="profile-booking-card"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
@@ -845,37 +845,61 @@ Cảm ơn bạn đã quan tâm đến Tuồng Việt Nam!
                         tabIndex={0}
                         onKeyDown={(e) => e.key === 'Enter' && setSelectedBooking(booking)}
                       >
-                        <div className="profile-list-item-content">
-                          <div className="profile-list-item-icon">
-                            {booking.schedule?.show?.title?.charAt(0) || 'T'}
-                          </div>
-                          <div className="profile-list-item-info">
-                            <h4 className="profile-list-item-title">
-                              {booking.schedule?.show?.title || 'Vở diễn Tuồng'}
-                            </h4>
-                            <p className="profile-list-item-meta">
-                              {booking.schedule?.start_datetime 
-                                ? new Date(booking.schedule.start_datetime).toLocaleString('vi-VN', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })
-                                : 'N/A'} 
-                              {booking.seat_labels?.length > 0 && (
-                                <> • Ghế {booking.seat_labels.join(', ')}</>
-                              )}
-                              {booking.booking_code && (
-                                <> • Mã: <strong>{booking.booking_code}</strong></>
-                              )}
-                              {booking.total_amount && booking.total_amount > 0 && (
-                                <> • {formatPrice(booking.total_amount)}</>
-                              )}
-                            </p>
+                        {/* Left: Icon/Thumbnail */}
+                        <div className="booking-card-icon">
+                          <div className="booking-icon-placeholder">
+                            {booking.schedule?.title?.charAt(0) || 'T'}
                           </div>
                         </div>
-                        <div className="profile-list-item-status">
+
+                        {/* Center: Info */}
+                        <div className="booking-card-info">
+                          <h4 className="booking-card-title">
+                            {booking.schedule?.title || 'Vở diễn Tuồng'}
+                          </h4>
+                          <div className="booking-card-meta">
+                            <span className="booking-meta-item">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                              </svg>
+                              {booking.schedule?.start_datetime 
+                                ? new Date(booking.schedule.start_datetime).toLocaleString('vi-VN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                  })
+                                : 'N/A'}
+                            </span>
+                            {booking.seat_labels?.length > 0 && (
+                              <span className="booking-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                </svg>
+                                Ghế {booking.seat_labels.join(', ')}
+                              </span>
+                            )}
+                            {booking.booking_code && (
+                              <span className="booking-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                Mã: <strong>{booking.booking_code}</strong>
+                              </span>
+                            )}
+                            {booking.total_amount && booking.total_amount > 0 && (
+                              <span className="booking-meta-item booking-price">
+                                {formatPrice(booking.total_amount)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Right: Status */}
+                        <div className="booking-card-status">
                           {getStatusBadge(booking.status)}
                         </div>
                       </motion.div>
@@ -917,7 +941,7 @@ Cảm ơn bạn đã quan tâm đến Tuồng Việt Nam!
                     {registrations.map((reg) => (
                       <motion.div
                         key={reg.id}
-                        className="profile-list-item profile-list-item-clickable"
+                        className="profile-booking-card"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
@@ -926,39 +950,67 @@ Cảm ơn bạn đã quan tâm đến Tuồng Việt Nam!
                         tabIndex={0}
                         onKeyDown={(e) => e.key === 'Enter' && setSelectedEvent(reg)}
                       >
-                        <div className="profile-list-item-content">
-                          <div className="profile-list-item-icon event-icon">
-                            <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        {/* Left: Icon */}
+                        <div className="booking-card-icon">
+                          <div className="booking-icon-placeholder event-icon-placeholder">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                              <circle cx="9" cy="7" r="4"/>
+                              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                             </svg>
                           </div>
-                          <div className="profile-list-item-info">
-                            <h4 className="profile-list-item-title">
-                              {reg.event?.title || 'Sự kiện'}
-                            </h4>
-                            <p className="profile-list-item-meta">
+                        </div>
+
+                        {/* Center: Info */}
+                        <div className="booking-card-info">
+                          <h4 className="booking-card-title">
+                            {reg.event?.title || 'Sự kiện'}
+                          </h4>
+                          <div className="booking-card-meta">
+                            <span className="booking-meta-item">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                              </svg>
                               {reg.event?.event_date 
                                 ? new Date(reg.event.event_date).toLocaleString('vi-VN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
                                     day: '2-digit',
                                     month: '2-digit',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
+                                    year: 'numeric'
                                   })
                                 : 'N/A'}
-                              {reg.event?.venue?.name && (
-                                <> • {reg.event.venue.name}</>
-                              )}
-                              {reg.registration_code && (
-                                <> • Mã: <strong>{reg.registration_code}</strong></>
-                              )}
-                              {reg.amount && reg.amount > 0 && (
-                                <> • {formatPrice(reg.amount)}</>
-                              )}
-                            </p>
+                            </span>
+                            {reg.event?.venue?.name && (
+                              <span className="booking-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                  <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                {reg.event.venue.name}
+                              </span>
+                            )}
+                            {reg.registration_code && (
+                              <span className="booking-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                Mã: <strong>{reg.registration_code}</strong>
+                              </span>
+                            )}
+                            {reg.amount && reg.amount > 0 && (
+                              <span className="booking-meta-item booking-price">
+                                {formatPrice(reg.amount)}
+                              </span>
+                            )}
                           </div>
                         </div>
-                        <div className="profile-list-item-status">
+
+                        {/* Right: Status */}
+                        <div className="booking-card-status">
                           {getStatusBadge(reg.status)}
                         </div>
                       </motion.div>
